@@ -1,0 +1,31 @@
+/* Grunnlag: nøytral palett for innlogging og lærerrommet. Hvert tema overstyrer tokenene i themes.css. */
+:root {
+  color-scheme: light;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  --bg: #eef1f4; --surface: #fbfcfd; --ink: #16202b; --muted: #57636f; --line: #d3dae1;
+  --accent: #2f5d8a; --accent-ink: #ffffff; --heat: #c23d20; --leaf: #2f7d4a; --sand: #b8640f; --sand-ink: #ffffff;
+  --good-bg: #dcefe2; --bad-bg: #f7dcd5; --ans-bg: #e3ebf3;
+  --font-display: 'Bricolage Grotesque', 'Trebuchet MS', system-ui, sans-serif;
+  --font-body: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --wall-l: #dbe7ec; --wall-r: #c8d9e0; --floor-a: #d8c6a4; --floor-b: #cdb992; --edge-l: #a99670; --edge-r: #8c7a58; --sky: #a9daf2; --frame: #8aa3ad;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #11161c; --surface: #19212a; --ink: #e6ecf2; --muted: #9aa7b4; --line: #2c3743;
+    --accent: #7fb0e3; --accent-ink: #0c1a28; --heat: #ff8a6b; --leaf: #6cc487; --sand: #f0a24a; --sand-ink: #1a1206;
+    --good-bg: #1b3a27; --bad-bg: #432019; --ans-bg: #1c2b3a;
+  }
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+[hidden] { display: none !important; }
+img { max-width: 100%; }
+code { font-family: var(--font-mono); font-size: .9em; }
+@media print {
+  body.printcodes * { visibility: hidden; }
+  body.printcodes #codes, body.printcodes #codes * { visibility: visible; }
+  body.printcodes #codes { position: absolute; inset: 0; }
+  body.printcodes #codes .row, body.printcodes #codes p { display: none; }
+}

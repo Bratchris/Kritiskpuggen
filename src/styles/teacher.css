@@ -1,0 +1,49 @@
+/* Innlogging og lærerrommet. */
+.authwrap { max-width: 520px; }
+.authhead .lede { color: var(--muted); margin: 0; max-width: 46ch; }
+.authpanel { display: flex; flex-direction: column; gap: 14px; }
+.authtabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
+.atab { font: inherit; font-weight: 700; padding: 10px; min-height: 44px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); cursor: pointer; }
+.atab[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 0 var(--line); }
+.aform, .tform { display: flex; flex-direction: column; gap: 12px; }
+.ahelp, .muted { color: var(--muted); margin: 0; max-width: 62ch; }
+.afield { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: .95rem; }
+.afield input, .afield textarea { font: inherit; font-weight: 400; font-size: 1.05rem; padding: 10px 12px; min-height: 46px; border-radius: 10px; border: 1.5px solid var(--ink); background: var(--bg); color: var(--ink); width: 100%; }
+#klasse { text-transform: uppercase; font-family: var(--font-mono); letter-spacing: .12em; }
+.alinks { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.teacher .panel h2 { font-family: var(--font-display); font-size: 1.35rem; margin: 0 0 10px; }
+.teacher .panel { display: flex; flex-direction: column; gap: 12px; }
+.teacher .panel > h2 { margin-bottom: 0; }
+.classbar { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip.add { border-style: dashed; }
+.chrow { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px; }
+.chrow h2 { margin: 0; }
+.codebox { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; padding: 8px 14px; border-radius: 10px; background: var(--ans-bg); }
+.codebox .lbl2 { margin: 0; }
+.code { font-family: var(--font-mono); font-size: 1.7rem; letter-spacing: .14em; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+.kpis div { display: flex; flex-direction: column; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+.kpis b { font-family: var(--font-display); font-size: 1.6rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.kpis span { color: var(--muted); font-size: .85rem; }
+.uname { display: block; font-family: var(--font-mono); font-size: .75rem; color: var(--muted); font-weight: 400; }
+.mono { font-family: var(--font-mono); }
+.lvchip { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-size: .85rem; }
+.lvchip::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--lc); }
+.minibar { display: inline-block; width: 54px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; vertical-align: middle; }
+.minibar i { display: block; height: 100%; background: var(--leaf); }
+.actbox { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 110px; }
+.actbox .lnk { padding: 2px 0; }
+.danger-lnk { color: var(--heat); }
+.inl { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; white-space: normal; }
+.inl input { width: 80px; font: inherit; padding: 6px 8px; border-radius: 8px; border: 1.5px solid var(--ink); background: var(--bg); color: var(--ink); }
+.inl .btn { min-height: 34px; padding: 4px 12px; }
+.checks { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+.check { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--bg); cursor: pointer; }
+.check input { margin-top: 4px; width: 18px; height: 18px; accent-color: var(--accent); }
+.check span { display: flex; flex-direction: column; }
+.check small { color: var(--muted); }
+fieldset { border: 0; padding: 0; margin: 0; }
+legend { font-weight: 600; font-size: .95rem; margin-bottom: 4px; }
+.codes { border: 1.5px solid var(--accent); border-radius: 12px; padding: 14px; background: var(--ans-bg); display: flex; flex-direction: column; gap: 10px; }
+.codes h3 { margin: 0; font-family: var(--font-display); }
+.danger { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; border-top: 1px solid var(--line); padding-top: 14px; }
