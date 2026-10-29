@@ -3,6 +3,7 @@
 import { $, esc, toast } from '../lib/dom';
 import type { Store, SavedState, Gift, ActivityRow } from '../lib/store';
 import type { Theme, Mode, Level, RoomItem, Placement, Topic } from '../themes/types';
+import { defaultAvatar, type AvatarCfg } from '../avatar/catalog';
 
 export interface AppState {
   topic: string;
@@ -18,9 +19,13 @@ export interface AppState {
   known: Record<string, 1>;
   notes: Record<string, string>;
   cur: Record<string, any>;
+  /** Avataren er den samme i alle temaer. owned = kostymer eleven eier. */
+  avatar: AvatarCfg;
+  owned: Set<string>;
+  avaReady: boolean;
 }
 
-export const S: AppState = { topic: 'alle', mode: 'quiz', last: 'quiz', points: 0, spent: 0, gifts: [], home: null, seenLvl: -1, seeded: [], earned: {}, known: {}, notes: {}, cur: {} };
+export const S: AppState = { topic: 'alle', mode: 'quiz', last: 'quiz', points: 0, spent: 0, gifts: [], home: null, seenLvl: -1, seeded: [], earned: {}, known: {}, notes: {}, cur: {}, avatar: defaultAvatar(0.37), owned: new Set(), avaReady: false };
 
 export let T: Theme;
 export let store: Store;

@@ -313,3 +313,41 @@ svg.house { display: block; width: 100%; height: auto; }
 @keyframes readfill { to { transform: scaleX(1); } }
 .opt.wait, .bk.wait { opacity: .55; cursor: wait; }
 .count.repeat { border: 1.5px dashed var(--line); border-radius: 999px; padding: 1px 9px; }
+
+/* Avatar */
+.titlerow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.titlerow .apptitle { margin: 4px 0 6px; min-width: 0; }
+.avabtn { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 6px 6px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-size: .74rem; font-weight: 700; cursor: pointer; }
+.avabtn svg { width: 62px; height: 68px; display: block; }
+.avabtn:hover, .avabtn[aria-pressed="true"] { border-color: var(--sand); }
+@media (max-width: 420px) { .avabtn svg { width: 50px; height: 55px; } }
+.avagrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+@media (min-width: 680px) { .avagrid { grid-template-columns: minmax(200px, 260px) minmax(0, 1fr); align-items: start; } .avastage { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 96px); } }
+.avastage { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px; border-radius: 14px; background: var(--bg); border: 1px solid var(--line); }
+.avastage svg.big { width: 100%; max-width: 220px; height: auto; aspect-ratio: 120 / 184; }
+.avastage .keyhint { text-align: center; margin: 0; }
+.avaopts { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.avtabs { padding-bottom: 2px; }
+.avsec h3 { font-family: var(--font-display); font-size: 1.05rem; margin: 0 0 8px; }
+.avsec { display: flex; flex-direction: column; gap: 8px; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.sw { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--line); cursor: pointer; padding: 0; }
+.sw[aria-checked="true"] { outline: 3px solid var(--accent); outline-offset: 2px; border-color: var(--surface); }
+.avtiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+.avtile { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px 8px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; font-size: .82rem; font-weight: 600; cursor: pointer; min-width: 0; }
+.avtile svg { width: 100%; height: 86px; }
+.avtile.on { border-color: var(--accent); background: var(--ans-bg); }
+.avtoggle { max-width: 260px; }
+.skins { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.skin { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--bg); min-width: 0; }
+.skin.worn { border-color: var(--leaf); }
+.skin svg { width: 100%; height: 120px; }
+.skin h4 { margin: 0; font-family: var(--font-display); font-size: 1rem; }
+.skin p { margin: 0; font-size: .84rem; color: var(--muted); flex: 1; }
+.skin .btn { min-height: 40px; padding: 6px 10px; }
+.ava { pointer-events: none; }
+.ava-b { animation: avabob 2.6s ease-in-out infinite; }
+@keyframes avabob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2.5px); } }
+.skin .pfoot { flex-wrap: wrap; gap: 4px 8px; }
+.skin .price { white-space: nowrap; }
+.skin .tsub { white-space: nowrap; }

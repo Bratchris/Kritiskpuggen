@@ -7,6 +7,7 @@ import { $, esc } from '../../lib/dom';
 import { iso, pts } from './iso';
 import { S, T, ITEMS, LEVELS, lvl, save, head, panel, hooks, modeOf, stars, starText, topXp, STAR_XP } from '../core';
 import type { Placement, HouseRoom, RoomItem } from '../../themes/types';
+import { avatarG } from '../../avatar/render';
 
 const GRID = 8;
 const WALL_TOP = 125, WALL_H = 150;
@@ -29,7 +30,28 @@ const hasWindow = (i: number) => ROOMS()[i]?.window !== false;
 /** Rom som åpnes på nivå i. Brukes i nivå-dialogen. */
 export function roomsAt(levelIndex: number): HouseRoom[] { return ROOMS().filter((r) => r.lv === levelIndex && r.lv > 0); }
 
-export function rm(): { sel: string | null; msg: string; room: number } { return S.cur.rom || (S.cur.rom = { sel: null, msg: '', room: 0 }); }
+export function rm(): { sel: string | null; msg: string; room: number; ava: { room: number; x: number; y: number } | null } { return S.cur.rom || (S.cur.rom = { sel: null, msg: '', room: 0, ava: null }); }
+
+/** Tilfeldig ledig rute for avataren i rommet. Tepper kan avataren stå på. */
+function avatarTile(room: number): { x: number; y: number } | null {
+  const st = rm();
+  if (st.ava && st.ava.room === room && !occupantFloor(st.ava.x, st.ava.y, room)) return st.ava;
+  const free: [number, number][] = [];
+  for (let y = 0; y < GRID; y++) for (let x = 0; x < GRID; x++) if (!occupantFloor(x, y, room)) free.push([x, y]);
+  if (!free.length) { st.ava = null; return null; }
+  const [x, y] = free[Math.floor(Math.random() * free.length)];
+  st.ava = { room, x, y };
+  return st.ava;
+}
+function occupantFloor(x: number, y: number, room: number): boolean {
+  const o = occupantAt(x, y, room);
+  return !!o && layerOf(o) === 'f';
+}
+function avatarSprite(x: number, y: number): string {
+  const c = tileC(x, y), k = 0.42;
+  return '<g class="ava" transform="translate(' + c[0] + ' ' + c[1] + ')"><title>Avataren din</title><ellipse cx="0" cy="2" rx="13" ry="5" style="fill:#000;opacity:.18"/>' +
+    '<g class="ava-b"><g transform="translate(' + (-60 * k) + ' ' + (-154 * k) + ') scale(' + k + ')">' + avatarG(S.avatar) + '</g></g></g>';
+}
 
 // ---------- plass ----------
 function fits(key: string, x: number, y: number, f: number, room: number, home = S.home): boolean {
@@ -150,10 +172,15 @@ function roomSVG(selKey: string | null, room: number): string {
     const A = S.home[a], B2 = S.home[b], pa = fp(a, A), pb = fp(b, B2), la = layerOf(a) === 'r' ? 0 : 1, lb = layerOf(b) === 'r' ? 0 : 1;
     return la - lb || (A.x! + pa[0] + A.y! + pa[1]) - (B2.x! + pb[0] + B2.y! + pb[1]) || A.x! - B2.x!;
   });
+  // Avataren tegnes etter teppene og foran møbler som står lenger bak.
+  const at = avatarTile(room), aDepth = at ? at.x + at.y + 2 : 0;
+  let avaDone = !at;
   fl.forEach((k) => {
     const r = S.home[k], p = fp(k, r), c = footC(r.x!, r.y!, p[0], p[1]);
+    if (!avaDone && layerOf(k) === 'f' && r.x! + p[0] + r.y! + p[1] > aDepth) { s += avatarSprite(at!.x, at!.y); avaDone = true; }
     s += '<g class="furn' + (layerOf(k) === 'r' ? ' rug' : '') + '" data-id="' + k + '" transform="translate(' + c[0] + ' ' + c[1] + ')"><title>' + esc(IT(k).n) + '</title>' + furnG(k, r.f) + '</g>';
   });
+  if (!avaDone && at) s += avatarSprite(at.x, at.y);
   return s + '</svg>';
 }
 
@@ -258,7 +285,7 @@ export function renderRoom(): void {
   fitPv(p);
 
   const done = (msg?: string, focusSel?: string) => { st.msg = msg || ''; save(); renderRoom(); if (focusSel) { const a = p.querySelector(focusSel) as HTMLElement | null; if (a) a.focus({ preventScroll: true }); } };
-  const go = (i: number) => { if (!roomOpen(i) || i === st.room) return; st.room = i; st.msg = ''; if (st.sel && !unique(baseOf(st.sel))) st.sel = null; renderRoom(); const h = p.querySelector('.hroom[data-room="' + i + '"]') as HTMLElement | null; if (h) h.focus({ preventScroll: true }); };
+  const go = (i: number) => { if (!roomOpen(i) || i === st.room) return; st.room = i; st.msg = ''; st.ava = null; if (st.sel && !unique(baseOf(st.sel))) st.sel = null; renderRoom(); const h = p.querySelector('.hroom[data-room="' + i + '"]') as HTMLElement | null; if (h) h.focus({ preventScroll: true }); };
   p.querySelectorAll('.hroom').forEach((g: HTMLElement) => {
     g.onclick = () => go(+g.dataset.room!);
     g.onkeydown = (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(+g.dataset.room!); } };

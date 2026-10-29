@@ -7,7 +7,7 @@ export interface FeilItem { t: string; src: string; sec: string; text: string; f
 export interface OrderPuzzle { title: string; intro: string; items: [string, string][] }
 export interface ThinkItem { id: string; q: string; boxes: { h: string; items: string[] }[]; keys: [string, string][] }
 
-/** f: viser emnefilteret. g: global funksjon i den faste linjen øverst. */
+/** f: viser emnefilteret. g: 1 = global funksjon i den faste linjen øverst, 2 = global, men åpnes fra avataren i toppen. */
 export interface Mode { id: string; name: string; desc: string; f: number; g?: number }
 
 export interface Content {

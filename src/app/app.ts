@@ -18,10 +18,13 @@ import { renderThink } from './modes/tenk';
 import { renderShop } from './shop';
 import { renderRoom, rm, hint, pv, fitPv, roomsAt } from './room/room';
 import { renderTop, loadBoard, myRankText } from './modes/top';
+import { renderAvatar } from '../avatar/screen';
+import { avatarSVG } from '../avatar/render';
+import { cleanAvatar, defaultAvatar } from '../avatar/catalog';
 
 const RENDER: Record<string, () => void> = {
   kort: renderKort, quiz: renderQuiz, tf: renderTf, par: renderPar, memo: renderMemo, ord: renderOrd, sort: renderSort,
-  hull: renderHull, feil: renderFeil, tenk: renderThink, shop: renderShop, rom: renderRoom, top: renderTop,
+  hull: renderHull, feil: renderFeil, tenk: renderThink, shop: renderShop, rom: renderRoom, top: renderTop, avatar: renderAvatar,
 };
 const SHORT: Record<string, string> = { kort: 'Kort­stokken', shop: '', rom: 'Trofé­rommet', top: 'Topp­listen' };
 
@@ -48,6 +51,11 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
     return;
   }
   loadProgress(progress);
+  try {
+    const av = await store.loadAvatar();
+    S.owned = new Set(av.owned); S.avaReady = av.ready;
+    S.avatar = av.cfg ? cleanAvatar(av.cfg, S.owned) : defaultAvatar();
+  } catch { S.avaReady = false; S.avatar = defaultAvatar(); }
   if (!S.home) S.home = {};
 
   root.innerHTML =
@@ -57,7 +65,7 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
     (opts.onSwitchTheme ? '<button class="lnk" id="sw-theme" type="button">Bytt tema</button>' : '') +
     (opts.onExit ? '<button class="lnk" id="ex-prev" type="button">Tilbake til lærerrommet</button>' : '') +
     (opts.onLogout ? '<button class="lnk" id="logout" type="button">Logg ut</button>' : '') + '</div></div>' +
-    '<h1 class="apptitle">' + esc(theme.title) + '</h1>' +
+    '<div class="titlerow"><h1 class="apptitle">' + esc(theme.title) + '</h1><button class="avabtn" id="ava-btn" type="button"></button></div>' +
     (opts.preview ? '<div class="previewnote previewbar"><span>Forhåndsvisning for læreren. Poeng og gaver lagres bare i denne nettleseren.</span><span id="unlock-slot"></span></div>' : '') +
     '<div id="stripes" class="stripes" role="img" aria-label="Fremdrift"></div><p class="stat" id="stat"></p></header>' +
     '<nav class="dock" id="dock" aria-label="Alltid tilgjengelig"></nav>' +
@@ -109,6 +117,11 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
     S.topic = b.dataset.t!; S.cur.kort = null; S.cur.quiz = null; S.cur.tf = null; S.cur.hull = null; S.cur.feil = null; render();
   });
 
+  $('#ava-btn').onclick = () => {
+    if (S.mode === 'avatar') { S.mode = S.last; render(); return; }
+    if (!isGlobal(S.mode)) S.last = S.mode;
+    S.mode = 'avatar'; render();
+  };
   hooks.refresh = () => { renderHeader(); renderTabs(); };
   let starsBefore = stars(S.points);
   hooks.onPoints = (before, after, n) => {
@@ -123,14 +136,26 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
   if (MODES.some((m) => m.id === 'top')) void loadBoard();
 }
 
+let lastRendered = '';
 function render(): void {
+  // Avataren får en ny tilfeldig plass hver gang eleven går inn i troférommet.
+  if (S.mode === 'rom' && lastRendered !== 'rom') rm().ava = null;
+  lastRendered = S.mode;
   renderTabs(); renderFilters(); renderHeader();
   const w = document.querySelector('.wrap'); if (w) w.classList.toggle('wide', S.mode === 'rom');
   mark();
   RENDER[S.mode]();
 }
 
+function renderAvaBtn(): void {
+  const b = $('#ava-btn'); if (!b) return;
+  b.setAttribute('aria-pressed', String(S.mode === 'avatar'));
+  b.setAttribute('aria-label', S.avatar.made ? 'Endre avataren din' : 'Lag avataren din');
+  b.innerHTML = avatarSVG(S.avatar, { crop: 'head' }) + '<span>' + (S.avatar.made ? 'Avatar' : 'Lag avatar') + '</span>';
+}
+
 function renderHeader(): void {
+  renderAvaBtn();
   const cards = T.content.cards, n = cards.length, known = CARDS_KNOWN();
   $('#stripes').innerHTML = cards.map((c, i) => '<i class="' + (S.known[c.id] === 1 ? 'on' : '') + '" style="background:' + gradient(T.stripes, i / Math.max(1, n - 1)) + '"></i>').join('');
   $('#stripes').setAttribute('aria-label', known + ' av ' + n + ' kort mestret');
@@ -140,9 +165,9 @@ function renderHeader(): void {
 
 function renderDock(): void {
   const sub: Record<string, string> = { kort: CARDS_KNOWN() + ' av ' + T.content.cards.length + ' kan', shop: (S.points - S.spent) + ' poeng', rom: 'Nivå ' + (lvl(S.points) + 1) + starText(stars(S.points)), top: myRankText() };
-  const g = MODES.filter((m) => m.g).length;
+  const g = MODES.filter((m) => m.g === 1).length;
   $('#dock').style.gridTemplateColumns = 'repeat(' + g + ', minmax(0, 1fr))';
-  $('#dock').innerHTML = MODES.filter((m) => m.g).map((m) =>
+  $('#dock').innerHTML = MODES.filter((m) => m.g === 1).map((m) =>
     '<button class="dk" type="button" data-g="' + m.id + '" aria-current="' + (S.mode === m.id) + '"><b>' + (SHORT[m.id] || m.name.replace(/butikken$/, '­butikken')) +
     (m.id === 'rom' && S.mode !== 'rom' && lvl(S.points) > S.seenLvl ? '<span class="newdot">Ny</span>' : '') + '</b><span>' + esc(sub[m.id] || '') + '</span></button>').join('');
 }

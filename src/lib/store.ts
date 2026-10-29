@@ -17,6 +17,8 @@ export interface Gift { item_id: string; created_at: string }
 export interface LbRow { display_name: string; points: number; is_me: boolean; rank?: number; total?: number }
 /** Tellere for ett spill siden forrige sending. */
 export interface ActivityRow { mode: string; answers: number; correct: number; xp: number; timed: number; ms: number; fast: number }
+/** Avatar og kostymer eleven eier (id-er fra alle temaer). ready = databasen har avatarstøtte. */
+export interface AvatarData { cfg: unknown; owned: string[]; ready: boolean }
 export interface Progress { points: number; spent: number; state: SavedState; gifts: Gift[] }
 
 /**
@@ -32,6 +34,9 @@ export interface Store {
   buy(theme: string, itemId: string, price: number): Promise<number>;
   leaderboard(theme: string): Promise<LbRow[]>;
   logActivity(theme: string, rows: ActivityRow[]): Promise<void>;
+  loadAvatar(): Promise<AvatarData>;
+  saveAvatar(cfg: unknown): void;
+  buySkin(theme: string, itemId: string, price: number): Promise<number>;
 }
 
 function emptyState(): SavedState { return { known: {}, notes: {}, home: null, seenLvl: -1 }; }
@@ -56,8 +61,8 @@ export class RemoteStore implements Store {
 
   constructor() {
     // Lagre det som venter når eleven bytter fane eller lukker siden.
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') void this.flush(); });
-    window.addEventListener('pagehide', () => { void this.flush(); });
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { void this.flush(); void this.flushAvatar(); } });
+    window.addEventListener('pagehide', () => { void this.flush(); void this.flushAvatar(); });
   }
 
   async load(theme: string): Promise<Progress> {
@@ -109,6 +114,37 @@ export class RemoteStore implements Store {
     if (error) throw error;
   }
 
+  async loadAvatar(): Promise<AvatarData> {
+    const { data: u } = await supabase.auth.getUser();
+    const [p, w] = await Promise.all([
+      supabase.from('profiles').select('avatar').eq('id', u.user?.id ?? '').maybeSingle(),
+      supabase.from('wardrobe').select('item_id'),
+    ]);
+    if (p.error || w.error) return { cfg: null, owned: [], ready: false };
+    return { cfg: p.data?.avatar ?? null, owned: (w.data ?? []).map((r: { item_id: string }) => r.item_id), ready: true };
+  }
+
+  private avaTimer: number | undefined;
+  private avaPending: unknown = null;
+  saveAvatar(cfg: unknown): void {
+    this.avaPending = JSON.parse(JSON.stringify(cfg));
+    clearTimeout(this.avaTimer);
+    this.avaTimer = window.setTimeout(() => { void this.flushAvatar(); }, 800);
+  }
+  private async flushAvatar() {
+    clearTimeout(this.avaTimer);
+    const c = this.avaPending; if (!c) return;
+    this.avaPending = null;
+    const { error } = await supabase.rpc('save_avatar', { p_avatar: c });
+    if (error && !this.avaPending) { this.avaPending = c; this.avaTimer = window.setTimeout(() => { void this.flushAvatar(); }, 8000); }
+  }
+
+  async buySkin(theme: string, itemId: string): Promise<number> {
+    const { data, error } = await supabase.rpc('buy_skin', { p_theme: theme, p_item: itemId });
+    if (error) throw error;
+    return data as number;
+  }
+
   async leaderboard(theme: string): Promise<LbRow[]> {
     const { data, error } = await supabase.rpc('get_leaderboard', { p_theme: theme });
     if (error) throw error;
@@ -145,9 +181,22 @@ export class PreviewStore implements Store {
     p.spent += price; p.gifts.push({ item_id: itemId, created_at: new Date().toISOString() }); this.write(theme, p);
     return p.spent;
   }
-  reset(theme: string) { try { localStorage.removeItem(this.key(theme)); } catch { /* ignorer */ } }
+  reset(theme: string) { try { localStorage.removeItem(this.key(theme)); localStorage.removeItem('puggen-preview-avatar'); } catch { /* ignorer */ } }
   /** Forhåndsvisningen registrerer ikke aktivitet. */
   async logActivity() { /* ingenting */ }
+  async loadAvatar(): Promise<AvatarData> {
+    try { const r = JSON.parse(localStorage.getItem('puggen-preview-avatar') || 'null'); if (r) return { cfg: r.cfg, owned: Array.isArray(r.owned) ? r.owned : [], ready: true }; } catch { /* tom */ }
+    return { cfg: null, owned: [], ready: true };
+  }
+  private avaWrite(cfg: unknown, owned: string[]) { try { localStorage.setItem('puggen-preview-avatar', JSON.stringify({ cfg, owned })); } catch { /* ignorer */ } }
+  saveAvatar(cfg: unknown) { void this.loadAvatar().then((a) => this.avaWrite(cfg, a.owned)); }
+  async buySkin(theme: string, itemId: string, price: number) {
+    const p = this.read(theme), a = await this.loadAvatar();
+    if (a.owned.includes(itemId)) throw new Error('Du har allerede dette kostymet');
+    if (p.points - p.spent < price) throw new Error('Ikke nok poeng');
+    p.spent += price; this.write(theme, p); this.avaWrite(a.cfg, a.owned.concat(itemId));
+    return p.spent;
+  }
   /** Lærerens «Lås opp alt»: setter XP i forhåndsvisningen. Rører ikke databasen. */
   async setPoints(theme: string, n: number) { const p = this.read(theme); p.points = Math.max(p.points, n); this.write(theme, p); return p.points; }
 }

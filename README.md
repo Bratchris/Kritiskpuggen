@@ -9,7 +9,7 @@ Teknikk: Vite + TypeScript i nettleseren, Supabase (Postgres, Auth og en Edge Fu
 ### 1. Supabase
 
 1. Lag et prosjekt på [supabase.com](https://supabase.com). Velg en region i EU, for eksempel Stockholm (`eu-north-1`).
-2. Åpne **SQL Editor** og kjør filene i `supabase/migrations/` én om gangen, i rekkefølge etter navn: først `20261020000000_init.sql`, så `20261029000000_fix_student_role.sql` så `20261029100000_leaderboard.sql` så `20261029200000_leaderboard_top3.sql` og til slutt `20261029300000_activity.sql`. Har du Supabase CLI, kan du i stedet kjøre `supabase link` og så `supabase db push`.
+2. Åpne **SQL Editor** og kjør filene i `supabase/migrations/` én om gangen, i rekkefølge etter navn: først `20261020000000_init.sql`, så `20261029000000_fix_student_role.sql` så `20261029100000_leaderboard.sql` så `20261029200000_leaderboard_top3.sql` så `20261029300000_activity.sql` og til slutt `20261029400000_avatar.sql`. Har du Supabase CLI, kan du i stedet kjøre `supabase link` og så `supabase db push`.
 3. Publiser edge-funksjonen som lager elevkontoer:
    ```bash
    npx supabase login
@@ -64,6 +64,12 @@ Gjør dette før du lager de første elevene, siden eksisterende elevkontoer beh
 
 - Hvert tema har 16 nivåer, fra 0 til 1800 XP. Etter øverste nivå får eleven en stjerne for hver 300 XP, så det finnes ikke noe tak.
 - Topplisten viser topp 3 i egen klasse og elevens egen plass. Databasefunksjonen `get_leaderboard` sender bare disse radene til elevene, så de ser ikke XP-en til de andre. Læreren ser hele listen i lærerrommet. Læreren slår topplisten av og på under «Innstillinger for klassen».
+
+## Avatar
+
+Hver elev lager en avatar med kjønn, hudfarge, frisyre, hårfarge, ansikt og klær. Avataren vises øverst i appen og står på en tilfeldig ledig rute i troférommet. Den lagres på profilen (`profiles.avatar`), så den er den samme i alle temaer.
+
+Kostymer kjøpes med poeng fra temaet de hører til, gjennom databasefunksjonen `buy_skin`, som sjekker prisen i `skin_items` og trekker poengene som i godteributikken. Kjøpte kostymer ligger i `wardrobe`. Kostymene og prisene står i `src/avatar/catalog.ts`, og tegningene i `src/avatar/render.ts`. Nye kostymer må også legges inn i `skin_items` med en migrasjon.
 
 ## Spilloversikt
 
