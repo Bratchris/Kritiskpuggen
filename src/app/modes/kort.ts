@@ -1,5 +1,5 @@
 import { $, esc, shuffle } from '../../lib/dom';
-import { S, T, head, tag, inTopic, focusMain, panel, save, hooks } from '../core';
+import { S, T, head, tag, inTopic, focusMain, panel, save, hooks, track, mark } from '../core';
 
 function start() {
   const all = T.content.cards.filter(inTopic);
@@ -20,9 +20,10 @@ export function renderKort(): void {
     '<div class="row">' + (k.flip ? '<button class="btn" id="k-more" type="button">Øv mer</button><button class="btn primary" data-focus id="k-ok" type="button">Kan den</button>' : '<button class="btn primary" data-focus id="k-show" type="button">Vis svar</button>') + '</div>';
   $('#flash').onclick = () => { k.flip = !k.flip; renderKort(); };
   if (k.flip) {
-    $('#k-more').onclick = () => { k.deck.push(k.deck.shift()); k.flip = false; renderKort(); };
-    $('#k-ok').onclick = () => { S.known[c.id] = 1; save(); k.deck.shift(); k.flip = false; hooks.refresh(); renderKort(); };
+    $('#k-more').onclick = () => { track(false); k.deck.push(k.deck.shift()); k.flip = false; renderKort(); };
+    $('#k-ok').onclick = () => { track(true); S.known[c.id] = 1; save(); k.deck.shift(); k.flip = false; hooks.refresh(); renderKort(); };
   } else {
+    mark();
     $('#k-show').onclick = () => { k.flip = true; renderKort(); };
   }
   focusMain();

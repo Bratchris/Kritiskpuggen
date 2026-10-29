@@ -1,5 +1,5 @@
 import { $, esc, shuffle } from '../../lib/dom';
-import { S, T, head, focusMain, panel, addPoints } from '../core';
+import { S, T, head, focusMain, panel, addPoints, track } from '../core';
 
 function start() { const pick = shuffle(T.content.pairs).slice(0, 6), idx = pick.map((_, i) => i); S.cur.par = { pick, left: shuffle(idx), right: shuffle(idx), done: {}, sel: null, wrong: 0, paid: false }; }
 export function renderPar(): void {
@@ -19,8 +19,8 @@ export function renderPar(): void {
       const i = +b.dataset.i!;
       if (b.dataset.side === 'l') { g.sel = (g.sel === i) ? null : i; renderPar(); return; }
       if (g.sel === null) { $('#pmsg').textContent = 'Velg først et begrep til venstre.'; return; }
-      if (g.sel === i) { g.done[i] = true; g.sel = null; renderPar(); return; }
-      g.wrong++; b.classList.add('bad'); $('#pmsg').textContent = 'Ikke helt. Prøv en annen forklaring.';
+      if (g.sel === i) { track(true); g.done[i] = true; g.sel = null; renderPar(); return; }
+      track(false); g.wrong++; b.classList.add('bad'); $('#pmsg').textContent = 'Ikke helt. Prøv en annen forklaring.';
       setTimeout(() => b.classList.remove('bad'), 700);
     };
   });

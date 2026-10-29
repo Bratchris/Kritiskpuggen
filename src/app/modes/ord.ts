@@ -1,5 +1,5 @@
 import { $, esc, shuffle } from '../../lib/dom';
-import { S, T, head, panel, addPoints } from '../core';
+import { S, T, head, panel, addPoints, track } from '../core';
 
 function start(pi: number) {
   const P = T.content.order[pi]; let l = P.items.map((_, i) => i);
@@ -27,7 +27,7 @@ export function renderOrd(): void {
     };
   });
   $('#o-check').onclick = () => {
-    o.good = o.list.filter((v: number, i: number) => v === i).length; o.checked = true; o.solved = (o.good === n);
+    o.good = o.list.filter((v: number, i: number) => v === i).length; o.checked = true; o.solved = (o.good === n); track(o.solved);
     if (o.solved && !o.paid) { o.paid = true; addPoints(3); }
     renderOrd();
   };

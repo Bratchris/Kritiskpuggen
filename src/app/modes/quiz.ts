@@ -1,5 +1,5 @@
 import { $, esc, shuffle } from '../../lib/dom';
-import { S, T, head, tag, inTopic, focusMain, panel, verdict, addPoints } from '../core';
+import { S, T, head, tag, inTopic, focusMain, panel, verdict, addPoints, track, mark } from '../core';
 
 function start() {
   const qs = shuffle(T.content.quiz.filter(inTopic)).slice(0, 10).map((q) => { const opts = shuffle([q.a].concat(q.w)); return { t: q.t, q: q.q, e: q.e, opts, ci: opts.indexOf(q.a) }; });
@@ -19,7 +19,8 @@ export function renderQuiz(): void {
     q.opts.map((o: string, j: number) => { let cls = 'opt'; if (done) { if (j === q.ci) cls += ' ok'; else if (j === z.pick) cls += ' bad'; } return '<button class="' + cls + '" data-j="' + j + '" type="button"' + (done ? ' disabled' : '') + '><span class="letter">' + 'ABCD'[j] + '</span><span>' + esc(o) + '</span></button>'; }).join('') + '</div>' +
     (done ? '<div class="fb ' + (z.pick === q.ci ? 'ok' : 'bad') + '"><strong>' + (z.pick === q.ci ? 'Riktig.' : 'Ikke helt.') + '</strong>' + esc(q.e) + '</div><div class="row"><button class="btn primary" data-focus id="q-next" type="button">' + (z.i + 1 >= z.qs.length ? 'Se resultat' : 'Neste') + '</button></div>' : '');
   if (!done) {
-    p.querySelectorAll('.opt').forEach((b: HTMLElement) => { b.onclick = () => { z.pick = +b.dataset.j!; if (z.pick === q.ci) { z.score++; addPoints(2); } renderQuiz(); }; });
+    mark();
+    p.querySelectorAll('.opt').forEach((b: HTMLElement) => { b.onclick = () => { z.pick = +b.dataset.j!; track(z.pick === q.ci); if (z.pick === q.ci) { z.score++; addPoints(2); } renderQuiz(); }; });
   } else {
     $('#q-next').onclick = () => { z.i++; z.pick = null; renderQuiz(); };
     focusMain();

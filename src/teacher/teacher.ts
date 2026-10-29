@@ -3,6 +3,7 @@ import { $, esc, fmtDate } from '../lib/dom';
 import { supabase, friendly } from '../lib/supabase';
 import { THEMES, THEME_IDS, themeName } from '../themes';
 import { gradient } from '../app/room/iso';
+import { activityHTML, type ActRow } from './activity';
 
 interface Klass { id: string; name: string; code: string; themes: string[]; created_at: string; leaderboard?: boolean }
 interface Student { id: string; display_name: string; username: string; last_seen: string | null; created_at: string }
@@ -22,6 +23,9 @@ interface View {
   msg: string;
   creating: boolean;
   confirmDel: boolean;
+  act: ActRow[] | null;
+  actErr: string;
+  actDays: number;
 }
 
 let V: View;
@@ -31,7 +35,7 @@ let onPreview: (theme: string, classId: string) => void;
 export async function mountTeacher(el: HTMLElement, me: { id: string; name: string }, preview: (theme: string, classId: string) => void): Promise<void> {
   root = el; onPreview = preview;
   document.documentElement.dataset.tema = '';
-  V = V && V.me.id === me.id ? V : { me, classes: [], sel: null, theme: 'kritisk', students: [], progress: [], gifts: [], newCodes: null, rowAct: null, msg: '', creating: false, confirmDel: false };
+  V = V && V.me.id === me.id ? V : { me, classes: [], sel: null, theme: 'kritisk', students: [], progress: [], gifts: [], newCodes: null, rowAct: null, msg: '', creating: false, confirmDel: false, act: null, actErr: '', actDays: 7 };
   root.innerHTML = '<div class="wrap"><p class="loading">Henter klassene dine …</p></div>';
   await loadClasses();
   if (V.sel) await loadClass(); else draw();
@@ -47,6 +51,7 @@ async function loadClasses() {
 
 async function loadClass() {
   const c = cls(); if (!c) { draw(); return; }
+  V.act = null; V.actErr = '';
   if (!c.themes.includes(V.theme)) V.theme = c.themes[0];
   const [st, pr, gi] = await Promise.all([
     supabase.from('profiles').select('id, display_name, username, last_seen, created_at').eq('class_id', c.id).eq('role', 'student').order('display_name'),
@@ -60,6 +65,11 @@ async function loadClass() {
   V.progress = ((pr.data ?? []) as Prog[]).filter((p) => ids.has(p.student_id));
   V.gifts = (gi.data ?? []) as GiftRow[];
   draw();
+  // Spilloversikten hentes for seg, så resten av lærerrommet ikke venter på den.
+  const ac = await supabase.from('activity').select('student_id, theme, mode, day, answers, correct, xp, timed, ms_total, fast').eq('class_id', c.id);
+  if (ac.error) { V.act = []; V.actErr = /activity|relation|schema cache/i.test(ac.error.message || '') ? 'Spilloversikten er ikke klar ennå. Kjør databaseoppdateringen for aktivitet i Supabase.' : friendly(ac.error); }
+  else { V.act = (ac.data ?? []) as ActRow[]; V.actErr = ''; }
+  if (V.sel === c.id) draw();
 }
 
 const cls = () => V.classes.find((c) => c.id === V.sel) || null;
@@ -134,6 +144,7 @@ function classHTML(c: Klass): string {
     (c.themes.length > 1 ? '<nav class="filters" aria-label="Tema"><span class="flabel">Tema</span>' + c.themes.map((t) => '<button class="chip" type="button" data-th="' + t + '" aria-pressed="' + (t === V.theme) + '">' + esc(themeName(t)) + '</button>').join('') + '</nav>' : '') +
 
     '<section class="panel"><h2>Elevene</h2>' + table + '</section>' +
+    activityHTML(V.act, V.actErr, V.theme, V.actDays, Object.fromEntries(V.students.map((s) => [s.id, s.display_name]))) +
 
     '<section class="panel"><h2>' + esc(T.shop.shelfTitle) + '</h2>' +
     (bowl ? '<div class="shelfitems">' + bowl + '</div><p class="muted">Samlet verdi: ' + giftsHere.reduce((a, g) => a + g.price, 0) + ' poeng</p>' +
@@ -190,6 +201,7 @@ function wire(): void {
 
   const r = $('#refresh'); if (r) r.onclick = () => { V.msg = ''; void loadClass(); };
   root.querySelectorAll<HTMLElement>('[data-prev]').forEach((b) => { b.onclick = () => onPreview(b.dataset.prev!, V.sel!); });
+  root.querySelectorAll<HTMLElement>('[data-days]').forEach((b) => { b.onclick = () => { V.actDays = +b.dataset.days!; draw(); const a = $('#act'); if (a) a.scrollIntoView({ block: 'nearest' }); }; });
   root.querySelectorAll<HTMLElement>('[data-th]').forEach((b) => { b.onclick = () => { V.theme = b.dataset.th!; V.rowAct = null; draw(); }; });
 
   ($('#add') as HTMLFormElement).onsubmit = async (e) => {

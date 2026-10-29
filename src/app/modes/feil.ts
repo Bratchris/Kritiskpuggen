@@ -1,5 +1,5 @@
 import { $, esc, shuffle } from '../../lib/dom';
-import { S, T, head, tag, inTopic, focusMain, panel, verdict, addPoints } from '../core';
+import { S, T, head, tag, inTopic, focusMain, panel, verdict, addPoints, track } from '../core';
 
 function start() { S.cur.feil = { qs: shuffle(T.content.feil.filter(inTopic)).slice(0, 5), i: 0, score: 0, pts: 0, miss: [], state: null, got: 0 }; }
 /** Deler teksten i ord. Feilen står mellom [[ og ]] i dataene. */
@@ -39,6 +39,7 @@ export function renderFeil(): void {
   p.querySelectorAll('.w').forEach((b: HTMLElement) => {
     b.onclick = () => {
       const j = +b.dataset.j!;
+      track(!!toks[j].e);
       if (toks[j].e) { z.got = 3 - z.miss.length; z.state = 'ok'; z.score++; z.pts += z.got; addPoints(z.got); }
       else { z.miss.push(j); if (z.miss.length >= 3) z.state = 'bad'; }
       renderFeil();
@@ -48,5 +49,5 @@ export function renderFeil(): void {
       }
     };
   });
-  $('#f-give').onclick = () => { z.state = 'bad'; renderFeil(); };
+  $('#f-give').onclick = () => { z.state = 'bad'; track(false); renderFeil(); };
 }

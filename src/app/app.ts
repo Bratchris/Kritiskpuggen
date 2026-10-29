@@ -3,7 +3,7 @@ import { $, esc, toast } from '../lib/dom';
 import type { Store } from '../lib/store';
 import type { Theme } from '../themes/types';
 import { gradient } from './room/iso';
-import { S, T, MODES, LEVELS, ITEMS, CARDS_KNOWN, setTheme, loadProgress, lvl, level, modeOf, isGlobal, hooks, save, stars, starText, topXp } from './core';
+import { S, T, MODES, LEVELS, ITEMS, CARDS_KNOWN, setTheme, loadProgress, lvl, level, modeOf, isGlobal, hooks, save, stars, starText, topXp, mark, flushActivity } from './core';
 import { PreviewStore } from '../lib/store';
 import { renderKort } from './modes/kort';
 import { renderQuiz } from './modes/quiz';
@@ -70,7 +70,7 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
     '</footer></div>' +
     '<div id="lvlup" class="lvlup" hidden role="dialog" aria-modal="true" aria-labelledby="lvl-t"></div>';
 
-  if (opts.onSwitchTheme) $('#sw-theme').onclick = async () => { await store.flush(); opts.onSwitchTheme!(); };
+  if (opts.onSwitchTheme) $('#sw-theme').onclick = async () => { await Promise.all([store.flush(), flushActivity()]); opts.onSwitchTheme!(); };
   if (opts.onExit) $('#ex-prev').onclick = opts.onExit;
   // «Lås opp alt» finnes bare i lærerens forhåndsvisning, aldri for elever.
   const drawUnlock = () => {
@@ -86,7 +86,7 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
     };
   };
   if (opts.preview && store instanceof PreviewStore) drawUnlock();
-  if (opts.onLogout) $('#logout').onclick = async () => { await store.flush(); opts.onLogout!(); };
+  if (opts.onLogout) $('#logout').onclick = async () => { await Promise.all([store.flush(), flushActivity()]); opts.onLogout!(); };
   if (opts.onReset) $('#r-ask').onclick = () => {
     const el = $('#r-ask').parentElement;
     el.innerHTML = '<span>Slette poeng, gaver og rom i forhåndsvisningen?</span><button class="btn" id="r-yes" type="button">Ja, nullstill</button><button class="btn ghost" id="r-no" type="button">Avbryt</button>';
@@ -126,6 +126,7 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
 function render(): void {
   renderTabs(); renderFilters(); renderHeader();
   const w = document.querySelector('.wrap'); if (w) w.classList.toggle('wide', S.mode === 'rom');
+  mark();
   RENDER[S.mode]();
 }
 

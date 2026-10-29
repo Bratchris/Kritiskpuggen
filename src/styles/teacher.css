@@ -47,3 +47,15 @@ legend { font-weight: 600; font-size: .95rem; margin-bottom: 4px; }
 .codes { border: 1.5px solid var(--accent); border-radius: 12px; padding: 14px; background: var(--ans-bg); display: flex; flex-direction: column; gap: 10px; }
 .codes h3 { margin: 0; font-family: var(--font-display); }
 .danger { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; border-top: 1px solid var(--line); padding-top: 14px; }
+/* Spilloversikt */
+.actlead { margin: 0; max-width: 70ch; }
+.acth3 { font-family: var(--font-display); font-size: 1.1rem; margin: 6px 0 0; }
+.acttab td, .acttab th { vertical-align: middle; }
+.acttab tr.idle th { color: var(--muted); font-weight: 600; }
+.sharebar { display: inline-block; width: 72px; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; vertical-align: middle; margin-right: 6px; }
+.sharebar i { display: block; height: 100%; background: var(--accent); }
+.tchip { display: inline-block; white-space: nowrap; font-size: .78rem; font-weight: 600; padding: 2px 9px; border-radius: 999px; border: 1.5px solid var(--line); color: var(--muted); }
+.tchip.ok { border-color: var(--leaf); color: var(--leaf); }
+.tchip.warn { border-color: var(--heat); background: var(--bad-bg); color: var(--ink); }
+.tchip.mute { border-style: dashed; }
+.acttab td:nth-child(2) { white-space: nowrap; }

@@ -13,6 +13,8 @@ export interface SavedState {
 export interface Gift { item_id: string; created_at: string }
 /** rank og total kommer fra databasen. Elever får bare topp 3 og sin egen rad. */
 export interface LbRow { display_name: string; points: number; is_me: boolean; rank?: number; total?: number }
+/** Tellere for ett spill siden forrige sending. */
+export interface ActivityRow { mode: string; answers: number; correct: number; xp: number; timed: number; ms: number; fast: number }
 export interface Progress { points: number; spent: number; state: SavedState; gifts: Gift[] }
 
 /**
@@ -27,6 +29,7 @@ export interface Store {
   award(theme: string, n: number): Promise<number>;
   buy(theme: string, itemId: string, price: number): Promise<number>;
   leaderboard(theme: string): Promise<LbRow[]>;
+  logActivity(theme: string, rows: ActivityRow[]): Promise<void>;
 }
 
 function emptyState(): SavedState { return { known: {}, notes: {}, home: null, seenLvl: -1 }; }
@@ -98,6 +101,11 @@ export class RemoteStore implements Store {
     return data as number;
   }
 
+  async logActivity(theme: string, rows: ActivityRow[]): Promise<void> {
+    const { error } = await supabase.rpc('log_activity', { p_theme: theme, p_rows: rows });
+    if (error) throw error;
+  }
+
   async leaderboard(theme: string): Promise<LbRow[]> {
     const { data, error } = await supabase.rpc('get_leaderboard', { p_theme: theme });
     if (error) throw error;
@@ -135,6 +143,8 @@ export class PreviewStore implements Store {
     return p.spent;
   }
   reset(theme: string) { try { localStorage.removeItem(this.key(theme)); } catch { /* ignorer */ } }
+  /** Forhåndsvisningen registrerer ikke aktivitet. */
+  async logActivity() { /* ingenting */ }
   /** Lærerens «Lås opp alt»: setter XP i forhåndsvisningen. Rører ikke databasen. */
   async setPoints(theme: string, n: number) { const p = this.read(theme); p.points = Math.max(p.points, n); this.write(theme, p); return p.points; }
 }

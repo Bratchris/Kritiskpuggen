@@ -1,7 +1,7 @@
 // Felles tilstand og hjelpere for øvingsappen. Temaet byttes med setTheme(),
 // og alle moduler leser data og tilstand herfra.
 import { $, esc, toast } from '../lib/dom';
-import type { Store, SavedState, Gift } from '../lib/store';
+import type { Store, SavedState, Gift, ActivityRow } from '../lib/store';
 import type { Theme, Mode, Level, RoomItem, Placement, Topic } from '../themes/types';
 
 export interface AppState {
@@ -28,6 +28,7 @@ export let LEVELS: Level[];
 export let ITEMS: Record<string, RoomItem>;
 
 export function setTheme(theme: Theme, st: Store, flags: { leaderboard?: boolean } = {}): void {
+  if (T && store && Object.keys(ACT).length) void flushActivity();
   T = theme; store = st;
   MODES = theme.modes.filter((m) => (m.id !== 'feil' || theme.content.feil.length > 0) && (m.id !== 'top' || flags.leaderboard !== false));
   LEVELS = theme.room.levels;
@@ -85,7 +86,42 @@ export const hooks = {
 };
 export function CARDS_KNOWN(): number { return T.content.cards.filter((c) => S.known[c.id] === 1).length; }
 
+// ---------- aktivitet til spilloversikten ----------
+/** Svar raskere enn dette (ms) telles som «raske». Spill uten grense måles ikke på fart. */
+export const FAST_MS: Record<string, number> = { quiz: 3000, tf: 2000, hull: 2500, sort: 2000, kort: 1500, feil: 1200 };
+const MAX_MS = 120000;
+let ACT: Record<string, ActivityRow> = {};
+let lastMark = performance.now();
+let flushTimer: number | undefined;
+
+/** Kalles når et nytt spørsmål vises, så tiden per svar måles fra da. */
+export function mark(): void { lastMark = performance.now(); }
+function row(mode: string): ActivityRow { return ACT[mode] || (ACT[mode] = { mode, answers: 0, correct: 0, xp: 0, timed: 0, ms: 0, fast: 0 }); }
+/** Registrerer ett svar i spillet eleven er i. */
+export function track(ok: boolean, mode: string = S.mode): void {
+  const now = performance.now(), ms = now - lastMark, r = row(mode);
+  lastMark = now;
+  r.answers++; if (ok) r.correct++;
+  if (ms > 0 && ms < MAX_MS) { r.timed++; r.ms += Math.round(ms); if (FAST_MS[mode] && ms < FAST_MS[mode]) r.fast++; }
+  scheduleFlush();
+}
+function scheduleFlush() { clearTimeout(flushTimer); flushTimer = window.setTimeout(() => { void flushActivity(); }, 15000); }
+export async function flushActivity(): Promise<void> {
+  clearTimeout(flushTimer);
+  const rows = Object.values(ACT).filter((r) => r.answers || r.xp);
+  if (!rows.length || !T) return;
+  const theme = T.id, st = store;
+  ACT = {};
+  try { await st.logActivity(theme, rows); }
+  catch { rows.forEach((r) => { const t = row(r.mode); t.answers += r.answers; t.correct += r.correct; t.xp += r.xp; t.timed += r.timed; t.ms += r.ms; t.fast += r.fast; }); scheduleFlush(); }
+}
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') void flushActivity(); });
+  window.addEventListener('pagehide', () => { void flushActivity(); });
+}
+
 export function addPoints(n: number): void {
+  row(S.mode).xp += n; scheduleFlush();
   const before = lvl(S.points);
   S.points += n;
   hooks.onPoints(before, lvl(S.points), n);

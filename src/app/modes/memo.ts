@@ -1,7 +1,7 @@
 // Memory: kortene ligger med baksiden opp. Eleven snur to om gangen og
 // prøver å finne et begrep og forklaringen som hører til.
 import { $, esc, shuffle } from '../../lib/dom';
-import { S, T, head, focusMain, panel, addPoints } from '../core';
+import { S, T, head, focusMain, panel, addPoints, track } from '../core';
 
 const PAIRS_PER_GAME = 6;
 const FLIP_BACK_MS = 1300;
@@ -56,6 +56,7 @@ export function renderMemo(): void {
       if (g.open.length === 2) {
         g.tries++;
         const [a, c] = g.open;
+        track(g.cards[a].pi === g.cards[c].pi);
         if (g.cards[a].pi === g.cards[c].pi) { g.found[g.cards[a].pi] = true; g.open = []; }
         else {
           g.lock = true;

@@ -1,5 +1,5 @@
 import { $, esc, shuffle } from '../../lib/dom';
-import { S, T, head, focusMain, panel, verdict, addPoints } from '../core';
+import { S, T, head, focusMain, panel, verdict, addPoints, track, mark } from '../core';
 
 function start() { S.cur.sort = { qs: shuffle(T.content.sort), i: 0, score: 0, pick: null, log: [] }; }
 const dot = (color: string) => '<i style="background:var(--' + color + ')"></i>';
@@ -17,7 +17,8 @@ export function renderSort(): void {
     B.map((b) => { let c = 'bk'; if (done) { if (b.k === q.b) c += ' ok'; else if (b.k === z.pick) c += ' bad'; } return '<button class="' + c + '" data-k="' + b.k + '" type="button"' + (done ? ' disabled' : '') + '>' + dot(b.color) + esc(b.name) + '</button>'; }).join('') + '</div>' +
     (done ? '<div class="fb ' + (z.pick === q.b ? 'ok' : 'bad') + '"><strong>' + (z.pick === q.b ? 'Riktig.' : 'Riktig kurv er «' + esc(name(q.b)) + '».') + '</strong>' + esc(q.e) + '</div><div class="row"><button class="btn primary" data-focus id="s-next" type="button">' + (z.i + 1 >= z.qs.length ? 'Se fasit' : 'Neste') + '</button></div>' : '');
   if (!done) {
-    p.querySelectorAll('.bk').forEach((b: HTMLElement) => { b.onclick = () => { z.pick = b.dataset.k; const ok = z.pick === q.b; if (ok) { z.score++; addPoints(1); } z.log.push({ text: q.text, b: q.b, miss: !ok }); renderSort(); }; });
+    mark();
+    p.querySelectorAll('.bk').forEach((b: HTMLElement) => { b.onclick = () => { z.pick = b.dataset.k; const ok = z.pick === q.b; track(ok); if (ok) { z.score++; addPoints(1); } z.log.push({ text: q.text, b: q.b, miss: !ok }); renderSort(); }; });
   } else {
     $('#s-next').onclick = () => { z.i++; z.pick = null; renderSort(); };
     focusMain();

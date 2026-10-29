@@ -1,5 +1,5 @@
 import { $, esc, shuffle } from '../../lib/dom';
-import { S, T, head, tag, inTopic, focusMain, panel, verdict, addPoints } from '../core';
+import { S, T, head, tag, inTopic, focusMain, panel, verdict, addPoints, track, mark } from '../core';
 
 function start() { S.cur.tf = { qs: shuffle(T.content.tf.filter(inTopic)).slice(0, 12), i: 0, score: 0, pick: null, streak: 0, best: 0 }; }
 export function renderTf(): void {
@@ -16,7 +16,8 @@ export function renderTf(): void {
     '<p class="qtext">' + esc(q.s) + '</p><div class="tfrow"><button class="' + cls(true) + '" data-v="1" type="button"' + (done ? ' disabled' : '') + '>Sant</button><button class="' + cls(false) + '" data-v="0" type="button"' + (done ? ' disabled' : '') + '>Usant</button></div>' +
     (done ? '<div class="fb ' + (ok ? 'ok' : 'bad') + '"><strong>' + (ok ? 'Riktig.' : 'Feil. Utsagnet er ' + (q.v ? 'sant' : 'usant') + '.') + '</strong>' + esc(q.e) + '</div><div class="row"><button class="btn primary" data-focus id="t-next" type="button">' + (z.i + 1 >= z.qs.length ? 'Se resultat' : 'Neste') + '</button></div>' : '');
   if (!done) {
-    p.querySelectorAll('.opt').forEach((b: HTMLElement) => { b.onclick = () => { z.pick = b.dataset.v === '1'; if (z.pick === q.v) { z.score++; z.streak++; z.best = Math.max(z.best, z.streak); addPoints(1); } else z.streak = 0; renderTf(); }; });
+    mark();
+    p.querySelectorAll('.opt').forEach((b: HTMLElement) => { b.onclick = () => { z.pick = b.dataset.v === '1'; track(z.pick === q.v); if (z.pick === q.v) { z.score++; z.streak++; z.best = Math.max(z.best, z.streak); addPoints(1); } else z.streak = 0; renderTf(); }; });
   } else {
     $('#t-next').onclick = () => { z.i++; z.pick = null; renderTf(); };
     focusMain();
