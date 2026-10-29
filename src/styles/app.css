@@ -384,7 +384,9 @@ svg.house { display: block; width: 100%; height: auto; }
 @media (max-width: 560px) { .skin.wide { flex-direction: column; } .skin.wide .skinart { flex: none; } }
 
 /* Egen bakgrunn bak appen */
-body.bgimg { background-color: var(--appbg-c); background-image: var(--appbg); background-size: var(--appbg-s) var(--appbg-s); background-attachment: fixed; }
+body.bgimg { background-color: var(--appbg-c); background-image: var(--appbg); background-size: var(--appbg-s); background-repeat: var(--appbg-r, repeat); background-position: var(--appbg-p, 0 0); background-attachment: fixed; }
+body.bgpixel { image-rendering: pixelated; }
+body.bgpixel * { image-rendering: auto; }
 body.bgimg .wrap { background: color-mix(in srgb, var(--bg) 84%, transparent); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); border-radius: 22px; padding: 18px; box-shadow: 0 8px 32px rgba(0,0,0,.22); }
 body.bgimg .dock { background: color-mix(in srgb, var(--bg) 92%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-radius: 14px; }
 @media (max-width: 560px) { body.bgimg { padding-left: 10px; padding-right: 10px; } body.bgimg .wrap { padding: 12px; border-radius: 16px; } }

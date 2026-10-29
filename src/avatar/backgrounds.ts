@@ -1,12 +1,15 @@
+import { nordlysSVG, nordlysPixelPNG } from './scenes';
+
 // Bakgrunner bak appen. Hvert mønster er en liten SVG-flis som gjentas over hele siden.
 // Pris 0 = gratis for alle. Andre kjøpes med poeng gjennom buy_skin, og prisene må stemme med skin_items
 // (supabase/migrations/20261029600000_backgrounds.sql).
 
-export type BgGroup = 'sot' | 'kul' | 'halloween';
+export type BgGroup = 'sot' | 'kul' | 'halloween' | 'natur';
 export const BG_GROUPS: { id: BgGroup; name: string }[] = [
-  { id: 'sot', name: 'Søte' }, { id: 'kul', name: 'Kule' }, { id: 'halloween', name: 'Halloween' },
+  { id: 'sot', name: 'Søte' }, { id: 'kul', name: 'Kule' }, { id: 'halloween', name: 'Halloween' }, { id: 'natur', name: 'Natur' },
 ];
-export interface Background { id: string; group: BgGroup; name: string; price: number; color: string; size: number; tile: () => string }
+/** cover = ett stort bilde som fyller skjermen i stedet for et mønster. pixel = skarpe piksler når bildet forstørres. image = ferdig bildeadresse i stedet for SVG. */
+export interface Background { id: string; group: BgGroup; name: string; price: number; color: string; size: number; tile: () => string; cover?: boolean; pixel?: boolean; image?: () => string }
 
 const r = (n: number) => Math.round(n * 10) / 10;
 const P = (d: string, f: string, x = '') => '<path d="' + d + '" fill="' + f + '"' + x + '/>';
@@ -122,19 +125,30 @@ export const BACKGROUNDS: Background[] = [
   { id: 'bg_kirkegard', group: 'halloween', name: 'Kirkegård', price: 65, color: '#27303d', size: 140, tile: () => svg(140, '#27303d',
     at(112, 28, 1, C(0, 0, 12, '#f2ecd0') + C(-5, -3, 12, '#27303d')) + at(36, 50, 1.1, grave('#9aa5b1')) + at(100, 110, 1, grave('#828e9b')) + at(32, 118, 0.8, P('M-2,-12 H2 V-4 H8 V0 H2 V12 H-2 V0 H-8 V-4 H-2Z', '#9aa5b1')) +
     at(76, 60, 0.6, bat('#11151c')) + C(60, 14, 1, '#fff') + C(10, 20, 1, '#fff') + C(132, 80, 1, '#fff')) },
+  // ---------- natur ----------
+  { id: 'bg_nordlys', group: 'natur', name: 'Nordlys over skogen', price: 80, color: '#0c1b40', size: 0, cover: true, tile: nordlysSVG },
+  { id: 'bg_nordlys_piksel', group: 'natur', name: 'Nordlys i piksler', price: 80, color: '#0c1a44', size: 0, cover: true, pixel: true, tile: () => '', image: nordlysPixelPNG },
 ];
 export const bgById = (id: string | undefined | null) => BACKGROUNDS.find((b) => b.id === id);
 
 const cache: Record<string, string> = {};
 /** CSS-verdi for bakgrunnen, klar til background-image. */
 export function bgImage(b: Background): string {
-  return cache[b.id] || (cache[b.id] = 'url("data:image/svg+xml,' + encodeURIComponent(b.tile()) + '")');
+  if (cache[b.id]) return cache[b.id];
+  if (b.image) { const u = b.image(); return u ? (cache[b.id] = 'url("' + u + '")') : 'none'; }
+  return (cache[b.id] = 'url("data:image/svg+xml,' + encodeURIComponent(b.tile()) + '")');
+}
+/** background-size og -repeat for et mønster eller et stort bilde. */
+export function bgFit(b: Background, scale = 1): { size: string; repeat: string; pos: string } {
+  return b.cover ? { size: 'cover', repeat: 'no-repeat', pos: 'center bottom' } : { size: Math.round(b.size * scale) + 'px', repeat: 'repeat', pos: '0 0' };
 }
 
 /** Legger bakgrunnen bak hele appen. null eller ukjent id gir temaets vanlige bakgrunn. */
 export function applyBackground(id: string | null | undefined): void {
   const b = bgById(id), s = document.body.style;
   document.body.classList.toggle('bgimg', !!b);
-  if (b) { s.setProperty('--appbg', bgImage(b)); s.setProperty('--appbg-c', b.color); s.setProperty('--appbg-s', b.size + 'px'); }
-  else { s.removeProperty('--appbg'); s.removeProperty('--appbg-c'); s.removeProperty('--appbg-s'); }
+  document.body.classList.toggle('bgpixel', !!b?.pixel);
+  const keys = ['--appbg', '--appbg-c', '--appbg-s', '--appbg-r', '--appbg-p'];
+  if (b) { const f = bgFit(b); [bgImage(b), b.color, f.size, f.repeat, f.pos].forEach((v, i) => s.setProperty(keys[i], v)); }
+  else keys.forEach((k) => s.removeProperty(k));
 }

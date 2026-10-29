@@ -9,7 +9,7 @@ Teknikk: Vite + TypeScript i nettleseren, Supabase (Postgres, Auth og en Edge Fu
 ### 1. Supabase
 
 1. Lag et prosjekt på [supabase.com](https://supabase.com). Velg en region i EU, for eksempel Stockholm (`eu-north-1`).
-2. Åpne **SQL Editor** og kjør filene i `supabase/migrations/` én om gangen, i rekkefølge etter navn: først `20261020000000_init.sql`, så `20261029000000_fix_student_role.sql` så `20261029100000_leaderboard.sql` så `20261029200000_leaderboard_top3.sql` så `20261029300000_activity.sql` så `20261029400000_avatar.sql` så `20261029500000_merch.sql` og til slutt `20261029600000_backgrounds.sql`. Har du Supabase CLI, kan du i stedet kjøre `supabase link` og så `supabase db push`.
+2. Åpne **SQL Editor** og kjør filene i `supabase/migrations/` én om gangen, i rekkefølge etter navn: først `20261020000000_init.sql`, så `20261029000000_fix_student_role.sql` så `20261029100000_leaderboard.sql` så `20261029200000_leaderboard_top3.sql` så `20261029300000_activity.sql` så `20261029400000_avatar.sql` så `20261029500000_merch.sql` så `20261029600000_backgrounds.sql` og til slutt `20261029700000_nordlys.sql`. Har du Supabase CLI, kan du i stedet kjøre `supabase link` og så `supabase db push`.
 3. Publiser edge-funksjonen som lager elevkontoer:
    ```bash
    npx supabase login
@@ -73,7 +73,7 @@ Kostymer kjøpes med poeng fra temaet de hører til, gjennom databasefunksjonen 
 
 CRISPY-G-butikken er en egen fane med merch (fotballdrakter, keeperdrakt, tracksuit, hoodie, caps, sneakers og mer). Den finnes i alle temaer: varene har `theme: 'merch'` i katalogen og ligger inne én gang per tema i `skin_items`, så eleven betaler med poengene fra temaet hen står i. Varer med `tint` kan fargelegges etter kjøp. Fargen lagres i `avatar.tint`.
 
-Under fanen «Bakgrunn» velger eleven et mønster som legges bak hele appen: søte (hjerter, katter, kaniner, pandaer og mer), kule (galakse, neon, lyn, flammer, kamuflasje) og halloween (gresskar, flaggermus, spøkelser, edderkoppnett, kirkegård). Fem er gratis. Resten kjøpes med poeng gjennom `buy_skin`, som kostymene. Mønstrene er SVG-fliser tegnet i `src/avatar/backgrounds.ts`, og valget lagres som `avatar.bg`.
+Under fanen «Bakgrunn» velger eleven et mønster som legges bak hele appen: søte (hjerter, katter, kaniner, pandaer og mer), kule (galakse, neon, lyn, flammer, kamuflasje) og halloween (gresskar, flaggermus, spøkelser, edderkoppnett, kirkegård) og natur (nordlys over skog og fjell med bål, både som vanlig tegning og som pikselkunst). Naturbildene fyller hele skjermen i stedet for å gjentas, og ligger i `src/avatar/scenes.ts`. Pikselversjonen tegnes på et lerret i nettleseren og forstørres med skarpe piksler. Fem er gratis. Resten kjøpes med poeng gjennom `buy_skin`, som kostymene. Mønstrene er SVG-fliser tegnet i `src/avatar/backgrounds.ts`, og valget lagres som `avatar.bg`.
 
 ## Spilloversikt
 

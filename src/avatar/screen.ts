@@ -7,7 +7,7 @@ import {
   CLOTH_COLORS, TOPS, BOTTOMS, SHOES, EYES, MOUTHS, SKINS, SLOT_NAMES, skinById, isMerch, Swatch, Opt,
 } from './catalog';
 import { avatarSVG, tintOf } from './render';
-import { BACKGROUNDS, BG_GROUPS, Background, bgById, bgImage, applyBackground } from './backgrounds';
+import { BACKGROUNDS, BG_GROUPS, Background, bgById, bgImage, bgFit, applyBackground } from './backgrounds';
 
 type Tab = 'kropp' | 'har' | 'ansikt' | 'sminke' | 'klaer' | 'bakgrunn' | 'kostymer' | 'merch';
 const TABS: [Tab, string][] = [['kropp', 'Kropp'], ['har', 'Hår'], ['ansikt', 'Ansikt'], ['sminke', 'Sminke'], ['klaer', 'Klær'], ['bakgrunn', 'Bakgrunn'], ['kostymer', 'Kostymer'], ['merch', 'CRISPY-G']];
@@ -114,7 +114,7 @@ function merchHTML(): string {
     grp('Drakter', ['outfit']) + grp('Overdeler', ['top']) + grp('Hodeplagg', ['hat']) + grp('Sko og tilbehør', ['feet', 'back', 'neck', 'hand', 'face']);
 }
 
-const bgStyle = (b: Background) => 'background-color:' + b.color + ';background-image:' + bgImage(b).replace(/"/g, "'") + ';background-size:' + Math.round(b.size * 0.75) + 'px';
+const bgStyle = (b: Background) => { const f = bgFit(b, 0.75); return 'background-color:' + b.color + ';background-image:' + bgImage(b).replace(/"/g, "'") + ';background-size:' + f.size + ';background-repeat:' + f.repeat + ';background-position:' + f.pos + (b.pixel ? ';image-rendering:pixelated' : ''); };
 
 function bgHTML(): string {
   const s = st(), bal = S.points - S.spent, cur = S.avatar.bg || '';
