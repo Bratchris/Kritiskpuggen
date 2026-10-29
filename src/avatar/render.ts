@@ -1,5 +1,5 @@
 // Tegner avataren som SVG. Koordinatsystem: 120 bredt, y fra -24 (plass til hatter) til 160 (føttene).
-import { AvatarCfg, Gender, Slot, SKIN_TONES, HAIR_COLORS, CLOTH_COLORS } from './catalog';
+import { AvatarCfg, Gender, Slot, skinById } from './catalog';
 
 export const VIEWBOX = '0 -24 120 184';
 export const HEAD_VIEWBOX = '18 -6 84 92';
@@ -23,6 +23,16 @@ const line = (d: string, stroke: string, w: number, extra = '') => '<path d="' +
 const circ = (x: number, y: number, r: number, fill: string, extra = '') => '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" style="fill:' + fill + extra + '"/>';
 const ell = (x: number, y: number, rx: number, ry: number, fill: string, extra = '') => '<ellipse cx="' + x + '" cy="' + y + '" rx="' + rx + '" ry="' + ry + '" style="fill:' + fill + extra + '"/>';
 const r1 = (n: number) => Math.round(n * 10) / 10;
+/** Lys eller mørk skrift som synes på bakgrunnen. */
+function ink(bg: string) { const [r, g, b] = hex(bg); return r * 0.299 + g * 0.587 + b * 0.114 > 150 ? '#1e1a24' : '#f4f1e8'; }
+const txt = (x: number, y: number, size: number, fill: string, t: string, extra = '') => '<text x="' + x + '" y="' + y + '" text-anchor="middle" style="font:900 ' + size + 'px system-ui,Arial,sans-serif;fill:' + fill + extra + '">' + t + '</text>';
+const rect = (x: number, y: number, w: number, h: number, fill: string, extra = '') => '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" style="fill:' + fill + extra + '"/>';
+/** CRISPY-G-merket: et lite skjold med CG. */
+function badge(x: number, y: number, k: number, _bg?: string) {
+  const w = 7 * k, h = 8 * k;
+  return path('M' + r1(x - w / 2) + ',' + r1(y - h / 2) + ' h' + r1(w) + ' v' + r1(h * 0.55) + ' q0,' + r1(h * 0.35) + ' -' + r1(w / 2) + ',' + r1(h * 0.45) + ' q-' + r1(w / 2) + ',-' + r1(h * 0.1) + ' -' + r1(w / 2) + ',-' + r1(h * 0.45) + 'z', '#ffd25a', ';stroke:' + shade('#ffd25a', -0.35) + ';stroke-width:' + r1(0.5 * k)) +
+    txt(x, r1(y + 1.4 * k), r1(3.6 * k), '#5a3a0a', 'CG');
+}
 function along(a: Pt, b: Pt, t: number): Pt { return [r1(a[0] + (b[0] - a[0]) * t), r1(a[1] + (b[1] - a[1]) * t)]; }
 function arm(B: Body, color: string, t: number, w: number) {
   return [0, 1].map((i) => { const e = along(B.sh[i], B.hand[i], t); return line('M' + B.sh[i][0] + ',' + B.sh[i][1] + ' L' + e[0] + ',' + e[1], color, w); }).join('');
@@ -52,6 +62,26 @@ function hair(style: string, c: string): { back: string; front: string } {
       return { back: b + circ(33, 102, 3, '#d9453b') + circ(87, 102, 3, '#d9453b'), front: path('M34,46 Q34,16 60,16 Q86,16 86,46 Q76,28 60,29 Q44,28 34,46Z', c) + line('M60,17 V28', d, 1.4) };
     }
     case 'bolle': return { back: circ(60, 12, 11, d), front: path(cap, c) };
+    case 'musefletter': return { back: circ(34, 22, 10, d) + circ(86, 22, 10, d), front: path(cap, c) + line('M60,17 V28', d, 1.4) };
+    case 'pannelugg': return { back: '', front: path('M34,46 Q32,15 60,15 Q88,15 86,46 L84,36 Q80,38 76,35 Q72,38 68,35 Q64,38 60,35 Q56,38 52,35 Q48,38 44,35 Q40,38 36,36Z', c) };
+    case 'sidelugg': return { back: '', front: path('M34,48 Q32,15 60,15 Q88,15 86,42 Q80,30 70,30 Q54,32 42,40 Q38,44 34,48Z', c) + line('M44,38 Q58,28 74,28', d, 1.4) };
+    case 'mohawk': return { back: '', front: path('M34,40 Q36,21 60,21 Q84,21 86,40 Q76,27 60,27 Q44,27 34,40Z', shade(c, -0.1), ';opacity:.55') + path('M52,24 L50,10 L56,14 L58,2 L62,2 L64,14 L70,10 L68,24 Q60,30 52,24Z', c) };
+    case 'cornrows': {
+      let f = path('M34,42 Q35,18 60,18 Q85,18 86,42 Q76,27 60,27 Q44,27 34,42Z', c);
+      for (const x of [44, 52, 60, 68, 76]) f += line('M' + x + ',' + (x === 60 ? 18 : 21) + ' Q' + (60 + (x - 60) * 1.3) + ',28 ' + (60 + (x - 60) * 1.45) + ',34', d, 1.3);
+      return { back: '', front: f };
+    }
+    case 'dreads': {
+      let b = '';
+      for (let i = 0; i < 9; i++) { const x = 32 + i * 7; b += line('M' + x + ',36 L' + (x + (i < 4 ? -3 : i > 4 ? 3 : 0)) + ',' + (88 - Math.abs(i - 4) * 3), i % 2 ? c : d, 6); }
+      return { back: b, front: path(cap, c) + line('M42,24 Q46,30 44,36 M52,20 Q55,27 53,32 M68,20 Q65,27 67,32 M78,24 Q74,30 76,36', d, 1.4) };
+    }
+    case 'bob': return { back: path('M30,40 Q30,12 60,12 Q90,12 90,40 L90,68 Q84,72 78,68 L78,50 H42 L42,68 Q36,72 30,68 Z', d), front: path('M33,50 Q30,14 60,14 Q90,14 87,50 Q84,32 72,28 Q58,34 40,32 Q34,38 33,50Z', c) };
+    case 'langkrøll': {
+      let b = '';
+      for (let i = 0; i < 6; i++) b += circ(31 - (i % 2) * 2, 50 + i * 9, 7, i % 2 ? c : d) + circ(89 + (i % 2) * 2, 50 + i * 9, 7, i % 2 ? d : c);
+      return { back: path('M31,40 Q30,13 60,13 Q90,13 89,40 L90,88 H30 Z', d) + b, front: path('M34,46 Q34,16 60,16 Q86,16 86,46 Q82,30 68,27 Q52,34 34,46Z', c) + circ(40, 30, 6, c) + circ(80, 30, 6, c) + circ(60, 18, 6, d) };
+    }
     default: return { back: '', front: path(cap, c) };
   }
 }
@@ -78,8 +108,13 @@ function shoes(id: string, c: string) {
 }
 
 // ---------- kostymer ----------
-interface Layers { back?: string; body?: string; legs?: boolean; front?: string; cover?: string; hideHair?: boolean }
-type Ctx = { B: Body; c: AvatarCfg; skin: string };
+interface Layers { back?: string; body?: string; legs?: boolean; front?: string; cover?: string; hideHair?: boolean; feet?: string }
+type Ctx = { B: Body; c: AvatarCfg; skin: string; t: string };
+const socks = (t: string) => path('M45,128 H58 V146 Q51,149 45,146 Z', t) + path('M62,128 H75 V146 Q69,149 62,146 Z', t) + line('M45,131 H58 M62,131 H75', '#f4f1e8', 1.6);
+function kit(x: Ctx, shirt: string, num: string, numC: string, shorts: string) {
+  const { B, skin, t } = x;
+  return legs(skin) + legs(shorts, 128) + socks(t) + arm(B, shirt, 0.42, 11) + path(B.torso, shirt) + path('M52,75 L60,82 L68,75Z', shade(t, -0.3)) + txt(60, 106, 16, numC, num) + badge(70, 86, 1, shirt);
+}
 const SKIN_DRAW: Record<string, (x: Ctx) => Layers> = {
   heksehatt: () => ({ front: ell(60, 20, 36, 7, '#2b2235') + path('M42,20 L58,-18 Q62,-20 64,-14 L78,20Z', '#2b2235') + path('M43,15 H77 L78,20 H42Z', '#6b4a8f') + path('M57,-12 Q66,-22 72,-10 Q64,-14 57,-12Z', '#2b2235') }),
   kattorer: () => ({ front: path('M36,30 L38,6 L52,22Z', '#1e1a24') + path('M84,30 L82,6 L68,22Z', '#1e1a24') + path('M40,24 L41,12 L48,21Z', '#e58aa0') + path('M80,24 L79,12 L72,21Z', '#e58aa0') }),
@@ -150,6 +185,46 @@ const SKIN_DRAW: Record<string, (x: Ctx) => Layers> = {
     body: legs('#e8eef0') + arm(B, '#e8eef0', 0.95, 13) + path(B.torso, '#e8eef0', ';stroke:#b7c3cb;stroke-width:1') + path('M50,90 h20 v14 h-20z', '#b7c3cb') + circ(54, 97, 2, '#d9453b') + circ(60, 97, 2, '#4fae6b') + circ(66, 97, 2, '#2e86c1') + line('M45,136 H58 M62,136 H75', '#b7c3cb', 3),
     cover: circ(60, 44, 33, 'rgba(190,226,245,.32)', ';stroke:#e8eef0;stroke-width:4') + path('M36,30 Q44,18 56,16', 'none', ';stroke:#fff;stroke-width:3;stroke-linecap:round;opacity:.8') + path('M40,72 Q60,80 80,72 L78,78 Q60,86 42,78Z', '#e8eef0'),
   }),
+  // CRISPY-G
+  cg_pannebaand: ({ t }) => ({ front: path('M34,33 Q60,23 86,33 L86,40 Q60,30 34,40Z', t) + txt(60, 35, 5, ink(t), 'CRISPY-G') }),
+  cg_caps: ({ t }) => ({ front: path('M34,34 Q34,10 60,10 Q86,10 86,34 Q60,28 34,34Z', t) + path('M34,34 Q60,27 92,31 Q100,35 92,38 Q60,33 34,37Z', shade(t, -0.3)) + circ(60, 10, 2.2, shade(t, -0.3)) + badge(60, 22, 1.4, t) }),
+  cg_bottehatt: ({ t }) => ({ front: path('M38,32 Q38,10 60,10 Q82,10 82,32Z', t) + path('M24,38 Q28,27 60,29 Q92,27 96,38 Q60,33 24,38Z', shade(t, -0.2)) + line('M38,30 Q60,26 82,30', shade(t, -0.35), 2) + txt(60, 25, 5, ink(t), 'CRISPY-G') }),
+  cg_tskjorte: ({ B, t }) => ({ body: arm(B, t, 0.42, 11) + path(B.torso, t) + line('M54,76 Q60,82 66,76', shade(t, -0.2), 1.6) + txt(60, 98, 7.2, ink(t), 'CRISPY') + txt(60, 108, 10, '#ffd25a', 'G', ';stroke:' + shade('#ffd25a', -0.4) + ';stroke-width:.6') }),
+  cg_hoodie: ({ B, t }) => {
+    const dk = shade(t, -0.25);
+    return { body: arm(B, t, 0.88, 11) + path(B.torso, t) + path('M44,77 Q60,92 76,77 Q74,70 60,70 Q46,70 44,77Z', dk) + path('M48,104 H72 L70,114 H50Z', dk) + line('M56,80 V92 M64,80 V92', '#ffd25a', 1.4) +
+      path('M60,88 C52,96 54,102 60,104 C66,102 68,96 64,92 C63,96 61,96 60,94 C59,92 61,90 60,88Z', '#e8742a') + txt(60, 103, 5, ink(t), 'CG') };
+  },
+  cg_sneakers: ({ t }) => {
+    const dk = shade(t, -0.3);
+    const one = (x: number) => path('M' + (x - 7) + ',136 H' + (x + 6) + ' V146 Q' + (x + 12) + ',147 ' + (x + 12) + ',151 H' + (x - 9) + ' Q' + (x - 10) + ',146 ' + (x - 7) + ',144Z', t, ';stroke:' + dk + ';stroke-width:.8') +
+      rect(x - 10, 150, 23, 4, '#f4f1e8', ';stroke:#b7c3cb;stroke-width:.6') + line('M' + (x - 6) + ',145 Q' + x + ',140 ' + (x + 6) + ',146', '#ffd25a', 2) + line('M' + (x - 4) + ',138 H' + (x + 3) + ' M' + (x - 4) + ',141 H' + (x + 3), dk, 1);
+    return { feet: one(51) + one(69) };
+  },
+  cg_sekk: ({ t }) => ({ back: path('M34,78 Q32,70 42,70 H78 Q88,70 86,78 L88,124 Q60,130 32,124 Z', t) + path('M38,98 H82 V108 H38Z', shade(t, -0.2)), front: line('M48,76 L46,116 M72,76 L74,116', shade(t, -0.3), 3.4) + badge(60, 88, 1.3, t) }),
+  cg_kjede: () => ({ front: line('M50,76 Q52,88 60,90 Q68,88 70,76', '#e3ad33', 1.8, ';stroke-dasharray:2 1') + circ(60, 93, 5.4, '#ffd25a', ';stroke:#c08a1e;stroke-width:1') + txt(60, 95, 4.6, '#7a5310', 'CG') }),
+  cg_hjemme: (x) => ({ legs: true, body: kit(x, x.t, '10', ink(x.t), '#f4f1e8') }),
+  cg_borte: (x) => {
+    const w = '#f4f1e8';
+    let s = kit(x, w, '', w, x.t);
+    for (const xx of [46, 54, 62, 70]) s += rect(xx, 80, 4, 37, x.t);
+    s += path('M52,75 L60,82 L68,75Z', shade(x.t, -0.3)) + rect(53, 94, 14, 14, w) + txt(60, 106, 14, x.t, '7') + badge(70, 86, 1, w);
+    return { legs: true, body: s };
+  },
+  cg_keeper: (x) => {
+    const { B, skin, t } = x, dk = shade(t, -0.3);
+    const s = legs(skin) + legs('#1e1a24', 128) + socks(t) + arm(B, t, 0.86, 11) + path(B.torso, t) + path('M40,80 L60,96 L80,80 V88 L60,104 L40,88Z', dk) + txt(60, 114, 9, ink(t), '1') + badge(70, 84, 1, t);
+    const glove = (p: Pt) => circ(p[0], p[1], 6.6, '#f2c230', ';stroke:#1e1a24;stroke-width:1');
+    return { legs: true, body: s, front: glove(B.hand[0]) + glove(B.hand[1]) };
+  },
+  cg_tracksuit: ({ B, t }) => {
+    const w = '#f4f1e8';
+    const s = legs(t) + line('M47,116 V145 M73,116 V145', w, 1.6) + arm(B, t, 0.92, 12) + line('M' + B.sh[0][0] + ',' + (B.sh[0][1] - 3) + ' L' + along(B.sh[0], B.hand[0], 0.9).join(',') + ' M' + B.sh[1][0] + ',' + (B.sh[1][1] - 3) + ' L' + along(B.sh[1], B.hand[1], 0.9).join(','), w, 1.4) +
+      path(B.torso, t) + path('M50,74 H70 V79 H50Z', shade(t, -0.3)) + line('M60,79 V117', '#c9ccd0', 1.6) + rect(38, 114, 44, 4, shade(t, -0.3)) + badge(70, 88, 1, t);
+    return { legs: true, body: s };
+  },
+  cg_fotball: ({ B }) => { const [x, y] = B.hand[1]; const cx = x + 4, cy = y + 8; return { front: circ(cx, cy, 8, '#f4f1e8', ';stroke:#1e1a24;stroke-width:1') + path('M' + cx + ',' + (cy - 3) + ' l3,2.2 -1.2,3.4 h-3.6 l-1.2,-3.4z', '#1e1a24') + line('M' + cx + ',' + (cy - 3) + ' V' + (cy - 8) + ' M' + (cx + 3) + ',' + (cy - 0.8) + ' L' + (cx + 7.6) + ',' + (cy - 2.4) + ' M' + (cx - 3) + ',' + (cy - 0.8) + ' L' + (cx - 7.6) + ',' + (cy - 2.4) + ' M' + (cx - 1.8) + ',' + (cy + 2.6) + ' L' + (cx - 4.6) + ',' + (cy + 6.4) + ' M' + (cx + 1.8) + ',' + (cy + 2.6) + ' L' + (cx + 4.6) + ',' + (cy + 6.4), '#1e1a24', 0.9) }; },
+  cg_gullball: ({ B }) => { const [x, y] = B.hand[1]; const cx = x + 2, cy = y - 12; return { front: rect(cx - 6, cy + 9, 12, 5, '#7a5310') + path('M' + (cx - 3) + ',' + (cy + 9) + ' L' + (cx - 2) + ',' + (cy + 5) + ' H' + (cx + 2) + ' L' + (cx + 3) + ',' + (cy + 9) + 'Z', '#e3ad33') + circ(cx, cy - 2, 9, '#ffd25a', ';stroke:#c08a1e;stroke-width:1.2') + path('M' + cx + ',' + (cy - 5) + ' l3,2.2 -1.2,3.4 h-3.6 l-1.2,-3.4z', '#e3ad33') + circ(cx - 3.6, cy - 5.6, 2, '#fff8d0', ';opacity:.8') }; },
 };
 
 export interface RenderOpts { crop?: 'head' | 'full'; cls?: string; title?: string; ariaHidden?: boolean }
@@ -159,43 +234,62 @@ export function avatarSVG(c: AvatarCfg, o: RenderOpts = {}): string {
   return '<svg class="avatar ' + (o.cls || '') + '" viewBox="' + (o.crop === 'head' ? HEAD_VIEWBOX : VIEWBOX) + '"' + (o.ariaHidden !== false ? ' aria-hidden="true"' : ' role="img"') + '>' + (o.title ? '<title>' + o.title + '</title>' : '') + avatarG(c) + '</svg>';
 }
 
+/** Kostymer som kan fargelegges, bruker elevens farge eller standardfargen. */
+export function tintOf(c: AvatarCfg, id: string): string { return c.tint?.[id] || skinById(id)?.tint || '#888888'; }
+
+const SLOT_ORDER: Slot[] = ['back', 'outfit', 'top', 'hat', 'face', 'neck', 'hand', 'feet'];
+
 /** Bare tegningen (uten svg-element), til bruk i troférommet. */
 export function avatarG(c: AvatarCfg): string {
-  const B = BODY[c.g], skin = SKIN_TONES[c.skin].c, hc = HAIR_COLORS[c.hairC].c;
-  const ctx: Ctx = { B, c, skin };
-  const L: Layers[] = (['back', 'outfit', 'top', 'hat', 'face', 'hand'] as Slot[]).map((s) => (c.eq[s] && SKIN_DRAW[c.eq[s]!] ? SKIN_DRAW[c.eq[s]!](ctx) : {}));
-  const [bk, out, tp, hat, face, hand] = L;
-  const all = L;
+  const B = BODY[c.g], skin = c.skinC, hc = c.hairC;
+  const L = {} as Record<Slot, Layers>;
+  for (const sl of SLOT_ORDER) { const id = c.eq[sl]; L[sl] = id && SKIN_DRAW[id] ? SKIN_DRAW[id]({ B, c, skin, t: tintOf(c, id) }) : {}; }
+  const all = SLOT_ORDER.map((sl) => L[sl]);
+  const out = L.outfit, tp = L.top;
   const H = hair(c.hair, hc);
   const hideHair = all.some((x) => x.hideHair);
+  const hijab = c.headwear === 'hijab' && !hideHair, hj = c.headC, hjd = shade(hj, -0.22);
   let s = '';
   s += all.map((x) => x.back || '').join('');
-  if (!hideHair) s += H.back;
-  if (!out.legs) s += bottom(c.bottom, CLOTH_COLORS[c.bottomC].c, skin);
-  s += shoes(c.shoes, CLOTH_COLORS[c.shoesC].c);
+  if (hijab) s += path('M27,46 Q27,10 60,10 Q93,10 93,46 Q95,72 86,86 Q60,96 34,86 Q25,72 27,46Z', hjd);
+  else if (!hideHair) s += H.back;
+  if (!out.legs) s += bottom(c.bottom, c.bottomC, skin);
+  s += L.feet.feet || shoes(c.shoes, c.shoesC);
   s += path('M54,66 H66 V80 H54Z', shade(skin, -0.12));
   s += arm(B, skin, 1, 9) + circ(B.hand[0][0], B.hand[0][1], 5, skin) + circ(B.hand[1][0], B.hand[1][1], 5, skin);
   if (out.body) s += out.body;
   else if (tp.body) s += tp.body;
-  else s += top(c.top, B, CLOTH_COLORS[c.topC].c);
+  else s += top(c.top, B, c.topC);
   if (out.body) s += circ(B.hand[0][0], B.hand[0][1], 5, skin) + circ(B.hand[1][0], B.hand[1][1], 5, skin);
   // hode og ansikt
   s += circ(34, 47, 5, skin) + circ(86, 47, 5, skin) + circ(60, 44, 26, skin);
-  const ink = '#2b2b2b', brow = shade(hc, -0.2);
-  s += line('M45,40 Q50,37.5 55,40', brow, 2) + line('M65,40 Q70,37.5 75,40', brow, 2);
-  if (c.eyes === 'glad') s += line('M46,49 Q50,45 54,49', ink, 2.4) + line('M66,49 Q70,45 74,49', ink, 2.4);
-  else s += ell(50, 48, 3.2, 4, ink) + ell(70, 48, 3.2, 4, ink) + circ(51.2, 46.5, 1.1, '#fff') + circ(71.2, 46.5, 1.1, '#fff');
-  if (c.lashes) s += line('M46.5,45 L44,43 M53.5,45 L56,43 M66.5,45 L64,43 M73.5,45 L76,43', ink, 1.3);
-  if (c.blush) s += circ(44, 55, 4, '#f08a8a', ';opacity:.4') + circ(76, 55, 4, '#f08a8a', ';opacity:.4');
-  if (c.mouth === 'glis') s += path('M52,56 Q60,67 68,56 Z', '#7a3b2e') + path('M54,57 H66 L65,59 H55Z', '#fff');
-  else if (c.mouth === 'rolig') s += line('M55,59 H65', '#7a3b2e', 2);
-  else s += line('M53,57 Q60,63 67,57', '#7a3b2e', 2.2);
-  if (!hideHair) s += H.front;
-  s += hat.front || '';
-  s += face.front || '';
-  s += bk.front || '';
-  s += (out.front || '') + (tp.front || '');
+  s += face(c, skin, hc);
+  if (hijab) s += path('M27,46 Q27,10 60,10 Q93,10 93,46 Q95,72 86,86 Q60,96 34,86 Q25,72 27,46Z M40,46 Q40,24 60,24 Q80,24 80,46 Q80,68 60,70 Q40,68 40,46Z', hj, ';fill-rule:evenodd') +
+    line('M40,46 Q40,24 60,24 Q80,24 80,46', hjd, 1.6) + line('M44,84 Q60,90 76,84', hjd, 1.4);
+  else if (!hideHair) s += H.front;
+  for (const sl of ['hat', 'face', 'back', 'outfit', 'top', 'neck'] as Slot[]) s += L[sl].front || '';
   s += all.map((x) => x.cover || '').join('');
-  s += hand.front || '';
+  s += L.hand.front || '';
+  return s;
+}
+
+function face(c: AvatarCfg, skin: string, hc: string): string {
+  const k = '#2b2b2b', brow = shade(hc, -0.2);
+  let s = '';
+  if (c.freckles) { const f = shade(skin, -0.35); for (const [x, y] of [[43, 53], [46, 56], [41, 57], [77, 53], [74, 56], [79, 57], [57, 52], [63, 52]]) s += circ(x, y, 0.8, f, ';opacity:.8'); }
+  if (c.blush) s += circ(44, 56, 4.4, c.blushC, ';opacity:.45') + circ(76, 56, 4.4, c.blushC, ';opacity:.45');
+  if (c.shadow) s += ell(50, 44.5, 5.6, 3.4, c.shadowC, ';opacity:.6') + ell(70, 44.5, 5.6, 3.4, c.shadowC, ';opacity:.6');
+  s += line('M45,40 Q50,37.5 55,40', brow, 2) + line('M65,40 Q70,37.5 75,40', brow, 2);
+  if (c.eyes === 'glad') s += line('M46,49 Q50,45 54,49', k, 2.4) + line('M66,49 Q70,45 74,49', k, 2.4);
+  else {
+    const big = c.eyes === 'store', rx = big ? 4.8 : 3.8, ry = big ? 5.4 : 4.4, ir = big ? 3.4 : 2.6;
+    for (const x of [50, 70]) s += ell(x, 48, rx, ry, '#ffffff', ';stroke:' + k + ';stroke-width:.9') + circ(x, 48.6, ir, c.eyeC) + circ(x, 48.6, ir * 0.48, '#141414') + circ(x + 1.1, 47.2, ir * 0.32, '#fff');
+  }
+  if (c.liner && c.eyes !== 'glad') s += line('M45.5,46 Q50,42.6 54.6,45.6 L57,44.2 M65.4,45.6 Q70,42.6 74.5,46 L77,44.2', '#141414', 1.5);
+  if (c.lashes) s += line('M46.5,44.5 L44,42.5 M53.5,44.5 L56,42.5 M66.5,44.5 L64,42.5 M73.5,44.5 L76,42.5', k, 1.3);
+  const lip = c.lips ? c.lipC : '#7a3b2e';
+  if (c.mouth === 'glis') s += path('M52,56 Q60,67 68,56 Z', c.lips ? shade(lip, -0.25) : lip) + path('M54,57 H66 L65,59 H55Z', '#fff') + (c.lips ? line('M52,56 Q60,67 68,56 Q60,54.6 52,56', lip, 1.6) : '');
+  else if (c.mouth === 'rolig') s += c.lips ? path('M54,59 Q57,57 60,58 Q63,57 66,59 Q60,62.4 54,59Z', lip) : line('M55,59 H65', lip, 2);
+  else s += c.lips ? path('M53,57 Q60,56 67,57 Q60,65 53,57Z', lip) + line('M54,57.4 Q60,61 66,57.4', shade(lip, -0.35), 0.8) : line('M53,57 Q60,63 67,57', lip, 2.2);
   return s;
 }
