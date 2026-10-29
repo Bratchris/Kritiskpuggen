@@ -1,4 +1,5 @@
 // Skallet rundt øvingsappen: topp, fast linje (kortstokk, butikk, rom), faner, filter og nivå-dialog.
+import { applyBackground } from '../avatar/backgrounds';
 import { $, esc, toast } from '../lib/dom';
 import type { Store } from '../lib/store';
 import type { Theme } from '../themes/types';
@@ -56,6 +57,7 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
     S.owned = new Set(av.owned); S.avaReady = av.ready;
     S.avatar = av.cfg ? cleanAvatar(av.cfg, S.owned) : defaultAvatar();
   } catch { S.avaReady = false; S.avatar = defaultAvatar(); }
+  applyBackground(S.avatar.bg);
   if (!S.home) S.home = {};
 
   root.innerHTML =

@@ -1,3 +1,4 @@
+import { applyBackground } from './avatar/backgrounds';
 import './styles/base.css';
 import './styles/app.css';
 import './styles/themes.css';
@@ -20,7 +21,7 @@ async function route(): Promise<void> {
     return;
   }
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) { current = ''; renderLogin(root); return; }
+  if (!session) { current = ''; applyBackground(null); renderLogin(root); return; }
   const uid = session.user.id;
   if (current === uid) return;
   current = uid;
@@ -40,7 +41,7 @@ async function route(): Promise<void> {
   }
 
   if (me.role === 'teacher') {
-    const openTeacher = () => mountTeacher(root, { id: me.id, name: me.display_name }, (theme, classId) => {
+    const openTeacher = () => (applyBackground(null), mountTeacher)(root, { id: me.id, name: me.display_name }, (theme, classId) => {
       const store = new PreviewStore(classId);
       void mountApp(root, THEMES[theme], store, {
         who: me.display_name + ' · forhåndsvisning', preview: true,
@@ -73,6 +74,7 @@ async function route(): Promise<void> {
   };
   function pick() {
     document.documentElement.dataset.tema = '';
+    applyBackground(null);
     root.innerHTML = '<div class="wrap"><header class="apphead"><div class="topbar"><p class="eyebrow">' + esc(who) + '</p><div class="who"><button class="lnk" id="out" type="button">Logg ut</button></div></div><h1 class="brand">Hva vil du øve på?</h1></header>' +
       '<div class="themepick">' + themes.map((t: string) => '<button class="tpick" type="button" data-pick="' + t + '" data-tema-card="' + t + '"><span class="eyebrow">' + esc(THEMES[t].eyebrow) + '</span><b>' + esc(THEMES[t].title) + '</b><span>' + THEMES[t].content.cards.length + ' kort · ' + THEMES[t].room.levels.length + ' nivåer</span></button>').join('') + '</div></div>';
     $('#out').onclick = () => supabase.auth.signOut();

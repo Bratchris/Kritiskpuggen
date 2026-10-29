@@ -382,3 +382,17 @@ svg.house { display: block; width: 100%; height: auto; }
 .skin .tsub { overflow-wrap: anywhere; }
 .skin .pfoot { flex-wrap: wrap; gap: 4px 8px; }
 @media (max-width: 560px) { .skin.wide { flex-direction: column; } .skin.wide .skinart { flex: none; } }
+
+/* Egen bakgrunn bak appen */
+body.bgimg { background-color: var(--appbg-c); background-image: var(--appbg); background-size: var(--appbg-s) var(--appbg-s); background-attachment: fixed; }
+body.bgimg .wrap { background: color-mix(in srgb, var(--bg) 84%, transparent); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); border-radius: 22px; padding: 18px; box-shadow: 0 8px 32px rgba(0,0,0,.22); }
+body.bgimg .dock { background: color-mix(in srgb, var(--bg) 92%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-radius: 14px; }
+@media (max-width: 560px) { body.bgimg { padding-left: 10px; padding-right: 10px; } body.bgimg .wrap { padding: 12px; border-radius: 16px; } }
+.bgs { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+.bgcard { display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--bg); min-width: 0; }
+.bgcard.on { border-color: var(--leaf); box-shadow: 0 0 0 2px var(--leaf) inset; }
+.bgcard h4 { margin: 0; font-family: var(--font-display); font-size: .98rem; }
+.bgcard .btn { min-height: 38px; padding: 5px 10px; }
+.bgprev { height: 84px; border-radius: 8px; border: 1px solid var(--line); }
+.avabig.withbg { border-radius: 12px; padding: 10px 0; }
+@media (max-width: 560px) { body.bgimg .apptitle { font-size: clamp(1.9rem, 8.2vw, 3.6rem); } }

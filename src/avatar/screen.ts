@@ -7,9 +7,10 @@ import {
   CLOTH_COLORS, TOPS, BOTTOMS, SHOES, EYES, MOUTHS, SKINS, SLOT_NAMES, skinById, isMerch, Swatch, Opt,
 } from './catalog';
 import { avatarSVG, tintOf } from './render';
+import { BACKGROUNDS, BG_GROUPS, Background, bgById, bgImage, applyBackground } from './backgrounds';
 
-type Tab = 'kropp' | 'har' | 'ansikt' | 'sminke' | 'klaer' | 'kostymer' | 'merch';
-const TABS: [Tab, string][] = [['kropp', 'Kropp'], ['har', 'Hår'], ['ansikt', 'Ansikt'], ['sminke', 'Sminke'], ['klaer', 'Klær'], ['kostymer', 'Kostymer'], ['merch', 'CRISPY-G']];
+type Tab = 'kropp' | 'har' | 'ansikt' | 'sminke' | 'klaer' | 'bakgrunn' | 'kostymer' | 'merch';
+const TABS: [Tab, string][] = [['kropp', 'Kropp'], ['har', 'Hår'], ['ansikt', 'Ansikt'], ['sminke', 'Sminke'], ['klaer', 'Klær'], ['bakgrunn', 'Bakgrunn'], ['kostymer', 'Kostymer'], ['merch', 'CRISPY-G']];
 
 interface AvaState { tab: Tab; arm: string | null; msg: string; busy: boolean; open: string | null }
 function st(): AvaState {
@@ -22,6 +23,7 @@ function st(): AvaState {
 function set(patch: Partial<AvatarCfg>, focus?: string) {
   S.avatar = { ...S.avatar, ...patch, made: true };
   store.saveAvatar(S.avatar);
+  if ('bg' in patch) applyBackground(S.avatar.bg);
   hooks.refresh();
   renderAvatar();
   if (focus) { const el = panel().querySelector(focus) as HTMLElement | null; if (el) el.focus({ preventScroll: true }); }
@@ -112,6 +114,23 @@ function merchHTML(): string {
     grp('Drakter', ['outfit']) + grp('Overdeler', ['top']) + grp('Hodeplagg', ['hat']) + grp('Sko og tilbehør', ['feet', 'back', 'neck', 'hand', 'face']);
 }
 
+const bgStyle = (b: Background) => 'background-color:' + b.color + ';background-image:' + bgImage(b).replace(/"/g, "'") + ';background-size:' + Math.round(b.size * 0.75) + 'px';
+
+function bgHTML(): string {
+  const s = st(), bal = S.points - S.spent, cur = S.avatar.bg || '';
+  const card = (b: Background) => {
+    const own = b.price === 0 || S.owned.has(b.id), on = cur === b.id, can = bal >= b.price, armed = s.arm === b.id;
+    let btn: string;
+    if (own) btn = '<button class="btn' + (on ? '' : ' primary') + '" type="button" data-bg="' + b.id + '"' + (on ? ' aria-pressed="true"' : '') + '>' + (on ? 'I bruk' : 'Bruk') + '</button>';
+    else if (!S.avaReady) btn = '';
+    else btn = '<button class="btn' + (armed ? ' primary' : '') + '" type="button" data-bgbuy="' + b.id + '"' + (can && !s.busy ? '' : ' disabled') + '>' + (can ? (armed ? 'Bekreft kjøp' : 'Kjøp') : 'Mangler ' + (b.price - bal) + ' poeng') + '</button>';
+    return '<article class="bgcard' + (on ? ' on' : '') + '"><div class="bgprev" style="' + bgStyle(b) + '"></div><h4>' + esc(b.name) + '</h4><span class="price">' + (b.price === 0 ? 'Gratis' : own ? 'Eies' : b.price + ' poeng') + '</span>' + btn + '</article>';
+  };
+  return balHTML('Bakgrunnen vises bak hele appen, i alle temaer. Noen er gratis, resten kjøpes med poeng.') +
+    '<div class="row"><button class="btn' + (cur ? '' : ' primary') + '" type="button" data-bg=""' + (cur ? '' : ' aria-pressed="true"') + '>' + (cur ? 'Bruk vanlig bakgrunn' : 'Vanlig bakgrunn er i bruk') + '</button></div>' +
+    BG_GROUPS.map((g) => '<h3 class="grp">' + g.name + '</h3><div class="bgs">' + BACKGROUNDS.filter((b) => b.group === g.id).map(card).join('') + '</div>').join('');
+}
+
 // ---------- skjermen ----------
 export function renderAvatar(): void {
   const s = st(), p = panel(), a = S.avatar;
@@ -132,10 +151,12 @@ export function renderAvatar(): void {
     (a.eq.outfit || a.eq.top || a.eq.feet ? '<p class="keyhint">Du har på deg noe fra butikken som dekker klærne. Ta det av under «Kostymer» eller «CRISPY-G» for å se klærne dine.</p>' : '');
   if (s.tab === 'kostymer') body = shopHTML();
   if (s.tab === 'merch') body = merchHTML();
+  if (s.tab === 'bakgrunn') body = bgHTML();
+  const sbg = bgById(a.bg);
 
   const worn = (Object.keys(a.eq) as Slot[]).map((k) => skinById(a.eq[k]!)?.name).filter(Boolean);
   p.innerHTML = head('avatar') +
-    '<div class="avagrid"><div class="avastage"><div class="avabig">' + avatarSVG(a, { cls: 'big', title: 'Avataren din', ariaHidden: false }) + '</div>' +
+    '<div class="avagrid"><div class="avastage"><div class="avabig' + (sbg ? ' withbg' : '') + '"' + (sbg ? ' style="' + bgStyle(sbg) + '"' : '') + '>' + avatarSVG(a, { cls: 'big', title: 'Avataren din', ariaHidden: false }) + '</div>' +
     '<p class="keyhint">' + (worn.length ? 'På deg: ' + esc(worn.join(', ')) + '.' : 'Ingen kostymer på.') + '</p>' +
     '<div class="row"><button class="btn" type="button" id="av-rand">Tilfeldig utseende</button></div></div>' +
     '<div class="avaopts"><div class="tabs avtabs" role="tablist" aria-label="Deler av avataren">' + TABS.map(([id, n]) => '<button class="tab' + (id === 'merch' ? ' cgtab' : '') + '" type="button" role="tab" data-tab="' + id + '" aria-selected="' + (s.tab === id) + '" aria-current="' + (s.tab === id) + '">' + n + '</button>').join('') + '</div>' +
@@ -189,7 +210,31 @@ function wire(p: ReturnType<typeof panel>, s: AvaState) {
       set({ eq }, '[data-wear="' + k.id + '"]');
     };
   });
+  p.querySelectorAll('[data-bg]').forEach((b: HTMLElement) => { b.onclick = () => set({ bg: b.dataset.bg || undefined }, '[data-bg="' + b.dataset.bg + '"]'); });
   let armTimer: number | undefined;
+  p.querySelectorAll('[data-bgbuy]').forEach((b: HTMLElement) => {
+    b.onclick = async () => {
+      const k = bgById(b.dataset.bgbuy)!;
+      if (s.busy || S.points - S.spent < k.price) return;
+      clearTimeout(armTimer);
+      if (s.arm !== k.id) {
+        s.arm = k.id; s.msg = 'Trykk «Bekreft kjøp» for å bruke ' + k.price + ' poeng på bakgrunnen ' + k.name.toLowerCase() + '.';
+        renderAvatar(); const a2 = p.querySelector('[data-bgbuy="' + k.id + '"]') as HTMLElement | null; if (a2) a2.focus({ preventScroll: true });
+        armTimer = window.setTimeout(() => { if (S.mode === 'avatar' && s.arm === k.id) { s.arm = null; s.msg = ''; renderAvatar(); } }, 6000);
+        return;
+      }
+      s.arm = null; s.busy = true; s.msg = 'Kjøper …'; renderAvatar();
+      try {
+        S.spent = await store.buySkin(T.id, k.id, k.price);
+        S.owned.add(k.id);
+        s.busy = false; s.msg = 'Bakgrunnen ' + k.name.toLowerCase() + ' er kjøpt og tatt i bruk.';
+        set({ bg: k.id }, '[data-bg="' + k.id + '"]');
+        toast(k.name + ' er kjøpt');
+      } catch (e) {
+        s.busy = false; s.msg = 'Kjøpet gikk ikke: ' + friendly(e); renderAvatar();
+      }
+    };
+  });
   p.querySelectorAll('[data-buy]').forEach((b: HTMLElement) => {
     b.onclick = async () => {
       const k = skinById(b.dataset.buy!)!;

@@ -1,4 +1,6 @@
 // Valgene i avatarskjermen og alt som kan kjøpes.
+import { bgById } from './backgrounds';
+
 // Prisene i SKINS må stemme med skin_items i databasen (supabase/migrations/*_avatar*.sql).
 
 export type Gender = 'g' | 'j' | 'n';
@@ -35,6 +37,8 @@ export interface AvatarCfg {
   eq: Partial<Record<Slot, string>>;
   /** Egen farge på kostymer som kan fargelegges, per kostyme-id. */
   tint: Record<string, string>;
+  /** Bakgrunnen bak appen, id fra backgrounds.ts. Tom = temaets vanlige bakgrunn. */
+  bg?: string;
   made?: boolean;
 }
 
@@ -175,5 +179,7 @@ export function cleanAvatar(raw: any, owned: Set<string>): AvatarCfg {
   const tint: Record<string, string> = {};
   for (const [id, v] of Object.entries(c.tint || {})) { const s = skinById(id); if (s?.tint && typeof v === 'string' && HEX.test(v)) tint[id] = v.toLowerCase(); }
   c.tint = tint;
+  const bg = bgById(c.bg);
+  if (!bg || (bg.price > 0 && !owned.has(bg.id))) delete c.bg;
   return c as AvatarCfg;
 }
