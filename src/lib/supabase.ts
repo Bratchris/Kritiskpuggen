@@ -15,6 +15,11 @@ export function studentEmail(username: string, classCode: string): string {
   return `${username.trim().toLowerCase()}.${classCode.trim().toLowerCase()}@${DOMAIN}`;
 }
 
+/** Sant for de interne adressene elevkontoene får. Brukes for å holde elever unna lærerrommet. */
+export function isStudentEmail(email: string | undefined | null): boolean {
+  return !!email && email.toLowerCase().endsWith('@' + DOMAIN.toLowerCase());
+}
+
 /** Gjør Supabase-feil om til en setning læreren eller eleven forstår. */
 export function friendly(err: unknown): string {
   const m = String((err as { message?: string })?.message ?? err ?? '');

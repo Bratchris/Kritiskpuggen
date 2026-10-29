@@ -3,7 +3,7 @@ import './styles/app.css';
 import './styles/themes.css';
 import './styles/teacher.css';
 import { $, esc } from './lib/dom';
-import { supabase, configured, friendly } from './lib/supabase';
+import { supabase, configured, friendly, isStudentEmail } from './lib/supabase';
 import { RemoteStore, PreviewStore } from './lib/store';
 import { THEMES } from './themes';
 import { renderLogin } from './auth/login';
@@ -28,6 +28,13 @@ async function route(): Promise<void> {
   const { data: me, error } = await supabase.from('profiles').select('id, role, display_name, class_id').eq('id', uid).maybeSingle();
   if (error || !me) {
     root.innerHTML = '<div class="wrap"><section class="panel"><h2>Fant ikke profilen din</h2><p>' + esc(error ? friendly(error) : 'Kontoen mangler profil. Kontakt læreren din.') + '</p><button class="btn" id="out" type="button">Logg ut</button></section></div>';
+    $('#out').onclick = () => supabase.auth.signOut();
+    return;
+  }
+
+  if (me.role === 'teacher' && isStudentEmail(session.user.email)) {
+    // En elevkonto som feilaktig står som lærer, skal aldri se lærerrommet.
+    root.innerHTML = '<div class="wrap"><section class="panel"><h2>Kontoen din er ikke ferdig satt opp</h2><p>Si fra til læreren, så ordner hen det. Du kan prøve å logge inn igjen etterpå.</p><button class="btn" id="out" type="button">Logg ut</button></section></div>';
     $('#out').onclick = () => supabase.auth.signOut();
     return;
   }
