@@ -9,7 +9,7 @@ Teknikk: Vite + TypeScript i nettleseren, Supabase (Postgres, Auth og en Edge Fu
 ### 1. Supabase
 
 1. Lag et prosjekt på [supabase.com](https://supabase.com). Velg en region i EU, for eksempel Stockholm (`eu-north-1`).
-2. Åpne **SQL Editor** og kjør filene i `supabase/migrations/` én om gangen, i rekkefølge etter navn: først `20261020000000_init.sql`, så `20261029000000_fix_student_role.sql` så `20261029100000_leaderboard.sql` så `20261029200000_leaderboard_top3.sql` så `20261029300000_activity.sql` så `20261029400000_avatar.sql` så `20261029500000_merch.sql` så `20261029600000_backgrounds.sql` så `20261029700000_nordlys.sql` så `20261029800000_pets.sql` og til slutt `20261029900000_pirat.sql`. Har du Supabase CLI, kan du i stedet kjøre `supabase link` og så `supabase db push`.
+2. Åpne **SQL Editor** og kjør filene i `supabase/migrations/` én om gangen, i rekkefølge etter navn: først `20261020000000_init.sql`, så `20261029000000_fix_student_role.sql` så `20261029100000_leaderboard.sql` så `20261029200000_leaderboard_top3.sql` så `20261029300000_activity.sql` så `20261029400000_avatar.sql` så `20261029500000_merch.sql` så `20261029600000_backgrounds.sql` så `20261029700000_nordlys.sql` så `20261029800000_pets.sql` så `20261029900000_pirat.sql` og til slutt `20261030000000_more_eggs.sql`. Har du Supabase CLI, kan du i stedet kjøre `supabase link` og så `supabase db push`.
 3. Publiser edge-funksjonen som lager elevkontoer:
    ```bash
    npx supabase login
@@ -77,7 +77,7 @@ Under fanen «Bakgrunn» velger eleven et mønster som legges bak hele appen: s�
 
 ## Egg og kjæledyr
 
-Når et svar gir XP, er det 2,5 % sjanse for å finne et egg og 0,15 % for et mytisk egg. Eleven kan finne høyst 2 egg om dagen og ha 4 uklekte egg om gangen. Et vanlig egg klekker etter 300 nye XP og et mytisk etter 600, summert over alle temaer. Trekningen og klekkingen skjer i databasefunksjonene `roll_egg` og `hatch_egg`, så eleven kan ikke jukse fram et dyr i nettleseren.
+Når et svar gir XP, er det 2,5 % sjanse for å finne et egg og 0,15 % for et mytisk egg. Eleven kan finne høyst 5 egg om dagen og ha 8 uklekte egg om gangen. Et vanlig egg klekker etter 300 nye XP og et mytisk etter 600, summert over alle temaer. Trekningen og klekkingen skjer i databasefunksjonene `roll_egg` og `hatch_egg`, så eleven kan ikke jukse fram et dyr i nettleseren.
 
 Vanlige egg gir ku, sau, kanin, hund, katt, skilpadde, minigris eller enhjørning. Mytiske egg gir alltid en drage. Hvert dyr får en farge: vanlig, stripete, bronse, sølv, smaragd, neon eller gull. Art og farge gir sjeldenhetsgraden: vanlig (grå), sjelden (grønn), veldig sjelden (blå), episk (lilla) eller legendarisk (oransje). Vektene står både i `src/pets/catalog.ts` og i `hatch_egg`, og de må endres begge steder.
 

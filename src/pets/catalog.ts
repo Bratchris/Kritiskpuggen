@@ -44,7 +44,7 @@ export const EGGS: Record<EggKind, { name: string; need: number; desc: string }>
   mytisk: { name: 'Mytisk egg', need: 600, desc: 'Et glødende egg med skjell. Det er varmt å holde i.' },
 };
 /** Sjansen per svar som gir XP. Står også i roll_egg i databasen. */
-export const CHANCE = { vanlig: 0.025, mytisk: 0.0015, perDay: 2, maxEggs: 4, cooldownMs: 12000 };
+export const CHANCE = { vanlig: 0.025, mytisk: 0.0015, perDay: 5, maxEggs: 8, cooldownMs: 12000 };
 
 export const speciesOf = (id: string | null) => SPECIES.find((s) => s.id === id);
 export const variantOf = (id: string | null) => VARIANTS.find((v) => v.id === id);
