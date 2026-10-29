@@ -4,7 +4,7 @@ import { supabase, friendly } from '../lib/supabase';
 import { THEMES, THEME_IDS, themeName } from '../themes';
 import { gradient } from '../app/room/iso';
 
-interface Klass { id: string; name: string; code: string; themes: string[]; created_at: string }
+interface Klass { id: string; name: string; code: string; themes: string[]; created_at: string; leaderboard?: boolean }
 interface Student { id: string; display_name: string; username: string; last_seen: string | null; created_at: string }
 interface Prog { student_id: string; theme: string; points: number; spent: number; state: any; updated_at: string }
 interface GiftRow { id: number; student_id: string; theme: string; item_id: string; price: number; created_at: string }
@@ -26,9 +26,9 @@ interface View {
 
 let V: View;
 let root: HTMLElement;
-let onPreview: (theme: string) => void;
+let onPreview: (theme: string, classId: string) => void;
 
-export async function mountTeacher(el: HTMLElement, me: { id: string; name: string }, preview: (theme: string) => void): Promise<void> {
+export async function mountTeacher(el: HTMLElement, me: { id: string; name: string }, preview: (theme: string, classId: string) => void): Promise<void> {
   root = el; onPreview = preview;
   document.documentElement.dataset.tema = '';
   V = V && V.me.id === me.id ? V : { me, classes: [], sel: null, theme: 'kritisk', students: [], progress: [], gifts: [], newCodes: null, rowAct: null, msg: '', creating: false, confirmDel: false };
@@ -38,7 +38,7 @@ export async function mountTeacher(el: HTMLElement, me: { id: string; name: stri
 }
 
 async function loadClasses() {
-  const { data, error } = await supabase.from('classes').select('id, name, code, themes, created_at').order('created_at');
+  const { data, error } = await supabase.from('classes').select('*').order('created_at');
   if (error) { V.msg = friendly(error); return; }
   V.classes = data as Klass[];
   if (!V.sel || !V.classes.some((c) => c.id === V.sel)) V.sel = V.classes[0]?.id ?? null;
@@ -65,6 +65,7 @@ async function loadClass() {
 const cls = () => V.classes.find((c) => c.id === V.sel) || null;
 const prog = (sid: string) => V.progress.find((p) => p.student_id === sid && p.theme === V.theme);
 function levelOf(theme: string, xp: number) { const L = THEMES[theme].room.levels; let k = 0; L.forEach((l, i) => { if (xp >= l.xp) k = i; }); return { i: k, n: L[k].n }; }
+function starsOf(theme: string, xp: number) { const L = THEMES[theme].room.levels, top = L[L.length - 1].xp; const n = xp >= top ? Math.floor((xp - top) / 300) : 0; return n > 0 ? ' ★' + n : ''; }
 function invoke(body: Record<string, unknown>) { return supabase.functions.invoke('manage-students', { body }); }
 async function fnError(error: any): Promise<string> {
   try { const j = await error?.context?.json?.(); if (j?.error) return j.error; } catch { /* bruk standardtekst */ }
@@ -110,7 +111,7 @@ function classHTML(c: Klass): string {
       const g = giftsHere.filter((x) => x.student_id === s.id).length;
       const pct = Math.round(known / nCards * 100);
       return '<tr><th scope="row"><b>' + esc(s.display_name) + '</b><small class="uname">' + esc(s.username) + '</small></th>' +
-        '<td><span class="lvchip" style="--lc:' + gradient(T.stripes, lv.i / Math.max(1, T.room.levels.length - 1)) + '">' + (lv.i + 1) + ' · ' + esc(lv.n) + '</span></td>' +
+        '<td><span class="lvchip" style="--lc:' + gradient(T.stripes, lv.i / Math.max(1, T.room.levels.length - 1)) + '">' + (lv.i + 1) + ' · ' + esc(lv.n) + starsOf(V.theme, xp) + '</span></td>' +
         '<td class="num">' + xp + '</td><td class="num">' + (xp - (p?.spent ?? 0)) + '</td>' +
         '<td><span class="minibar" aria-hidden="true"><i style="width:' + pct + '%"></i></span> ' + known + ' av ' + nCards + '</td>' +
         '<td class="num">' + g + '</td><td class="when">' + (s.last_seen ? esc(fmtDate(s.last_seen)) : 'Aldri') + '</td>' +
@@ -143,7 +144,9 @@ function classHTML(c: Klass): string {
     '<form id="add" class="tform"><label class="afield" for="add-names"><span>Navn</span><textarea id="add-names" rows="5" placeholder="Ola&#10;Kari&#10;Amir"></textarea></label><div class="row"><button class="btn primary" type="submit">Lag elevkoder</button></div></form>' +
     (V.newCodes ? codesHTML(c) : '') + '</section>' +
 
-    '<section class="panel"><h2>Innstillinger for klassen</h2><form id="cset" class="tform"><label class="afield" for="cs-name"><span>Navn</span><input id="cs-name" maxlength="60" value="' + esc(c.name) + '"></label><fieldset><legend>Temaer</legend>' + themeChecks(c.themes, 'cs-t') + '</fieldset><div class="row"><button class="btn" type="submit">Lagre</button></div></form>' +
+    '<section class="panel"><h2>Innstillinger for klassen</h2><form id="cset" class="tform"><label class="afield" for="cs-name"><span>Navn</span><input id="cs-name" maxlength="60" value="' + esc(c.name) + '"></label><fieldset><legend>Temaer</legend>' + themeChecks(c.themes, 'cs-t') + '</fieldset>' +
+    ('leaderboard' in c ? '<label class="check"><input type="checkbox" id="cs-lb"' + (c.leaderboard ? ' checked' : '') + '><span><b>Vis topplisten for elevene</b><small>Elevene ser navn og XP for alle i klassen. Slå av hvis det ikke passer for klassen.</small></span></label>' : '<p class="muted">Kjør databaseoppdateringen for topplisten for å kunne slå den av og på.</p>') +
+    '<div class="row"><button class="btn" type="submit">Lagre</button></div></form>' +
     '<div class="danger">' + (V.confirmDel ? '<span>Slette klassen og alle elevkontoene i den? Fremgang og gaver forsvinner.</span><button class="btn" id="del-yes" type="button">Ja, slett</button><button class="btn ghost" id="del-no" type="button">Avbryt</button>' : '<button class="btn ghost" id="del-ask" type="button">Slett klassen</button>') + '</div></section>';
 }
 
@@ -186,7 +189,7 @@ function wire(): void {
   }
 
   const r = $('#refresh'); if (r) r.onclick = () => { V.msg = ''; void loadClass(); };
-  root.querySelectorAll<HTMLElement>('[data-prev]').forEach((b) => { b.onclick = () => onPreview(b.dataset.prev!); });
+  root.querySelectorAll<HTMLElement>('[data-prev]').forEach((b) => { b.onclick = () => onPreview(b.dataset.prev!, V.sel!); });
   root.querySelectorAll<HTMLElement>('[data-th]').forEach((b) => { b.onclick = () => { V.theme = b.dataset.th!; V.rowAct = null; draw(); }; });
 
   ($('#add') as HTMLFormElement).onsubmit = async (e) => {
@@ -235,7 +238,9 @@ function wire(): void {
     e.preventDefault();
     const name = String($('#cs-name').value).trim(), themes = checked('cs-t');
     if (!name || !themes.length) { V.msg = 'Klassen trenger et navn og minst ett tema.'; draw(); return; }
-    const { error } = await supabase.from('classes').update({ name, themes }).eq('id', V.sel);
+    const c = cls(), patch: Record<string, unknown> = { name, themes };
+    if (c && 'leaderboard' in c) patch.leaderboard = !!($('#cs-lb') as HTMLInputElement)?.checked;
+    const { error } = await supabase.from('classes').update(patch).eq('id', V.sel);
     V.msg = error ? friendly(error) : ''; await loadClasses(); await loadClass();
   };
   const da = $('#del-ask'); if (da) da.onclick = () => { V.confirmDel = true; draw(); };

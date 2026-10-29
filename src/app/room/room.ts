@@ -2,7 +2,7 @@
 // Portert fra den opprinnelige én-fil-appen; tegningene ligger i hvert tema.
 import { $, esc } from '../../lib/dom';
 import { iso, pts } from './iso';
-import { S, T, ITEMS, LEVELS, lvl, save, head, panel, hooks, modeOf } from '../core';
+import { S, T, ITEMS, LEVELS, lvl, save, head, panel, hooks, modeOf, stars, starText, topXp, STAR_XP } from '../core';
 
 const GRID = 7;
 var WALL_TOP = 125, WALL_H = 150;
@@ -71,7 +71,7 @@ function furnG(id, flip?) {
 }
 function wallG(id, wl, s) {
   var tx = wl === 'R' ? 32 * s : -32 * s, ty = 16 * s - WALL_TOP;
-  return '<g class="furn" data-id="' + id + '" transform="matrix(' + (wl === 'R' ? '.5' : '-.5') + ' .25 0 1 ' + tx + ' ' + ty + ')"><title>' + esc(ITEMS[id].n) + '</title>' + ITEMS[id].f() + '</g>';
+  return '<g class="furn" data-id="' + id + '" transform="matrix(' + (wl === 'R' ? '.5' : '-.5') + ' .25 0 1 ' + tx + ' ' + ty + ')"><title>' + esc(ITEMS[id].n) + '</title>' + (wl === 'R' ? ITEMS[id].f() : '<g transform="translate(' + ITEMS[id].w * 64 + ' 0) scale(-1 1)">' + ITEMS[id].f() + '</g>') + '</g>';
 }
 function wallPt(wl, s, z) { return wl === 'R' ? iso(s, 0, z) : iso(0, s, z); }
 function tilePoly(x, y) { var c = tileC(x, y); return c[0] + ',' + (c[1] - 16) + ' ' + (c[0] + 32) + ',' + c[1] + ' ' + c[0] + ',' + (c[1] + 16) + ' ' + (c[0] - 32) + ',' + c[1]; }
@@ -157,13 +157,13 @@ export function renderRoom(): void {
     tray += '<h4 class="grp2">' + (i <= cur ? '' : '🔒 ') + 'Nivå ' + (i + 1) + ' · ' + esc(lv.n) + '</h4><div class="tray">' + lv.t.map(card).join('') + '</div>';
   });
   p.innerHTML = head('rom') +
-    '<div class="lvlcard"><div class="lvlrow"><span class="lvlname">' + esc(L.n) + '</span><span class="count">Nivå ' + (cur + 1) + ' av ' + LEVELS.length + ' · ' + S.points + ' XP</span></div>' +
+    '<div class="lvlcard"><div class="lvlrow"><span class="lvlname">' + esc(L.n) + '</span><span class="count">Nivå ' + (cur + 1) + ' av ' + LEVELS.length + starText(stars(S.points)) + ' · ' + S.points + ' XP</span></div>' +
     '<div class="meter" role="progressbar" aria-label="Fremdrift mot neste nivå" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '"><i style="width:' + pct + '%"></i></div>' +
-    '<p class="keyhint" style="margin:0">' + (nx ? 'Neste nivå er ' + esc(nx.n) + ' ved ' + nx.xp + ' XP. Du mangler ' + (nx.xp - S.points) + ' XP for å låse opp tre nye trofeer. ' : 'Du har nådd øverste nivå. ') + 'Trofeer: ' + got + ' av ' + total + ' er låst opp.</p></div>' +
+    '<p class="keyhint" style="margin:0">' + (nx ? 'Neste nivå er ' + esc(nx.n) + ' ved ' + nx.xp + ' XP. Du mangler ' + (nx.xp - S.points) + ' XP for å låse opp ' + nx.t.length + ' nye trofeer. ' : 'Du har nådd øverste nivå. Neste stjerne får du om ' + (STAR_XP - (S.points - topXp()) % STAR_XP) + ' XP. ') + 'Trofeer: ' + got + ' av ' + total + ' er låst opp.</p></div>' +
     '<div class="roomwrap">' + roomSVG(st.sel) + '</div>' +
     '<div class="selbar">' + selHTML + '<p class="msg" style="margin:8px 0 0" aria-live="polite">' + esc(st.msg) + '</p></div>' +
     tray +
-    '<details style="margin-top:18px"><summary>Slik fungerer XP og nivåer</summary><ul class="earn"><li>XP er alle poengene du noen gang har tjent i øvelsene.</li><li>Å bruke poeng i ' + esc(modeOf('shop').name) + ' senker ikke XP-en din.</li><li>Hvert nivå låser opp tre nye trofeer. De er ekstra pynt som du kan sette ut i stua, sammen med møblene og kunsten du allerede har.</li></ul></details>';
+    '<details style="margin-top:18px"><summary>Slik fungerer XP og nivåer</summary><ul class="earn"><li>XP er alle poengene du noen gang har tjent i øvelsene.</li><li>Å bruke poeng i ' + esc(modeOf('shop').name) + ' senker ikke XP-en din.</li><li>Hvert nivå låser opp nye trofeer. De er ekstra pynt som du kan sette ut i stua, sammen med møblene og kunsten du allerede har.</li><li>Etter øverste nivå får du en stjerne for hver ' + STAR_XP + ' XP, så du kan fortsette å samle.</li></ul></details>';
   fitPv(p);
 
   function done(msg?, focusSel?) { st.msg = msg || ''; save(); renderRoom(); if (focusSel) { var a = p.querySelector(focusSel); if (a) a.focus({ preventScroll: true }); } }

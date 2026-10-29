@@ -264,11 +264,13 @@ export const MODES: Mode[] = [
  { id: 'quiz', name: 'Quiz', desc: 'Ti spørsmål med flere svaralternativer. Du får forklaringen med en gang.', f: 1 },
  { id: 'tf', name: 'Sant eller usant', desc: 'Avslør hva som er sant og hva som er rene løgner.', f: 1 },
  { id: 'par', name: 'Parkoblingen', desc: 'Trykk på et begrep til venstre, og deretter på forklaringen til høyre.', f: 0 },
+ { id: 'memo', name: 'Memory', desc: 'Kortene ligger med baksiden opp. Snu to og finn begrepet og forklaringen som hører sammen.', f: 0 },
  { id: 'ord', name: 'Rekkefølgen', desc: 'Sett hendelser og steg i riktig rekkefølge.', f: 0 },
  { id: 'sort', name: 'Kurvene', desc: 'Er utsagnet fakta, en mening eller en fordom?', f: 0 },
  { id: 'hull', name: 'Hull i teksten', desc: 'Skriv ordet som mangler. Her må du huske, ikke gjette.', f: 1 },
  { id: 'feil', name: 'Finn feilen', desc: 'En feil har sneket seg inn i hver tekst. Åpne originalteksten, sammenlign, og trykk på ordet som er feil.', f: 1 },
  { id: 'tenk', name: 'Tenk selv', desc: 'Øv på spørsmål der du må argumentere og se sammenhenger.', f: 0 },
  { id: 'shop', name: 'Godteributikken', desc: 'Bruk poengene dine på digitalt halloweengodteri til læreren. Jo mer du øver, jo større godteri kan du kjøpe.', f: 0, g: 1 },
- { id: 'rom', name: 'Troférommet', desc: 'Stig i nivå for å låse opp skumle trofeer til halloweenstua di.', f: 0, g: 1 }
+ { id: 'rom', name: 'Troférommet', desc: 'Stig i nivå for å låse opp skumle trofeer til halloweenstua di.', f: 0, g: 1 },
+ { id: 'top', name: 'Topplisten', desc: 'Hvem i klassen har samlet mest XP? Plassen din oppdateres når du tjener poeng.', f: 0, g: 1 }
 ];

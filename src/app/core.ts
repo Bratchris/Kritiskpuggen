@@ -26,9 +26,9 @@ export let MODES: Mode[];
 export let LEVELS: Level[];
 export let ITEMS: Record<string, RoomItem>;
 
-export function setTheme(theme: Theme, st: Store): void {
+export function setTheme(theme: Theme, st: Store, flags: { leaderboard?: boolean } = {}): void {
   T = theme; store = st;
-  MODES = theme.modes.filter((m) => m.id !== 'feil' || theme.content.feil.length > 0);
+  MODES = theme.modes.filter((m) => (m.id !== 'feil' || theme.content.feil.length > 0) && (m.id !== 'top' || flags.leaderboard !== false));
   LEVELS = theme.room.levels;
   ITEMS = theme.room.items;
 }
@@ -69,6 +69,11 @@ export function panel(): any { return $('#panel'); }
 
 export function lvl(p: number): number { let k = 0; for (let i = 0; i < LEVELS.length; i++) if (p >= LEVELS[i].xp) k = i; return k; }
 export function level(p: number): string { return LEVELS[lvl(p)].n; }
+/** Etter øverste nivå gir hver STAR_XP en stjerne, så det finnes ikke noe tak. */
+export const STAR_XP = 300;
+export function topXp(): number { return LEVELS[LEVELS.length - 1].xp; }
+export function stars(p: number): number { return p >= topXp() ? Math.floor((p - topXp()) / STAR_XP) : 0; }
+export function starText(n: number): string { return n > 0 ? ' ★' + n : ''; }
 
 /** Kalles av skallet (app.ts) når poengene endres, for å tegne toppen og vise nytt nivå. */
 export const hooks = {

@@ -340,3 +340,5 @@ export const HOME: Record<string, Placement> = {
   lenestol: { x: 5, y: 1, f: 0 }, plante: { x: 6, y: 0, f: 0 }, lampe: { x: 0, y: 5, f: 0 }, puff: { x: 4, y: 4, f: 0 },
   mane: { wl: 'R', s: 0 }, girlander: { wl: 'R', s: 2 }, klokke: { wl: 'R', s: 6 }, hus: { wl: 'L', s: 0 }, kirkegard: { wl: 'L', s: 3 }
 };
+
+export { f1, flame, pk, bat, fv, rectF, at, fr, WOODD, DARKL, STONED, GOLD };

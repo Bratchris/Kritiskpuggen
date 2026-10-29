@@ -9,6 +9,7 @@ export interface SavedState {
   seenLvl: number;
 }
 export interface Gift { item_id: string; created_at: string }
+export interface LbRow { display_name: string; points: number; is_me: boolean }
 export interface Progress { points: number; spent: number; state: SavedState; gifts: Gift[] }
 
 /**
@@ -22,6 +23,7 @@ export interface Store {
   flush(): Promise<void>;
   award(theme: string, n: number): Promise<number>;
   buy(theme: string, itemId: string, price: number): Promise<number>;
+  leaderboard(theme: string): Promise<LbRow[]>;
 }
 
 function emptyState(): SavedState { return { known: {}, notes: {}, home: null, seenLvl: -1 }; }
@@ -91,10 +93,24 @@ export class RemoteStore implements Store {
     if (error) throw error;
     return data as number;
   }
+
+  async leaderboard(theme: string): Promise<LbRow[]> {
+    const { data, error } = await supabase.rpc('get_leaderboard', { p_theme: theme });
+    if (error) throw error;
+    return (data ?? []) as LbRow[];
+  }
 }
 
 export class PreviewStore implements Store {
   readonly kind = 'preview' as const;
+  /** Klassen læreren forhåndsviser fra, slik at topplisten viser ekte elever. */
+  constructor(private classId: string | null = null) {}
+  async leaderboard(theme: string): Promise<LbRow[]> {
+    if (!this.classId) return [];
+    const { data, error } = await supabase.rpc('get_leaderboard', { p_theme: theme, p_class: this.classId });
+    if (error) throw error;
+    return (data ?? []) as LbRow[];
+  }
   private key(theme: string) { return 'puggen-preview-' + theme; }
   private read(theme: string): Progress {
     try {

@@ -2,6 +2,7 @@ import type { Theme } from '../types';
 import * as C from './content';
 import { ICONS, PRODUCTS } from './shop';
 import { ITEMS, LEVELS, HOME } from './room';
+import { EXTRA_ITEMS, EXTRA_LEVELS } from './room-extra';
 
 export const klima: Theme = {
   id: 'klima',
@@ -25,7 +26,7 @@ export const klima: Theme = {
   content: { cards: C.CARDS, quiz: C.QUIZ, tf: C.TF, hull: C.HULL, pairs: C.PAIRS, order: C.ORDER, sort: C.SORT, think: C.THINK, feil: C.FEIL },
   shop: { products: PRODUCTS, icons: ICONS, shelfTitle: 'Lærerens kaffehjørne', emptyText: 'Hyllen er tom. Tjen poeng i øvelsene og velg den første gaven.', goldId: 'gull' },
   room: {
-    levels: LEVELS, items: ITEMS, defaultHome: HOME,
+    levels: [...LEVELS, ...EXTRA_LEVELS], items: { ...ITEMS, ...EXTRA_ITEMS }, defaultHome: HOME,
     windowArt: '<circle cx="96" cy="26" r="6" style="fill:#ffd25a"/>',
     groups: [['mob', 'Møbler'], ['rug', 'Tepper'], ['art', 'Plakater og kunst']],
     ariaLabel: 'Isometrisk stue med møbler, veggkunst og trofeer',

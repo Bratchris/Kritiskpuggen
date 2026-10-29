@@ -40,8 +40,8 @@ async function route(): Promise<void> {
   }
 
   if (me.role === 'teacher') {
-    const openTeacher = () => mountTeacher(root, { id: me.id, name: me.display_name }, (theme) => {
-      const store = new PreviewStore();
+    const openTeacher = () => mountTeacher(root, { id: me.id, name: me.display_name }, (theme, classId) => {
+      const store = new PreviewStore(classId);
       void mountApp(root, THEMES[theme], store, {
         who: me.display_name + ' · forhåndsvisning', preview: true,
         onExit: () => { void openTeacher(); },
@@ -53,7 +53,7 @@ async function route(): Promise<void> {
     return;
   }
 
-  const { data: klass } = await supabase.from('classes').select('name, themes').eq('id', me.class_id).maybeSingle();
+  const { data: klass } = await supabase.from('classes').select('*').eq('id', me.class_id).maybeSingle();
   const themes = (klass?.themes ?? []).filter((t: string) => THEMES[t]);
   if (!themes.length) {
     root.innerHTML = '<div class="wrap"><section class="panel"><h2>Ingen puggere ennå</h2><p>Læreren har ikke valgt noe tema for klassen din.</p><button class="btn" id="out" type="button">Logg ut</button></section></div>';
@@ -66,6 +66,7 @@ async function route(): Promise<void> {
     try { localStorage.setItem(LAST_THEME, theme); } catch { /* ignorer */ }
     void mountApp(root, THEMES[theme], store, {
       who,
+      leaderboard: klass?.leaderboard !== false,
       onSwitchTheme: themes.length > 1 ? pick : undefined,
       onLogout: () => { void supabase.auth.signOut(); },
     });

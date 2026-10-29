@@ -277,3 +277,5 @@ export const HOME: Record<string, Placement> = {
   lenestol: { x: 5, y: 1, f: 0 }, plante: { x: 6, y: 0, f: 0 }, lampe: { x: 0, y: 5, f: 0 }, puff: { x: 4, y: 4, f: 0 },
   stripes: { wl: 'R', s: 0 }, temp: { wl: 'R', s: 2 }, klokke: { wl: 'R', s: 6 }, kart: { wl: 'L', s: 0 }, fjord: { wl: 'L', s: 3 }
 };
+
+export { fv, rectF, at, fr, dPokal, WOODD, DARK, GREEN, GREEND };

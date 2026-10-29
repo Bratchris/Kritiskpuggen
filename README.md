@@ -9,7 +9,7 @@ Teknikk: Vite + TypeScript i nettleseren, Supabase (Postgres, Auth og en Edge Fu
 ### 1. Supabase
 
 1. Lag et prosjekt på [supabase.com](https://supabase.com). Velg en region i EU, for eksempel Stockholm (`eu-north-1`).
-2. Åpne **SQL Editor** og kjør filene i `supabase/migrations/` én om gangen, i rekkefølge etter navn: først `20261020000000_init.sql`, så `20261029000000_fix_student_role.sql`. Har du Supabase CLI, kan du i stedet kjøre `supabase link` og så `supabase db push`.
+2. Åpne **SQL Editor** og kjør filene i `supabase/migrations/` én om gangen, i rekkefølge etter navn: først `20261020000000_init.sql`, så `20261029000000_fix_student_role.sql` og til slutt `20261029100000_leaderboard.sql`. Har du Supabase CLI, kan du i stedet kjøre `supabase link` og så `supabase db push`.
 3. Publiser edge-funksjonen som lager elevkontoer:
    ```bash
    npx supabase login
@@ -59,6 +59,11 @@ npx supabase secrets set STUDENT_EMAIL_DOMAIN=elev.dittdomene.no   # edge-funksj
 ```
 
 Gjør dette før du lager de første elevene, siden eksisterende elevkontoer beholder adressen de ble laget med.
+
+## Nivåer og toppliste
+
+- Hvert tema har 16 nivåer, fra 0 til 1800 XP. Etter øverste nivå får eleven en stjerne for hver 300 XP, så det finnes ikke noe tak.
+- Topplisten viser XP for elevene i egen klasse. Elevene kan ikke lese andres fremgang direkte, bare gjennom databasefunksjonen `get_leaderboard`. Læreren slår topplisten av og på under «Innstillinger for klassen».
 
 ## Arkitektur
 

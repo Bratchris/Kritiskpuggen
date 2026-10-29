@@ -3,11 +3,12 @@ import { $, esc, toast } from '../lib/dom';
 import type { Store } from '../lib/store';
 import type { Theme } from '../themes/types';
 import { gradient } from './room/iso';
-import { S, T, MODES, LEVELS, ITEMS, CARDS_KNOWN, setTheme, loadProgress, lvl, level, modeOf, isGlobal, hooks, save } from './core';
+import { S, T, MODES, LEVELS, ITEMS, CARDS_KNOWN, setTheme, loadProgress, lvl, level, modeOf, isGlobal, hooks, save, stars, starText } from './core';
 import { renderKort } from './modes/kort';
 import { renderQuiz } from './modes/quiz';
 import { renderTf } from './modes/tf';
 import { renderPar } from './modes/par';
+import { renderMemo } from './modes/memo';
 import { renderOrd } from './modes/ord';
 import { renderSort } from './modes/sort';
 import { renderHull } from './modes/hull';
@@ -15,12 +16,13 @@ import { renderFeil } from './modes/feil';
 import { renderThink } from './modes/tenk';
 import { renderShop } from './shop';
 import { renderRoom, defaultHome, rm, hint, pv, fitPv } from './room/room';
+import { renderTop, loadBoard, myRankText } from './modes/top';
 
 const RENDER: Record<string, () => void> = {
-  kort: renderKort, quiz: renderQuiz, tf: renderTf, par: renderPar, ord: renderOrd, sort: renderSort,
-  hull: renderHull, feil: renderFeil, tenk: renderThink, shop: renderShop, rom: renderRoom,
+  kort: renderKort, quiz: renderQuiz, tf: renderTf, par: renderPar, memo: renderMemo, ord: renderOrd, sort: renderSort,
+  hull: renderHull, feil: renderFeil, tenk: renderThink, shop: renderShop, rom: renderRoom, top: renderTop,
 };
-const SHORT: Record<string, string> = { kort: 'Kort­stokken', shop: '', rom: 'Trofé­rommet' };
+const SHORT: Record<string, string> = { kort: 'Kort­stokken', shop: '', rom: 'Trofé­rommet', top: 'Topp­listen' };
 
 export interface MountOptions {
   who: string;
@@ -29,12 +31,14 @@ export interface MountOptions {
   onLogout?: () => void;
   onExit?: () => void;
   onReset?: () => void;
+  /** Av når læreren har slått av topplisten for klassen. */
+  leaderboard?: boolean;
 }
 
 /** Bygger øvingsappen i root for et tema. Fremgangen hentes fra store. */
 export async function mountApp(root: HTMLElement, theme: Theme, store: Store, opts: MountOptions): Promise<void> {
   document.documentElement.dataset.tema = theme.id;
-  setTheme(theme, store);
+  setTheme(theme, store, { leaderboard: opts.leaderboard });
   root.innerHTML = '<div class="wrap"><p class="loading">Henter fremgangen din …</p></div>';
   let progress;
   try { progress = await store.load(theme.id); } catch (e) {
@@ -91,12 +95,17 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
   });
 
   hooks.refresh = () => { renderHeader(); renderTabs(); };
+  let starsBefore = stars(S.points);
   hooks.onPoints = (before, after, n) => {
     renderHeader(); renderTabs();
+    const st = stars(S.points);
     if (after > before) { toast('Nytt nivå: ' + LEVELS[after].n); showLevelUp(after); }
+    else if (st > starsBefore) toast('Ny stjerne! Du har nå ★' + st);
     else toast('+' + n + ' poeng');
+    starsBefore = st;
   };
   render();
+  if (MODES.some((m) => m.id === 'top')) void loadBoard();
 }
 
 function render(): void { renderTabs(); renderFilters(); renderHeader(); RENDER[S.mode](); }
@@ -105,13 +114,15 @@ function renderHeader(): void {
   const cards = T.content.cards, n = cards.length, known = CARDS_KNOWN();
   $('#stripes').innerHTML = cards.map((c, i) => '<i class="' + (S.known[c.id] === 1 ? 'on' : '') + '" style="background:' + gradient(T.stripes, i / Math.max(1, n - 1)) + '"></i>').join('');
   $('#stripes').setAttribute('aria-label', known + ' av ' + n + ' kort mestret');
-  $('#stat').innerHTML = '<span><b>' + known + '</b> av ' + n + ' kort mestret</span><span>Poeng <b>' + (S.points - S.spent) + '</b></span><span>Nivå <b>' + esc(level(S.points)) + '</b> · ' + S.points + ' XP</span>';
+  $('#stat').innerHTML = '<span><b>' + known + '</b> av ' + n + ' kort mestret</span><span>Poeng <b>' + (S.points - S.spent) + '</b></span><span>Nivå <b>' + esc(level(S.points)) + '</b>' + starText(stars(S.points)) + ' · ' + S.points + ' XP</span>';
   renderDock();
 }
 
 function renderDock(): void {
   const L = LEVELS[lvl(S.points)];
-  const sub: Record<string, string> = { kort: CARDS_KNOWN() + ' av ' + T.content.cards.length + ' kan', shop: (S.points - S.spent) + ' poeng', rom: 'Nivå ' + (lvl(S.points) + 1) + ' · ' + L.n };
+  const sub: Record<string, string> = { kort: CARDS_KNOWN() + ' av ' + T.content.cards.length + ' kan', shop: (S.points - S.spent) + ' poeng', rom: 'Nivå ' + (lvl(S.points) + 1) + ' · ' + L.n, top: myRankText() };
+  const g = MODES.filter((m) => m.g).length;
+  $('#dock').style.gridTemplateColumns = 'repeat(' + g + ', minmax(0, 1fr))';
   $('#dock').innerHTML = MODES.filter((m) => m.g).map((m) =>
     '<button class="dk" type="button" data-g="' + m.id + '" aria-current="' + (S.mode === m.id) + '"><b>' + (SHORT[m.id] || m.name.replace(/butikken$/, '­butikken')) +
     (m.id === 'rom' && S.mode !== 'rom' && lvl(S.points) > S.seenLvl ? '<span class="newdot">Ny</span>' : '') + '</b><span>' + esc(sub[m.id] || '') + '</span></button>').join('');
@@ -136,7 +147,7 @@ function renderFilters(): void {
 
 function showLevelUp(i: number): void {
   const L = LEVELS[i], m = $('#lvlup');
-  m.innerHTML = '<div class="lvlbox"><p class="eyebrow">Nytt nivå</p><h2 id="lvl-t">' + esc(L.n) + '</h2><p><b>Du låste opp tre nye trofeer.</b> Velg hvilke du vil sette ut i stua.</p>' +
+  m.innerHTML = '<div class="lvlbox"><p class="eyebrow">Nytt nivå</p><h2 id="lvl-t">' + esc(L.n) + '</h2><p><b>Du låste opp ' + L.t.length + ' nye trofeer.</b> Velg hvilke du vil sette ut i stua.</p>' +
     '<div class="lvlpv">' + L.t.map((id) => '<div class="lp pop">' + pv(id) + '<b>' + esc(ITEMS[id].n) + '</b></div>').join('') + '</div>' +
     '<div class="row"><button class="btn primary" id="lu-go" type="button">Gå til troférommet</button><button class="btn ghost" id="lu-x" type="button">Fortsett å øve</button></div></div>';
   m.hidden = false;

@@ -209,12 +209,14 @@ export const MODES: Mode[] = [
  { id: 'quiz', name: 'Quiz', desc: 'Ti spørsmål med fire svar. Du får forklaringen med en gang.', f: 1 },
  { id: 'tf', name: 'Sant eller usant', desc: 'Avslør hva som er sant og hva som er rene løgner.', f: 1 },
  { id: 'par', name: 'Parkoblingen', desc: 'Trykk på et begrep til venstre, og deretter på forklaringen til høyre.', f: 0 },
+ { id: 'memo', name: 'Memory', desc: 'Kortene ligger med baksiden opp. Snu to og finn begrepet og forklaringen som hører sammen.', f: 0 },
  { id: 'ord', name: 'Rekkefølgen', desc: 'Sett hendelser og årsaker i riktig rekkefølge.', f: 0 },
  { id: 'sort', name: 'Kurvene', desc: 'Hører det til klima og miljø, sosiale forhold, økonomi, eller alle tre?', f: 0 },
  { id: 'hull', name: 'Hull i teksten', desc: 'Skriv ordet som mangler. Her må du huske, ikke gjette.', f: 1 },
  { id: 'tenk', name: 'Tenk selv', desc: 'Øv på spørsmål der du må argumentere og se sammenhenger.', f: 0 },
  { id: 'shop', name: 'Kaffebutikken', desc: 'Bruk poengene dine på digitale kaffegaver til læreren. Jo mer du øver, jo større gaver kan du kjøpe.', f: 0, g: 1 },
- { id: 'rom', name: 'Troférommet', desc: 'Stig i nivå for å låse opp trofeer.', f: 0, g: 1 }
+ { id: 'rom', name: 'Troférommet', desc: 'Stig i nivå for å låse opp trofeer.', f: 0, g: 1 },
+ { id: 'top', name: 'Topplisten', desc: 'Hvem i klassen har samlet mest XP? Plassen din oppdateres når du tjener poeng.', f: 0, g: 1 }
 ];
 
 export const FEIL: FeilItem[] = [];

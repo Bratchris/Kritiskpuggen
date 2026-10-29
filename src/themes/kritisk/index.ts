@@ -2,6 +2,7 @@ import type { Theme } from '../types';
 import * as C from './content';
 import { ICONS, PRODUCTS } from './shop';
 import { ITEMS, LEVELS, HOME } from './room';
+import { EXTRA_ITEMS, EXTRA_LEVELS } from './room-extra';
 
 export const kritisk: Theme = {
   id: 'kritisk',
@@ -24,7 +25,7 @@ export const kritisk: Theme = {
   content: { cards: C.CARDS, quiz: C.QUIZ, tf: C.TF, hull: C.HULL, pairs: C.PAIRS, order: C.ORDER, sort: C.SORT, think: C.THINK, feil: C.FEIL },
   shop: { products: PRODUCTS, icons: ICONS, shelfTitle: 'Lærerens godteriskål', emptyText: 'Skålen er tom. Tjen poeng i øvelsene og velg det første godteriet.', goldId: 'gull' },
   room: {
-    levels: LEVELS, items: ITEMS, defaultHome: HOME,
+    levels: [...LEVELS, ...EXTRA_LEVELS], items: { ...ITEMS, ...EXTRA_ITEMS }, defaultHome: HOME,
     windowArt: '<circle cx="96" cy="26" r="8" style="fill:#f6e7a8"/><circle cx="100" cy="23" r="7" style="fill:var(--sky)"/><circle cx="24" cy="22" r="1.2" style="fill:#f6e7a8"/><circle cx="44" cy="54" r="1" style="fill:#f6e7a8"/><circle cx="80" cy="52" r="1.2" style="fill:#f6e7a8"/><circle cx="110" cy="50" r="1" style="fill:#f6e7a8"/>',
     groups: [['mob', 'Møbler'], ['rug', 'Tepper'], ['art', 'Malerier og pynt']],
     ariaLabel: 'Isometrisk halloweenstue med møbler, veggkunst og trofeer',
