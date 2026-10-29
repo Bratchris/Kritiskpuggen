@@ -11,7 +11,8 @@ export interface SavedState {
   seeded?: number[];
 }
 export interface Gift { item_id: string; created_at: string }
-export interface LbRow { display_name: string; points: number; is_me: boolean }
+/** rank og total kommer fra databasen. Elever får bare topp 3 og sin egen rad. */
+export interface LbRow { display_name: string; points: number; is_me: boolean; rank?: number; total?: number }
 export interface Progress { points: number; spent: number; state: SavedState; gifts: Gift[] }
 
 /**

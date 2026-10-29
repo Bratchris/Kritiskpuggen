@@ -216,7 +216,7 @@ export const MODES: Mode[] = [
  { id: 'tenk', name: 'Tenk selv', desc: 'Øv på spørsmål der du må argumentere og se sammenhenger.', f: 0 },
  { id: 'shop', name: 'Kaffebutikken', desc: 'Bruk poengene dine på digitale kaffegaver til læreren. Jo mer du øver, jo større gaver kan du kjøpe.', f: 0, g: 1 },
  { id: 'rom', name: 'Troférommet', desc: 'Stig i nivå for å låse opp trofeer og nye rom i huset ditt.', f: 0, g: 1 },
- { id: 'top', name: 'Topplisten', desc: 'Hvem i klassen har samlet mest XP? Plassen din oppdateres når du tjener poeng.', f: 0, g: 1 }
+ { id: 'top', name: 'Topplisten', desc: 'Se hvem som er topp 3 i klassen, og hvilken plass du har selv.', f: 0, g: 1 }
 ];
 
 export const FEIL: FeilItem[] = [];
