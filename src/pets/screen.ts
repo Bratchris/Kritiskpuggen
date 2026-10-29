@@ -3,7 +3,7 @@
 import { esc, toast } from '../lib/dom';
 import { friendly } from '../lib/supabase';
 import { S, T, store, hooks, xpTotal } from '../app/core';
-import { type Pet, type EggKind, SPECIES, VARIANTS, RARITIES, EGGS, CHANCE, petName, eggProgress } from './catalog';
+import { type Pet, type EggKind, SPECIES, VARIANTS, RARITIES, EGGS, CHANCE, petName, eggProgress, rarityOf } from './catalog';
 import { petSVG, petG, eggSVG, eggG } from './render';
 import type { PreviewStore } from '../lib/store';
 
@@ -89,6 +89,33 @@ async function hatch(id: string, rerender: () => void): Promise<void> {
 }
 
 // ---------- fanen ----------
+/** Prosent med en eller to desimaler, så små sjanser ikke blir 0 %. */
+const pct = (x: number) => { const v = x * 100; return (v >= 1 ? v.toFixed(1) : v >= 0.1 ? v.toFixed(2) : v.toFixed(3)).replace('.', ',') + ' %'; };
+
+const num = (x: number) => pct(x).replace(' %', '');
+
+/** Tabell over sjansen for hvert dyr og hver farge, regnet ut fra vektene i catalog.ts. */
+export function oddsHTML(): string {
+  const vTot = VARIANTS.reduce((a, v) => a + v.w, 0);
+  const table = (egg: EggKind) => {
+    const sp = SPECIES.filter((x) => x.egg === egg), sTot = sp.reduce((a, x) => a + x.w, 0);
+    const byR = [0, 0, 0, 0, 0];
+    const rows = sp.map((x) => {
+      const ps = x.w / sTot;
+      return '<tr><th scope="row">' + esc(x.name) + '</th>' + VARIANTS.map((v) => {
+        const p = ps * (v.w / vTot), r = rarityOf(x.id, v.id); byR[r] += p;
+        return '<td class="rar r' + r + '" title="' + esc(petName(x.id, v.id) + ': ' + pct(p) + ', ' + RARITIES[r].toLowerCase()) + '">' + num(p) + '</td>';
+      }).join('') + '<td class="tot">' + num(ps) + '</td></tr>';
+    }).join('');
+    return '<div class="oddswrap"><table class="odds"><caption>' + esc(EGGS[egg].name) + ' <small>(prosent)</small></caption><thead><tr><th scope="col">Dyr</th>' + VARIANTS.map((v) => '<th scope="col">' + esc(v.name) + '</th>').join('') + '<th scope="col">Sum</th></tr></thead><tbody>' + rows + '</tbody>' +
+      '<tfoot><tr><th scope="row">Fargen</th>' + VARIANTS.map((v) => '<td>' + num(v.w / vTot) + '</td>').join('') + '<td class="tot">100</td></tr></tfoot></table></div>' +
+      '<p class="oddsrar">' + byR.map((x, i) => x > 0 ? '<span class="o">' + rar(i) + ' ' + pct(x) + '</span>' : '').join('') + '</p>';
+  };
+  return '<details class="dex oddsbox"><summary>Sjansene: hva klekker av eggene?</summary><div class="dexbody">' +
+    '<p class="keyhint">Prosentene viser hvor sannsynlig hvert dyr er når et egg klekker. Fargen på tallet er sjeldenhetsgraden. For å finne et egg i det hele tatt er sjansen ' + pct(CHANCE.vanlig) + ' for et vanlig og ' + pct(CHANCE.mytisk) + ' for et mytisk egg per svar som gir XP.</p>' +
+    table('vanlig') + table('mytisk') + '</div></details>';
+}
+
 function dexHTML(): string {
   const found = new Set(hatched().map((p) => p.species + '/' + p.variant));
   return SPECIES.map((s) => '<div class="dexrow"><span class="dexname">' + esc(s.name) + (s.egg === 'mytisk' ? ' <small>(mytisk egg)</small>' : '') + '</span><div class="dexcells">' +
@@ -112,7 +139,7 @@ export function petsHTML(): string {
     '<div class="avsec"><h3>Eggene dine</h3>' + (E.length ? '<div class="eggs">' + E.map(eggCard).join('') + '</div>' : '<p class="keyhint">Ingen egg ennå. Fortsett å øve, så dukker det kanskje opp et.</p>') + '</div>' +
     '<div class="avsec"><h3>Dyrene dine</h3>' + (H.length ? '<div class="pets">' + H.map((p) => petCard(p)).join('') + '</div>' : '<p class="keyhint">Ingen dyr ennå. Klekk et egg for å få ditt første.</p>') + '</div>' +
     '<details class="dex"><summary>Dyreboka: ' + nFound + ' av ' + nAll + ' funnet</summary><div class="dexbody"></div></details>' +
-    '<div class="avsec"><h3>Sjeldenhet</h3><p class="rarlegend">' + RARITIES.map((_, i) => rar(i)).join(' ') + '</p><p class="keyhint">Arten og fargen avgjør hvor sjeldent dyret er. Stripete og bronse er litt sjeldne, sølv mer, smaragd og neon svært sjeldne, og gull nesten aldri. Enhjørning og minigris er sjeldnere enn de andre, og dragen finnes bare i mytiske egg.</p></div>';
+    '<div class="avsec"><h3>Sjeldenhet</h3><p class="rarlegend">' + RARITIES.map((_, i) => rar(i)).join(' ') + '</p><p class="keyhint">Arten og fargen avgjør hvor sjeldent dyret er. Stripete og bronse er litt sjeldne, sølv mer, smaragd og neon svært sjeldne, og gull nesten aldri. Enhjørning og minigris er sjeldnere enn de andre, og dragen finnes bare i mytiske egg.</p></div>' + oddsHTML();
 }
 
 export function wirePets(p: HTMLElement, rerender: () => void): void {

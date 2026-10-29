@@ -462,3 +462,14 @@ svg.egg.wobble, svg.egg.ready.companion { animation: eggwob 1.4s ease-in-out inf
 @keyframes glowp { 50% { opacity: .35; } }
 .rarline .rar { font-size: 1.1rem; text-transform: uppercase; letter-spacing: .08em; }
 @media (prefers-reduced-motion: reduce) { svg.egg.wobble, svg.egg.ready.companion, .hatching svg.shake, .eggdrop svg.pop, .reveal svg.born, .burst { animation: none; } }
+.oddswrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--line); border-radius: 10px; }
+table.odds { border-collapse: collapse; width: 100%; min-width: 420px; font-size: .78rem; font-variant-numeric: tabular-nums; }
+table.odds caption { text-align: left; font-weight: 800; padding: 8px 10px 4px; font-family: var(--font-display); font-size: 1rem; }
+table.odds th, table.odds td { padding: 5px 4px; border-top: 1px solid var(--line); text-align: right; white-space: nowrap; }
+table.odds th[scope="row"], table.odds thead th:first-child { text-align: left; position: sticky; left: 0; background: var(--surface); }
+table.odds thead th { font-size: .76rem; color: var(--muted); font-weight: 700; }
+table.odds td.tot, table.odds tfoot td { color: var(--ink); font-weight: 700; }
+table.odds tfoot th, table.odds tfoot td { background: var(--bg); }
+.oddsrar { margin: 6px 0 10px; font-size: .86rem; display: flex; flex-wrap: wrap; gap: 2px 12px; }
+.oddsrar span.o { white-space: nowrap; }
+table.odds caption small { font-family: var(--font-body); font-weight: 600; color: var(--muted); font-size: .78rem; }
