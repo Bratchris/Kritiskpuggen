@@ -1,12 +1,13 @@
 import { nordlysSVG, nordlysPixelPNG } from './scenes';
+import { piratePNG } from './pirate';
 
 // Bakgrunner bak appen. Hvert mønster er en liten SVG-flis som gjentas over hele siden.
 // Pris 0 = gratis for alle. Andre kjøpes med poeng gjennom buy_skin, og prisene må stemme med skin_items
 // (supabase/migrations/20261029600000_backgrounds.sql).
 
-export type BgGroup = 'sot' | 'kul' | 'halloween' | 'natur';
+export type BgGroup = 'sot' | 'kul' | 'halloween' | 'natur' | 'pirat';
 export const BG_GROUPS: { id: BgGroup; name: string }[] = [
-  { id: 'sot', name: 'Søte' }, { id: 'kul', name: 'Kule' }, { id: 'halloween', name: 'Halloween' }, { id: 'natur', name: 'Natur' },
+  { id: 'sot', name: 'Søte' }, { id: 'kul', name: 'Kule' }, { id: 'halloween', name: 'Halloween' }, { id: 'natur', name: 'Natur' }, { id: 'pirat', name: 'Piratøya' },
 ];
 /** cover = ett stort bilde som fyller skjermen i stedet for et mønster. pixel = skarpe piksler når bildet forstørres. image = ferdig bildeadresse i stedet for SVG. */
 export interface Background { id: string; group: BgGroup; name: string; price: number; color: string; size: number; tile: () => string; cover?: boolean; pixel?: boolean; image?: () => string }
@@ -128,6 +129,10 @@ export const BACKGROUNDS: Background[] = [
   // ---------- natur ----------
   { id: 'bg_nordlys', group: 'natur', name: 'Nordlys over skogen', price: 80, color: '#0c1b40', size: 0, cover: true, tile: nordlysSVG },
   { id: 'bg_nordlys_piksel', group: 'natur', name: 'Nordlys i piksler', price: 80, color: '#0c1a44', size: 0, cover: true, pixel: true, tile: () => '', image: nordlysPixelPNG },
+  // ---------- piratøya ----------
+  { id: 'bg_pirat_soloppgang', group: 'pirat', name: 'Piratøya ved soloppgang', price: 100, color: '#f2a6a6', size: 0, cover: true, pixel: true, tile: () => '', image: () => piratePNG('soloppgang') },
+  { id: 'bg_pirat_solnedgang', group: 'pirat', name: 'Piratøya ved solnedgang', price: 100, color: '#a23f6b', size: 0, cover: true, pixel: true, tile: () => '', image: () => piratePNG('solnedgang') },
+  { id: 'bg_pirat_natt', group: 'pirat', name: 'Piratøya en stjerneklar natt', price: 100, color: '#0b1638', size: 0, cover: true, pixel: true, tile: () => '', image: () => piratePNG('natt') },
 ];
 export const bgById = (id: string | undefined | null) => BACKGROUNDS.find((b) => b.id === id);
 
