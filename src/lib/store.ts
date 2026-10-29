@@ -9,6 +9,8 @@ export interface SavedState {
   seenLvl: number;
   /** Rom i huset som har fått startmøblene sine. */
   seeded?: number[];
+  /** Spørsmål som har gitt poeng, med dato (ÅÅÅÅ-MM-DD). Bare dagens beholdes. */
+  earned?: Record<string, string>;
 }
 export interface Gift { item_id: string; created_at: string }
 /** rank og total kommer fra databasen. Elever får bare topp 3 og sin egen rad. */
@@ -41,6 +43,7 @@ function cleanState(raw: any): SavedState {
     if (raw.home && typeof raw.home === 'object') s.home = raw.home;
     if (typeof raw.seenLvl === 'number') s.seenLvl = raw.seenLvl;
     if (Array.isArray(raw.seeded)) s.seeded = raw.seeded.filter((n: unknown) => typeof n === 'number');
+    if (raw.earned && typeof raw.earned === 'object') s.earned = raw.earned;
   }
   return s;
 }

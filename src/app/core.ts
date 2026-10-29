@@ -14,12 +14,13 @@ export interface AppState {
   home: Record<string, Placement> | null;
   seenLvl: number;
   seeded: number[];
+  earned: Record<string, string>;
   known: Record<string, 1>;
   notes: Record<string, string>;
   cur: Record<string, any>;
 }
 
-export const S: AppState = { topic: 'alle', mode: 'quiz', last: 'quiz', points: 0, spent: 0, gifts: [], home: null, seenLvl: -1, seeded: [], known: {}, notes: {}, cur: {} };
+export const S: AppState = { topic: 'alle', mode: 'quiz', last: 'quiz', points: 0, spent: 0, gifts: [], home: null, seenLvl: -1, seeded: [], earned: {}, known: {}, notes: {}, cur: {} };
 
 export let T: Theme;
 export let store: Store;
@@ -40,13 +41,14 @@ export function loadProgress(p: { points: number; spent: number; state: SavedSta
   S.known = p.state.known; S.notes = p.state.notes; S.home = p.state.home; S.seenLvl = p.state.seenLvl;
   // Elever med lagret stue fra før huset kom: første rom regnes som innredet.
   S.seeded = p.state.seeded ?? (p.state.home ? [0] : []);
+  S.earned = keepToday(p.state.earned ?? {});
   S.cur = {}; S.topic = 'alle';
   const first = MODES.find((m) => !m.g);
   S.mode = S.last = first ? first.id : 'kort';
 }
 
 export function save(): void {
-  store.saveState(T.id, { known: S.known, notes: S.notes, home: S.home, seenLvl: S.seenLvl, seeded: S.seeded });
+  store.saveState(T.id, { known: S.known, notes: S.notes, home: S.home, seenLvl: S.seenLvl, seeded: S.seeded, earned: keepToday(S.earned) });
 }
 
 export function owned(): Record<string, number> {
@@ -85,6 +87,42 @@ export const hooks = {
   onPoints: (_before: number, _after: number, _n: number) => {},
 };
 export function CARDS_KNOWN(): number { return T.content.cards.filter((c) => S.known[c.id] === 1).length; }
+
+// ---------- poeng én gang per spørsmål per dag ----------
+/** Dagens dato i elevens tidssone, ÅÅÅÅ-MM-DD. */
+export function today(): string { const d = new Date(), p = (n: number) => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+function keepToday(e: Record<string, string>): Record<string, string> { const t = today(), o: Record<string, string> = {}; for (const k of Object.keys(e)) if (e[k] === t) o[k] = t; return o; }
+export function earnedToday(key: string): boolean { return S.earned[key] === today(); }
+/**
+ * Gir poeng for et spørsmål bare første gang det besvares riktig i dag.
+ * Returnerer poengene som ble gitt (0 hvis spørsmålet allerede har gitt poeng i dag).
+ */
+export function earnOnce(key: string, n: number): number {
+  if (earnedToday(key)) return 0;
+  S.earned[key] = today(); save(); addPoints(n);
+  return n;
+}
+
+// ---------- lesetid ----------
+/** Svarknappene er låst så lenge (ms) etter at et spørsmål vises. */
+export const READ_MS: Record<string, number> = { quiz: 3000, tf: 2000, sort: 2000 };
+/**
+ * Låser svarknappene i panelet til lesetiden er over. readyAt lagres på spørsmålet,
+ * så tiden ikke starter på nytt om eleven bytter fane og kommer tilbake.
+ */
+export function readLock(sel: string, item: { readyAt?: number }, mode: string = S.mode): void {
+  const ms = READ_MS[mode]; if (!ms) return;
+  if (!item.readyAt) item.readyAt = Date.now() + ms;
+  const left = item.readyAt - Date.now();
+  if (left <= 0) return;
+  const p = panel(), btns = Array.from(p.querySelectorAll(sel)) as HTMLButtonElement[];
+  btns.forEach((b) => { b.disabled = true; b.classList.add('wait'); });
+  const bar = document.createElement('div');
+  bar.className = 'readbar'; bar.setAttribute('role', 'status');
+  bar.innerHTML = '<span>Les spørsmålet …</span><i style="animation-duration:' + left + 'ms"></i>';
+  const host = btns[0]?.parentElement; if (host) host.before(bar);
+  window.setTimeout(() => { btns.forEach((b) => { if (b.isConnected) { b.disabled = false; b.classList.remove('wait'); } }); if (bar.isConnected) bar.remove(); }, left);
+}
 
 // ---------- aktivitet til spilloversikten ----------
 /** Svar raskere enn dette (ms) telles som «raske». Spill uten grense måles ikke på fart. */

@@ -102,5 +102,6 @@ function explain(theme: string): string {
     '<li><b>Raske svar</b> er svar som kommer så fort at eleven neppe har lest spørsmålet: ' + Object.keys(FAST_S).filter((m) => T.modes.some((x) => x.id === m)).map((m) => esc(name(m)) + ' under ' + String(FAST_S[m]).replace('.', ',') + ' s').join(', ') + '. Over 40 % raske svar gir merknaden «Mange raske svar».</li>' +
     '<li><b>Treffer nær gjetting</b> betyr at andelen riktige er under 15 prosentpoeng over det man ville fått ved å gjette, for eksempel 50 % i Sant eller usant.</li>' +
     '<li>Spill med færre enn ' + MIN_ANSWERS + ' svar får ingen vurdering. Kortstokken gir ikke XP, men raske «Kan den»-trykk vises likevel.</li>' +
+    '<li>Fra 29. oktober 2026 gir Quiz, Sant eller usant, Kurvene og Hull i teksten poeng for hvert spørsmål bare én gang per dag, og svarknappene er låst i 2–3 sekunder så eleven rekker å lese. Raske svar i disse spillene bør derfor gå ned.</li>' +
     '<li>Aktiviteten registreres fra og med oppdateringen 29. oktober 2026. Bare tall lagres, ikke hva eleven svarte.</li></ul></details>';
 }

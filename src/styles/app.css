@@ -305,3 +305,11 @@ svg.house { display: block; width: 100%; height: auto; }
 .previewbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
 .previewbar .btn { min-height: 38px; padding: 6px 14px; }
 .previewbar .unlocked { font-family: var(--font-mono); font-size: .8rem; color: var(--leaf); }
+
+/* Lesetid og poeng én gang per dag */
+.readbar { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; font-size: .88rem; color: var(--muted); }
+.readbar i { flex: 1; height: 6px; border-radius: 3px; background: var(--line); position: relative; overflow: hidden; }
+.readbar i::after { content: ""; position: absolute; inset: 0; background: var(--accent); transform-origin: left; transform: scaleX(0); animation: readfill linear forwards; animation-duration: inherit; }
+@keyframes readfill { to { transform: scaleX(1); } }
+.opt.wait, .bk.wait { opacity: .55; cursor: wait; }
+.count.repeat { border: 1.5px dashed var(--line); border-radius: 999px; padding: 1px 9px; }
