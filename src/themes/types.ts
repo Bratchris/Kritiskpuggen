@@ -48,7 +48,20 @@ export interface RoomItem {
 }
 
 /** Gulv: x, y og f (snudd). Vegg: wl (venstre/høyre) og s (plass langs veggen). */
-export interface Placement { x?: number; y?: number; f?: number; wl?: 'L' | 'R'; s?: number }
+export interface Placement { x?: number; y?: number; f?: number; wl?: 'L' | 'R'; s?: number; /** Rommet i huset (0 = første rom). */ r?: number }
+
+/** Ett rom i huset. lv er nivået (indeks i levels) som låser det opp. */
+export interface HouseRoom {
+  name: string;
+  pos: 'g1' | 'g2' | 'base' | 'loft';
+  lv: number;
+  /** CSS-klasse med rommets farger, se themes.css. Tom for første rom. */
+  cls: string;
+  /** false = ingen vindu (f.eks. kjeller). */
+  window?: boolean;
+  /** Møblene rommet starter med første gang det åpnes. */
+  home: Record<string, Placement>;
+}
 
 export interface RoomDef {
   levels: Level[];
@@ -57,6 +70,7 @@ export interface RoomDef {
   /** SVG-innhold i vinduet (64x56 i veggens koordinater). */
   windowArt: string;
   groups: [string, string][];
+  rooms: HouseRoom[];
   ariaLabel: string;
 }
 

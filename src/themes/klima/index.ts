@@ -29,6 +29,18 @@ export const klima: Theme = {
     levels: [...LEVELS, ...EXTRA_LEVELS], items: { ...ITEMS, ...EXTRA_ITEMS }, defaultHome: HOME,
     windowArt: '<circle cx="96" cy="26" r="6" style="fill:#ffd25a"/>',
     groups: [['mob', 'Møbler'], ['rug', 'Tepper'], ['art', 'Plakater og kunst']],
+    rooms: [
+      { name: 'Stua', pos: 'g1', lv: 0, cls: '', home: HOME },
+      { name: 'Arbeidsrommet', pos: 'g2', lv: 4, cls: 'rm-b', home: {
+        hylle: { x: 0, y: 1, f: 1 }, lenestol: { x: 3, y: 2, f: 0 }, lampe: { x: 0, y: 4, f: 0 }, teppeB: { x: 3, y: 3, f: 0 }, bord: { x: 6, y: 4, f: 1 }, plante: { x: 7, y: 0, f: 0 },
+        venn: { wl: 'L', s: 3 }, kart: { wl: 'L', s: 5 }, klokke: { wl: 'R', s: 1 } } },
+      { name: 'Verkstedet', pos: 'base', lv: 8, cls: 'rm-k', window: false, home: {
+        tv: { x: 0, y: 2, f: 1 }, sofa: { x: 3, y: 0, f: 0 }, teppeA: { x: 3, y: 2, f: 0 }, puff: { x: 4, y: 5, f: 0 }, lampe: { x: 7, y: 0, f: 0 },
+        temp: { wl: 'L', s: 2 }, stripes: { wl: 'R', s: 2 }, fjord: { wl: 'R', s: 5 } } },
+      { name: 'Drivhuset', pos: 'loft', lv: 12, cls: 'rm-l', home: {
+        lenestol: { x: 1, y: 1, f: 0 }, plante: { x: 0, y: 0, f: 0 }, teppeC: { x: 5, y: 1, f: 0 }, puff: { x: 2, y: 3, f: 0 }, hylle: { x: 3, y: 7, f: 0 },
+        klokke: { wl: 'L', s: 4 }, fjord: { wl: 'R', s: 6 } } },
+    ],
     ariaLabel: 'Isometrisk stue med møbler, veggkunst og trofeer',
   },
 };

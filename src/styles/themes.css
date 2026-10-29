@@ -32,3 +32,19 @@
     --wall-l: #22373f; --wall-r: #1b2d34; --floor-a: #4b4132; --floor-b: #42392b; --edge-l: #342c21; --edge-r: #2a231a; --sky: #1d4466; --frame: #5b7580;
   }
 }
+
+/* Rommene i huset. Første rom bruker temaets vanlige farger. */
+:root[data-tema="kritisk"] .room.rm-b { --wall-l: #c9d6c8; --wall-r: #b6c6b4; --floor-a: #6b4c34; --floor-b: #5f432d; }
+:root[data-tema="kritisk"] .room.rm-k { --wall-l: #c9c6cf; --wall-r: #b6b2bd; --floor-a: #8f8a94; --floor-b: #827d88; --edge-l: #5f5a66; --edge-r: #4f4a56; }
+:root[data-tema="kritisk"] .room.rm-l { --wall-l: #e0c9a8; --wall-r: #d1b48e; --floor-a: #a87c52; --floor-b: #9c7048; }
+:root[data-tema="klima"] .room.rm-b { --wall-l: #e6e0cf; --wall-r: #d8d0bb; --floor-a: #c9b48a; --floor-b: #bea87e; }
+:root[data-tema="klima"] .room.rm-k { --wall-l: #d4d9dc; --wall-r: #c3cacd; --floor-a: #9aa3a8; --floor-b: #8f989d; --edge-l: #6c7a85; --edge-r: #5a6771; }
+:root[data-tema="klima"] .room.rm-l { --wall-l: #d6efd9; --wall-r: #c2e3c6; --floor-a: #b89a70; --floor-b: #ab8e64; --sky: #bfe8f7; }
+@media (prefers-color-scheme: dark) {
+  :root[data-tema="kritisk"] .room.rm-b { --wall-l: #243127; --wall-r: #1d2820; --floor-a: #3a2a1c; --floor-b: #322417; }
+  :root[data-tema="kritisk"] .room.rm-k { --wall-l: #2a2730; --wall-r: #221f28; --floor-a: #3a3640; --floor-b: #332f39; --edge-l: #24212a; --edge-r: #1c1a21; }
+  :root[data-tema="kritisk"] .room.rm-l { --wall-l: #3a2c22; --wall-r: #30241b; --floor-a: #4a3424; --floor-b: #402c1e; }
+  :root[data-tema="klima"] .room.rm-b { --wall-l: #2c3a35; --wall-r: #24302c; --floor-a: #4b4132; --floor-b: #42392b; }
+  :root[data-tema="klima"] .room.rm-k { --wall-l: #26303a; --wall-r: #1f2830; --floor-a: #3a444c; --floor-b: #333c44; --edge-l: #1c242b; --edge-r: #161d23; }
+  :root[data-tema="klima"] .room.rm-l { --wall-l: #1f3a2a; --wall-r: #193022; --floor-a: #3e3324; --floor-b: #362c1f; --sky: #1d4466; }
+}

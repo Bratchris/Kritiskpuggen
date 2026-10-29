@@ -15,7 +15,7 @@ import { renderHull } from './modes/hull';
 import { renderFeil } from './modes/feil';
 import { renderThink } from './modes/tenk';
 import { renderShop } from './shop';
-import { renderRoom, defaultHome, rm, hint, pv, fitPv } from './room/room';
+import { renderRoom, rm, hint, pv, fitPv, roomsAt } from './room/room';
 import { renderTop, loadBoard, myRankText } from './modes/top';
 
 const RENDER: Record<string, () => void> = {
@@ -47,7 +47,7 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
     return;
   }
   loadProgress(progress);
-  if (!S.home) S.home = defaultHome();
+  if (!S.home) S.home = {};
 
   root.innerHTML =
     '<div class="wrap">' +
@@ -108,7 +108,11 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
   if (MODES.some((m) => m.id === 'top')) void loadBoard();
 }
 
-function render(): void { renderTabs(); renderFilters(); renderHeader(); RENDER[S.mode](); }
+function render(): void {
+  renderTabs(); renderFilters(); renderHeader();
+  const w = document.querySelector('.wrap'); if (w) w.classList.toggle('wide', S.mode === 'rom');
+  RENDER[S.mode]();
+}
 
 function renderHeader(): void {
   const cards = T.content.cards, n = cards.length, known = CARDS_KNOWN();
@@ -119,8 +123,7 @@ function renderHeader(): void {
 }
 
 function renderDock(): void {
-  const L = LEVELS[lvl(S.points)];
-  const sub: Record<string, string> = { kort: CARDS_KNOWN() + ' av ' + T.content.cards.length + ' kan', shop: (S.points - S.spent) + ' poeng', rom: 'Nivå ' + (lvl(S.points) + 1) + ' · ' + L.n, top: myRankText() };
+  const sub: Record<string, string> = { kort: CARDS_KNOWN() + ' av ' + T.content.cards.length + ' kan', shop: (S.points - S.spent) + ' poeng', rom: 'Nivå ' + (lvl(S.points) + 1) + starText(stars(S.points)), top: myRankText() };
   const g = MODES.filter((m) => m.g).length;
   $('#dock').style.gridTemplateColumns = 'repeat(' + g + ', minmax(0, 1fr))';
   $('#dock').innerHTML = MODES.filter((m) => m.g).map((m) =>
@@ -147,13 +150,13 @@ function renderFilters(): void {
 
 function showLevelUp(i: number): void {
   const L = LEVELS[i], m = $('#lvlup');
-  m.innerHTML = '<div class="lvlbox"><p class="eyebrow">Nytt nivå</p><h2 id="lvl-t">' + esc(L.n) + '</h2><p><b>Du låste opp ' + L.t.length + ' nye trofeer.</b> Velg hvilke du vil sette ut i stua.</p>' +
+  m.innerHTML = '<div class="lvlbox"><p class="eyebrow">Nytt nivå</p><h2 id="lvl-t">' + esc(L.n) + '</h2><p><b>Du låste opp ' + L.t.length + ' nye trofeer.</b> Velg hvilke du vil sette ut i huset.</p>' + roomsAt(i).map((r) => '<p class="fb ok"><strong>Nytt rom: ' + esc(r.name) + '</strong>Du har fått et nytt rom i huset, med møbler du kan flytte rundt på.</p>').join('') + '' +
     '<div class="lvlpv">' + L.t.map((id) => '<div class="lp pop">' + pv(id) + '<b>' + esc(ITEMS[id].n) + '</b></div>').join('') + '</div>' +
     '<div class="row"><button class="btn primary" id="lu-go" type="button">Gå til troférommet</button><button class="btn ghost" id="lu-x" type="button">Fortsett å øve</button></div></div>';
   m.hidden = false;
   fitPv(m);
   $('#lu-x').onclick = () => { m.hidden = true; };
-  $('#lu-go').onclick = () => { m.hidden = true; if (!isGlobal(S.mode)) S.last = S.mode; S.mode = 'rom'; rm().sel = L.t[0]; rm().msg = hint(L.t[0]); render(); window.scrollTo(0, 0); };
+  $('#lu-go').onclick = () => { m.hidden = true; if (!isGlobal(S.mode)) S.last = S.mode; S.mode = 'rom'; const nr = roomsAt(i)[0]; if (nr) rm().room = T.room.rooms.indexOf(nr); rm().sel = L.t[0]; rm().msg = hint(L.t[0]); render(); window.scrollTo(0, 0); };
   m.onclick = (e: Event) => { if (e.target === m) m.hidden = true; };
   setTimeout(() => { const b = $('#lu-go'); if (b && !m.hidden) b.focus(); }, 60);
 }

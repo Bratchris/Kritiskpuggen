@@ -13,12 +13,13 @@ export interface AppState {
   gifts: Gift[];
   home: Record<string, Placement> | null;
   seenLvl: number;
+  seeded: number[];
   known: Record<string, 1>;
   notes: Record<string, string>;
   cur: Record<string, any>;
 }
 
-export const S: AppState = { topic: 'alle', mode: 'quiz', last: 'quiz', points: 0, spent: 0, gifts: [], home: null, seenLvl: -1, known: {}, notes: {}, cur: {} };
+export const S: AppState = { topic: 'alle', mode: 'quiz', last: 'quiz', points: 0, spent: 0, gifts: [], home: null, seenLvl: -1, seeded: [], known: {}, notes: {}, cur: {} };
 
 export let T: Theme;
 export let store: Store;
@@ -36,13 +37,15 @@ export function setTheme(theme: Theme, st: Store, flags: { leaderboard?: boolean
 export function loadProgress(p: { points: number; spent: number; state: SavedState; gifts: Gift[] }): void {
   S.points = p.points; S.spent = p.spent; S.gifts = p.gifts;
   S.known = p.state.known; S.notes = p.state.notes; S.home = p.state.home; S.seenLvl = p.state.seenLvl;
+  // Elever med lagret stue fra før huset kom: første rom regnes som innredet.
+  S.seeded = p.state.seeded ?? (p.state.home ? [0] : []);
   S.cur = {}; S.topic = 'alle';
   const first = MODES.find((m) => !m.g);
   S.mode = S.last = first ? first.id : 'kort';
 }
 
 export function save(): void {
-  store.saveState(T.id, { known: S.known, notes: S.notes, home: S.home, seenLvl: S.seenLvl });
+  store.saveState(T.id, { known: S.known, notes: S.notes, home: S.home, seenLvl: S.seenLvl, seeded: S.seeded });
 }
 
 export function owned(): Record<string, number> {

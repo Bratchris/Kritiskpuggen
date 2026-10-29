@@ -7,6 +7,8 @@ export interface SavedState {
   notes: Record<string, string>;
   home: Record<string, Placement> | null;
   seenLvl: number;
+  /** Rom i huset som har fått startmøblene sine. */
+  seeded?: number[];
 }
 export interface Gift { item_id: string; created_at: string }
 export interface LbRow { display_name: string; points: number; is_me: boolean }
@@ -34,6 +36,7 @@ function cleanState(raw: any): SavedState {
     if (raw.notes && typeof raw.notes === 'object') s.notes = raw.notes;
     if (raw.home && typeof raw.home === 'object') s.home = raw.home;
     if (typeof raw.seenLvl === 'number') s.seenLvl = raw.seenLvl;
+    if (Array.isArray(raw.seeded)) s.seeded = raw.seeded.filter((n: unknown) => typeof n === 'number');
   }
   return s;
 }
