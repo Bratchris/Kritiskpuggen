@@ -302,3 +302,6 @@ svg.house { display: block; width: 100%; height: auto; }
 .lbme-l { flex-basis: 100%; font-family: var(--font-mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .lbtitle { font-family: var(--font-display); font-size: 1.15rem; margin: 0 0 8px; }
 .dk b .newdot { display: inline-block; white-space: nowrap; line-height: 1.3; }
+.previewbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+.previewbar .btn { min-height: 38px; padding: 6px 14px; }
+.previewbar .unlocked { font-family: var(--font-mono); font-size: .8rem; color: var(--leaf); }

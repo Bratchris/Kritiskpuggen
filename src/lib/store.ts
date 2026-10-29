@@ -135,4 +135,6 @@ export class PreviewStore implements Store {
     return p.spent;
   }
   reset(theme: string) { try { localStorage.removeItem(this.key(theme)); } catch { /* ignorer */ } }
+  /** Lærerens «Lås opp alt»: setter XP i forhåndsvisningen. Rører ikke databasen. */
+  async setPoints(theme: string, n: number) { const p = this.read(theme); p.points = Math.max(p.points, n); this.write(theme, p); return p.points; }
 }

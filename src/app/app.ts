@@ -3,7 +3,8 @@ import { $, esc, toast } from '../lib/dom';
 import type { Store } from '../lib/store';
 import type { Theme } from '../themes/types';
 import { gradient } from './room/iso';
-import { S, T, MODES, LEVELS, ITEMS, CARDS_KNOWN, setTheme, loadProgress, lvl, level, modeOf, isGlobal, hooks, save, stars, starText } from './core';
+import { S, T, MODES, LEVELS, ITEMS, CARDS_KNOWN, setTheme, loadProgress, lvl, level, modeOf, isGlobal, hooks, save, stars, starText, topXp } from './core';
+import { PreviewStore } from '../lib/store';
 import { renderKort } from './modes/kort';
 import { renderQuiz } from './modes/quiz';
 import { renderTf } from './modes/tf';
@@ -57,7 +58,7 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
     (opts.onExit ? '<button class="lnk" id="ex-prev" type="button">Tilbake til lærerrommet</button>' : '') +
     (opts.onLogout ? '<button class="lnk" id="logout" type="button">Logg ut</button>' : '') + '</div></div>' +
     '<h1 class="apptitle">' + esc(theme.title) + '</h1>' +
-    (opts.preview ? '<p class="previewnote">Forhåndsvisning for læreren. Poeng og gaver lagres bare i denne nettleseren.</p>' : '') +
+    (opts.preview ? '<div class="previewnote previewbar"><span>Forhåndsvisning for læreren. Poeng og gaver lagres bare i denne nettleseren.</span><span id="unlock-slot"></span></div>' : '') +
     '<div id="stripes" class="stripes" role="img" aria-label="Fremdrift"></div><p class="stat" id="stat"></p></header>' +
     '<nav class="dock" id="dock" aria-label="Alltid tilgjengelig"></nav>' +
     '<nav class="tabs" id="tabs" aria-label="Øvingsformer"></nav>' +
@@ -71,6 +72,20 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
 
   if (opts.onSwitchTheme) $('#sw-theme').onclick = async () => { await store.flush(); opts.onSwitchTheme!(); };
   if (opts.onExit) $('#ex-prev').onclick = opts.onExit;
+  // «Lås opp alt» finnes bare i lærerens forhåndsvisning, aldri for elever.
+  const drawUnlock = () => {
+    const slot = $('#unlock-slot'); if (!slot) return;
+    if (S.points >= topXp()) { slot.innerHTML = '<span class="unlocked">Alt er låst opp</span>'; return; }
+    slot.innerHTML = '<button class="btn" id="unlock-all" type="button">Lås opp alt</button>';
+    $('#unlock-all').onclick = async () => {
+      if (!(store instanceof PreviewStore)) return;
+      S.points = await store.setPoints(theme.id, topXp());
+      S.seenLvl = lvl(S.points) - 1; save();
+      drawUnlock(); render();
+      toast('Alle nivåer, trofeer og rom er låst opp i forhåndsvisningen.');
+    };
+  };
+  if (opts.preview && store instanceof PreviewStore) drawUnlock();
   if (opts.onLogout) $('#logout').onclick = async () => { await store.flush(); opts.onLogout!(); };
   if (opts.onReset) $('#r-ask').onclick = () => {
     const el = $('#r-ask').parentElement;
