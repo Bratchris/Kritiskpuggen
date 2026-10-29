@@ -39,6 +39,8 @@ export interface AvatarCfg {
   tint: Record<string, string>;
   /** Bakgrunnen bak appen, id fra backgrounds.ts. Tom = temaets vanlige bakgrunn. */
   bg?: string;
+  /** Egget eller dyret som står ved siden av avataren (id fra tabellen pets). */
+  pet?: string;
   made?: boolean;
 }
 
@@ -181,5 +183,6 @@ export function cleanAvatar(raw: any, owned: Set<string>): AvatarCfg {
   c.tint = tint;
   const bg = bgById(c.bg);
   if (!bg || (bg.price > 0 && !owned.has(bg.id))) delete c.bg;
+  if (typeof c.pet !== 'string' || c.pet.length > 64) delete c.pet;
   return c as AvatarCfg;
 }

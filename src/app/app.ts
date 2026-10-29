@@ -1,5 +1,6 @@
 // Skallet rundt øvingsappen: topp, fast linje (kortstokk, butikk, rom), faner, filter og nivå-dialog.
 import { applyBackground } from '../avatar/backgrounds';
+import { showEggFound, companionSVG } from '../pets/screen';
 import { $, esc, toast } from '../lib/dom';
 import type { Store } from '../lib/store';
 import type { Theme } from '../themes/types';
@@ -58,6 +59,10 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
     S.avatar = av.cfg ? cleanAvatar(av.cfg, S.owned) : defaultAvatar();
   } catch { S.avaReady = false; S.avatar = defaultAvatar(); }
   applyBackground(S.avatar.bg);
+  try {
+    const pd = await store.loadPets();
+    S.pets = pd.pets; S.petsReady = pd.ready; S.xpOther = Math.max(0, pd.total - S.points);
+  } catch { S.pets = []; S.petsReady = false; S.xpOther = 0; }
   if (!S.home) S.home = {};
 
   root.innerHTML =
@@ -125,6 +130,13 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
     S.mode = 'avatar'; render();
   };
   hooks.refresh = () => { renderHeader(); renderTabs(); };
+  hooks.onEgg = (p) => showEggFound(p);
+  hooks.open = (mode, tab) => {
+    if (!isGlobal(S.mode)) S.last = S.mode;
+    S.mode = mode;
+    if (tab && mode === 'avatar') { S.cur.ava = { ...(S.cur.ava || { arm: null, msg: '', busy: false, open: null }), tab }; }
+    render(); window.scrollTo(0, 0);
+  };
   let starsBefore = stars(S.points);
   hooks.onPoints = (before, after, n) => {
     renderHeader(); renderTabs();
@@ -153,7 +165,9 @@ function renderAvaBtn(): void {
   const b = $('#ava-btn'); if (!b) return;
   b.setAttribute('aria-pressed', String(S.mode === 'avatar'));
   b.setAttribute('aria-label', S.avatar.made ? 'Endre avataren din' : 'Lag avataren din');
-  b.innerHTML = avatarSVG(S.avatar, { crop: 'head' }) + '<span>' + (S.avatar.made ? 'Avatar' : 'Lag avatar') + '</span>';
+  const pet = companionSVG('mini');
+  b.classList.toggle('withpet', !!pet);
+  b.innerHTML = '<span class="avahead">' + avatarSVG(S.avatar, { crop: 'head' }) + pet + '</span><span>' + (S.avatar.made ? 'Avatar' : 'Lag avatar') + '</span>';
 }
 
 function renderHeader(): void {

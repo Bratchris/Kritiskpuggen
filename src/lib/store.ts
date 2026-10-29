@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import type { Placement } from '../themes/types';
+import { type Pet, type EggKind, EGGS, CHANCE, SPECIES, VARIANTS, pick, rarityOf } from '../pets/catalog';
 
 /** Det som lagres per elev og tema, i tillegg til poengene. */
 export interface SavedState {
@@ -19,6 +20,8 @@ export interface LbRow { display_name: string; points: number; is_me: boolean; r
 export interface ActivityRow { mode: string; answers: number; correct: number; xp: number; timed: number; ms: number; fast: number }
 /** Avatar og kostymer eleven eier (id-er fra alle temaer). ready = databasen har avatarstøtte. */
 export interface AvatarData { cfg: unknown; owned: string[]; ready: boolean }
+/** Egg og dyr, og XP i alle temaer til sammen. ready = databasen har støtte for dyr. */
+export interface PetData { pets: Pet[]; total: number; ready: boolean }
 export interface Progress { points: number; spent: number; state: SavedState; gifts: Gift[] }
 
 /**
@@ -37,6 +40,10 @@ export interface Store {
   loadAvatar(): Promise<AvatarData>;
   saveAvatar(cfg: unknown): void;
   buySkin(theme: string, itemId: string, price: number): Promise<number>;
+  loadPets(): Promise<PetData>;
+  /** Kanskje et egg. null = ingen egg denne gangen. */
+  rollEgg(theme: string): Promise<Pet | null>;
+  hatchEgg(id: string): Promise<Pet>;
 }
 
 function emptyState(): SavedState { return { known: {}, notes: {}, home: null, seenLvl: -1 }; }
@@ -150,6 +157,27 @@ export class RemoteStore implements Store {
     if (error) throw error;
     return (data ?? []) as LbRow[];
   }
+
+  async loadPets(): Promise<PetData> {
+    const [p, x] = await Promise.all([
+      supabase.from('pets').select('*').order('found_at'),
+      supabase.from('progress').select('points'),
+    ]);
+    if (p.error) return { pets: [], total: 0, ready: false };
+    const total = (x.data ?? []).reduce((a: number, r: { points: number }) => a + (r.points || 0), 0);
+    return { pets: (p.data ?? []) as Pet[], total, ready: true };
+  }
+  async rollEgg(theme: string): Promise<Pet | null> {
+    const { data, error } = await supabase.rpc('roll_egg', { p_theme: theme });
+    if (error) throw error;
+    const d = data as Pet | null;
+    return d && d.id ? d : null;
+  }
+  async hatchEgg(id: string): Promise<Pet> {
+    const { data, error } = await supabase.rpc('hatch_egg', { p_id: id });
+    if (error) throw error;
+    return data as Pet;
+  }
 }
 
 export class PreviewStore implements Store {
@@ -181,7 +209,7 @@ export class PreviewStore implements Store {
     p.spent += price; p.gifts.push({ item_id: itemId, created_at: new Date().toISOString() }); this.write(theme, p);
     return p.spent;
   }
-  reset(theme: string) { try { localStorage.removeItem(this.key(theme)); localStorage.removeItem('puggen-preview-avatar'); } catch { /* ignorer */ } }
+  reset(theme: string) { try { localStorage.removeItem(this.key(theme)); localStorage.removeItem('puggen-preview-avatar'); localStorage.removeItem('puggen-preview-pets'); } catch { /* ignorer */ } }
   /** Forhåndsvisningen registrerer ikke aktivitet. */
   async logActivity() { /* ingenting */ }
   async loadAvatar(): Promise<AvatarData> {
@@ -196,6 +224,41 @@ export class PreviewStore implements Store {
     if (p.points - p.spent < price) throw new Error('Ikke nok poeng');
     p.spent += price; this.write(theme, p); this.avaWrite(a.cfg, a.owned.concat(itemId));
     return p.spent;
+  }
+  // ---------- dyr i forhåndsvisningen: samme regler som i databasen, men lagret i nettleseren ----------
+  private petsRead(): Pet[] { try { const r = JSON.parse(localStorage.getItem('puggen-preview-pets') || '[]'); return Array.isArray(r) ? r : []; } catch { return []; } }
+  private petsWrite(p: Pet[]) { try { localStorage.setItem('puggen-preview-pets', JSON.stringify(p)); } catch { /* ignorer */ } }
+  private total() { return ['kritisk', 'klima'].reduce((a, t) => a + this.read(t).points, 0); }
+  private lastRoll = 0;
+  async loadPets(): Promise<PetData> { return { pets: this.petsRead(), total: this.total(), ready: true }; }
+  /** Lager et egg med en gang. Bare for læreren, så hen kan prøve klekkingen. */
+  async giveEgg(theme: string, egg: EggKind): Promise<Pet> {
+    const p: Pet = { id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), egg, found_at: new Date().toISOString(), found_theme: theme, xp_start: this.total(), xp_need: EGGS[egg].need, hatched_at: null, species: null, variant: null, rarity: null };
+    this.petsWrite(this.petsRead().concat(p));
+    return p;
+  }
+  /** Bare for læreren: gjør alle egg klare til å klekke. */
+  readyEggs(): Pet[] { const all = this.petsRead(), t = this.total(); all.forEach((p) => { if (!p.hatched_at) p.xp_start = Math.min(p.xp_start, t - p.xp_need); }); this.petsWrite(all); return all; }
+  async rollEgg(theme: string): Promise<Pet | null> {
+    if (Date.now() - this.lastRoll < CHANCE.cooldownMs) return null;
+    this.lastRoll = Date.now();
+    const all = this.petsRead(), day = new Date().toISOString().slice(0, 10);
+    if (all.filter((p) => !p.hatched_at).length >= CHANCE.maxEggs || all.filter((p) => p.found_at.slice(0, 10) === day).length >= CHANCE.perDay) return null;
+    const r = Math.random();
+    const egg: EggKind | null = r < CHANCE.mytisk ? 'mytisk' : r < CHANCE.mytisk + CHANCE.vanlig ? 'vanlig' : null;
+    return egg ? this.giveEgg(theme, egg) : null;
+  }
+  async hatchEgg(id: string): Promise<Pet> {
+    const all = this.petsRead(), p = all.find((x) => x.id === id);
+    if (!p) throw new Error('Fant ikke egget');
+    if (p.hatched_at) return p;
+    if (this.total() < p.xp_start + p.xp_need) throw new Error('Egget er ikke klart til å klekke ennå');
+    p.species = p.egg === 'mytisk' ? 'drage' : pick(SPECIES.filter((s) => s.egg === 'vanlig')).id;
+    p.variant = pick(VARIANTS).id;
+    p.rarity = rarityOf(p.species, p.variant);
+    p.hatched_at = new Date().toISOString();
+    this.petsWrite(all);
+    return p;
   }
   /** Lærerens «Lås opp alt»: setter XP i forhåndsvisningen. Rører ikke databasen. */
   async setPoints(theme: string, n: number) { const p = this.read(theme); p.points = Math.max(p.points, n); this.write(theme, p); return p.points; }

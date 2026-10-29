@@ -398,3 +398,67 @@ body.bgimg .dock { background: color-mix(in srgb, var(--bg) 92%, transparent); -
 .bgprev { height: 84px; border-radius: 8px; border: 1px solid var(--line); }
 .avabig.withbg { border-radius: 12px; padding: 10px 0; }
 @media (max-width: 560px) { body.bgimg .apptitle { font-size: clamp(1.9rem, 8.2vw, 3.6rem); } }
+
+/* Egg og kjæledyr */
+:root { --r0: #6f767f; --r1: #23883e; --r2: #1971c2; --r3: #8e3fb3; --r4: #e06c00; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --r0: #a7adb5; --r1: #5fd07f; --r2: #5aa9ff; --r3: #c38cf0; --r4: #ffa94d; } }
+.rar { font-weight: 800; font-size: .86rem; letter-spacing: .02em; }
+.rar.r0 { color: var(--r0); } .rar.r1 { color: var(--r1); } .rar.r2 { color: var(--r2); } .rar.r3 { color: var(--r3); } .rar.r4 { color: var(--r4); }
+.rarlegend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; }
+svg.pet.neon { filter: drop-shadow(0 0 2px #ff4fd8) drop-shadow(0 0 5px #62f4ff); }
+svg.pet.unknown { filter: brightness(0); opacity: .14; }
+.eggs, .pets { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.eggcard, .petcard { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--bg); text-align: center; min-width: 0; }
+.eggcard svg, .petcard svg { width: 100%; max-width: 120px; height: auto; aspect-ratio: 1; }
+.eggcard h4, .petcard h4 { margin: 0; font-family: var(--font-display); font-size: 1rem; }
+.eggcard .keyhint, .petcard .keyhint { margin: 0; }
+.eggcard .btn, .petcard .btn { width: 100%; min-height: 38px; padding: 5px 10px; }
+.eggcard.on, .petcard.on { box-shadow: 0 0 0 2px var(--leaf) inset; border-color: var(--leaf); }
+.eggcard.myth { background: linear-gradient(170deg, var(--bg), color-mix(in srgb, #8a5cff 14%, var(--bg))); }
+.petcard.rr1 { border-color: color-mix(in srgb, var(--r1) 55%, var(--line)); }
+.petcard.rr2 { border-color: color-mix(in srgb, var(--r2) 60%, var(--line)); }
+.petcard.rr3 { border-color: var(--r3); background: linear-gradient(170deg, var(--bg), color-mix(in srgb, var(--r3) 12%, var(--bg))); }
+.petcard.rr4 { border-color: var(--r4); background: linear-gradient(170deg, var(--bg), color-mix(in srgb, var(--r4) 16%, var(--bg))); box-shadow: 0 0 14px color-mix(in srgb, var(--r4) 35%, transparent); }
+.eggbar { width: 100%; height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; }
+.eggbar i { display: block; height: 100%; background: linear-gradient(90deg, #ffd36a, #ff9c4a); border-radius: 5px; }
+.eggcard.myth .eggbar i { background: linear-gradient(90deg, #b06bff, #ffd36a); }
+svg.egg.wobble, svg.egg.ready.companion { animation: eggwob 1.4s ease-in-out infinite; transform-origin: 50% 90%; }
+@keyframes eggwob { 0%, 60%, 100% { transform: rotate(0); } 70% { transform: rotate(-7deg); } 80% { transform: rotate(6deg); } 90% { transform: rotate(-3deg); } }
+.dex summary { cursor: pointer; font-weight: 700; padding: 6px 0; }
+.dexbody { display: flex; flex-direction: column; gap: 6px; }
+.dexrow { display: flex; flex-direction: column; gap: 4px; }
+.dexname { font-weight: 700; font-size: .92rem; } .dexname small { color: var(--muted); font-weight: 500; }
+.dexcells { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.dexcell { display: flex; flex-direction: column; align-items: center; padding: 3px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); min-width: 0; }
+.dexcell svg { width: 100%; height: auto; aspect-ratio: 1; }
+.dexcell i { font-style: normal; font-size: .64rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.dexcell.has { border-color: var(--leaf); }
+/* Ved siden av avataren */
+.avabig { position: relative; }
+.stagepet { position: absolute; right: 4%; bottom: 2%; width: 34%; max-width: 92px; pointer-events: none; }
+.stagepet svg { width: 100%; height: auto; display: block; }
+.avahead { position: relative; display: block; }
+.avabtn.withpet .avahead { padding-right: 22px; }
+.avabtn svg.companion { position: absolute; right: -4px; bottom: -2px; width: 34px; height: 34px; }
+/* Vinduene */
+.petpop { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 16px; background: rgba(10, 8, 20, .55); }
+.petbox { width: min(420px, 100%); max-height: calc(100vh - 32px); overflow: auto; background: var(--surface); color: var(--ink); border-radius: 18px; padding: 22px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.35); display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.petbox h2 { margin: 0; font-family: var(--font-display); }
+.petbox p { margin: 0; }
+.petbox .row { justify-content: center; flex-wrap: wrap; margin-top: 6px; }
+.eggdrop svg, .hatching svg { width: 140px; height: 140px; }
+.eggdrop svg.pop { animation: eggpop .7s cubic-bezier(.2,1.6,.4,1) both; }
+.eggdrop.myth svg { filter: drop-shadow(0 0 14px #b06bff); }
+@keyframes eggpop { from { transform: scale(.2) translateY(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+.hatching svg.shake { animation: eggshake .5s ease-in-out infinite; transform-origin: 50% 85%; }
+@keyframes eggshake { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-9deg) translateX(-2px); } 75% { transform: rotate(9deg) translateX(2px); } }
+.reveal { position: relative; width: 170px; height: 170px; display: grid; place-items: center; }
+.reveal svg.born { position: relative; width: 150px; height: 150px; animation: born .8s cubic-bezier(.2,1.5,.4,1) both; }
+@keyframes born { from { transform: scale(.1) rotate(-20deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.burst { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--rc, #ffd36a) 60%, transparent) 0, transparent 68%); animation: burst 1.6s ease-out both; }
+.reveal.rr0 { --rc: #c9ccd1; } .reveal.rr1 { --rc: var(--r1); } .reveal.rr2 { --rc: var(--r2); } .reveal.rr3 { --rc: var(--r3); } .reveal.rr4 { --rc: var(--r4); }
+.reveal.rr4 .burst { animation: burst 1.6s ease-out both, glowp 1.8s 1.6s ease-in-out infinite; }
+@keyframes burst { from { transform: scale(.2); opacity: 0; } 40% { opacity: 1; } to { transform: scale(1.1); opacity: .7; } }
+@keyframes glowp { 50% { opacity: .35; } }
+.rarline .rar { font-size: 1.1rem; text-transform: uppercase; letter-spacing: .08em; }
+@media (prefers-reduced-motion: reduce) { svg.egg.wobble, svg.egg.ready.companion, .hatching svg.shake, .eggdrop svg.pop, .reveal svg.born, .burst { animation: none; } }

@@ -3,6 +3,7 @@
 // Nøkler i S.home:
 //  - Trofeer finnes én gang og har nøkkel = id. Placement.r sier hvilket rom de står i.
 //  - Møbler, tepper og kunst finnes i hvert rom: nøkkel = id i første rom, id~r i rom r.
+import { companionG } from '../../pets/screen';
 import { $, esc } from '../../lib/dom';
 import { iso, pts } from './iso';
 import { S, T, ITEMS, LEVELS, lvl, save, head, panel, hooks, modeOf, stars, starText, topXp, STAR_XP } from '../core';
@@ -48,9 +49,10 @@ function occupantFloor(x: number, y: number, room: number): boolean {
   return !!o && layerOf(o) === 'f';
 }
 function avatarSprite(x: number, y: number): string {
-  const c = tileC(x, y), k = 0.42;
+  const c = tileC(x, y), k = 0.42, pet = companionG();
   return '<g class="ava" transform="translate(' + c[0] + ' ' + c[1] + ')"><title>Avataren din</title><ellipse cx="0" cy="2" rx="13" ry="5" style="fill:#000;opacity:.18"/>' +
-    '<g class="ava-b"><g transform="translate(' + (-60 * k) + ' ' + (-154 * k) + ') scale(' + k + ')">' + avatarG(S.avatar) + '</g></g></g>';
+    '<g class="ava-b"><g transform="translate(' + (-60 * k) + ' ' + (-154 * k) + ') scale(' + k + ')">' + avatarG(S.avatar) + '</g></g>' +
+    (pet ? '<g class="ava-pet" transform="translate(14 -26) scale(.3)"><title>Dyret ditt</title>' + pet + '</g>' : '') + '</g>';
 }
 
 // ---------- plass ----------

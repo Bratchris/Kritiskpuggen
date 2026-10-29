@@ -7,10 +7,11 @@ import {
   CLOTH_COLORS, TOPS, BOTTOMS, SHOES, EYES, MOUTHS, SKINS, SLOT_NAMES, skinById, isMerch, Swatch, Opt,
 } from './catalog';
 import { avatarSVG, tintOf } from './render';
+import { petsHTML, wirePets, companionSVG } from '../pets/screen';
 import { BACKGROUNDS, BG_GROUPS, Background, bgById, bgImage, bgFit, applyBackground } from './backgrounds';
 
-type Tab = 'kropp' | 'har' | 'ansikt' | 'sminke' | 'klaer' | 'bakgrunn' | 'kostymer' | 'merch';
-const TABS: [Tab, string][] = [['kropp', 'Kropp'], ['har', 'Hår'], ['ansikt', 'Ansikt'], ['sminke', 'Sminke'], ['klaer', 'Klær'], ['bakgrunn', 'Bakgrunn'], ['kostymer', 'Kostymer'], ['merch', 'CRISPY-G']];
+type Tab = 'dyr' | 'kropp' | 'har' | 'ansikt' | 'sminke' | 'klaer' | 'bakgrunn' | 'kostymer' | 'merch';
+const TABS: [Tab, string][] = [['kropp', 'Kropp'], ['har', 'Hår'], ['ansikt', 'Ansikt'], ['sminke', 'Sminke'], ['klaer', 'Klær'], ['bakgrunn', 'Bakgrunn'], ['dyr', 'Dyr og egg'], ['kostymer', 'Kostymer'], ['merch', 'CRISPY-G']];
 
 interface AvaState { tab: Tab; arm: string | null; msg: string; busy: boolean; open: string | null }
 function st(): AvaState {
@@ -152,17 +153,19 @@ export function renderAvatar(): void {
   if (s.tab === 'kostymer') body = shopHTML();
   if (s.tab === 'merch') body = merchHTML();
   if (s.tab === 'bakgrunn') body = bgHTML();
+  if (s.tab === 'dyr') body = petsHTML();
   const sbg = bgById(a.bg);
 
   const worn = (Object.keys(a.eq) as Slot[]).map((k) => skinById(a.eq[k]!)?.name).filter(Boolean);
   p.innerHTML = head('avatar') +
-    '<div class="avagrid"><div class="avastage"><div class="avabig' + (sbg ? ' withbg' : '') + '"' + (sbg ? ' style="' + bgStyle(sbg) + '"' : '') + '>' + avatarSVG(a, { cls: 'big', title: 'Avataren din', ariaHidden: false }) + '</div>' +
+    '<div class="avagrid"><div class="avastage"><div class="avabig' + (sbg ? ' withbg' : '') + '"' + (sbg ? ' style="' + bgStyle(sbg) + '"' : '') + '>' + avatarSVG(a, { cls: 'big', title: 'Avataren din', ariaHidden: false }) + '<span class="stagepet">' + companionSVG() + '</span></div>' +
     '<p class="keyhint">' + (worn.length ? 'På deg: ' + esc(worn.join(', ')) + '.' : 'Ingen kostymer på.') + '</p>' +
     '<div class="row"><button class="btn" type="button" id="av-rand">Tilfeldig utseende</button></div></div>' +
     '<div class="avaopts"><div class="tabs avtabs" role="tablist" aria-label="Deler av avataren">' + TABS.map(([id, n]) => '<button class="tab' + (id === 'merch' ? ' cgtab' : '') + '" type="button" role="tab" data-tab="' + id + '" aria-selected="' + (s.tab === id) + '" aria-current="' + (s.tab === id) + '">' + n + '</button>').join('') + '</div>' +
     body + '</div></div>' +
     (a.made ? '' : '<p class="keyhint">Avataren lagres automatisk når du endrer noe. Den vises øverst i appen og dukker opp i troférommet.</p>');
   wire(p, s);
+  if (s.tab === 'dyr') wirePets(p, renderAvatar);
 }
 
 function wire(p: ReturnType<typeof panel>, s: AvaState) {
@@ -189,7 +192,7 @@ function wire(p: ReturnType<typeof panel>, s: AvaState) {
       });
       const own = p.querySelector('[data-cf="' + ck + '"] .sw.custom') as HTMLElement | null;
       if (own) { own.style.setProperty('--own', h); p.querySelectorAll('[data-cf="' + ck + '"] .sw').forEach((w: HTMLElement) => w.setAttribute('aria-checked', String(w === own))); }
-      const big = p.querySelector('.avabig'); if (big) big.innerHTML = avatarSVG(S.avatar, { cls: 'big', title: 'Avataren din', ariaHidden: false });
+      const big = p.querySelector('.avabig'); if (big) big.innerHTML = avatarSVG(S.avatar, { cls: 'big', title: 'Avataren din', ariaHidden: false }) + '<span class="stagepet">' + companionSVG() + '</span>';
       const art = box.closest('.skin')?.querySelector('.skinart'); const k = ck.startsWith('tint:') ? skinById(ck.slice(5)) : null;
       if (art && k) art.innerHTML = avatarSVG({ ...S.avatar, eq: { [k.slot]: k.id } }, { crop: k.slot === 'hat' || k.slot === 'face' ? 'head' : 'full' });
       hooks.refresh();

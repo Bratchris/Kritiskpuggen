@@ -4,6 +4,7 @@ import { $, esc, toast } from '../lib/dom';
 import type { Store, SavedState, Gift, ActivityRow } from '../lib/store';
 import type { Theme, Mode, Level, RoomItem, Placement, Topic } from '../themes/types';
 import { defaultAvatar, type AvatarCfg } from '../avatar/catalog';
+import { type Pet, CHANCE, eggProgress } from '../pets/catalog';
 
 export interface AppState {
   topic: string;
@@ -23,9 +24,13 @@ export interface AppState {
   avatar: AvatarCfg;
   owned: Set<string>;
   avaReady: boolean;
+  /** Egg og dyr. xpOther = XP i de andre temaene, så xpTotal() gir summen. */
+  pets: Pet[];
+  petsReady: boolean;
+  xpOther: number;
 }
 
-export const S: AppState = { topic: 'alle', mode: 'quiz', last: 'quiz', points: 0, spent: 0, gifts: [], home: null, seenLvl: -1, seeded: [], earned: {}, known: {}, notes: {}, cur: {}, avatar: defaultAvatar(0.37), owned: new Set(), avaReady: false };
+export const S: AppState = { topic: 'alle', mode: 'quiz', last: 'quiz', points: 0, spent: 0, gifts: [], home: null, seenLvl: -1, seeded: [], earned: {}, known: {}, notes: {}, cur: {}, avatar: defaultAvatar(0.37), owned: new Set(), avaReady: false, pets: [], petsReady: false, xpOther: 0 };
 
 export let T: Theme;
 export let store: Store;
@@ -90,7 +95,26 @@ export function starText(n: number): string { return n > 0 ? ' ★' + n : ''; }
 export const hooks = {
   refresh: () => {},
   onPoints: (_before: number, _after: number, _n: number) => {},
+  /** Et nytt egg er funnet. */
+  onEgg: (_p: Pet) => {},
+  /** Åpner en side, for eksempel dyrene i avatarskjermen. */
+  open: (_mode: string, _tab?: string) => {},
 };
+
+/** XP i alle temaer til sammen. Eggene klekker etter denne. */
+export function xpTotal(): number { return S.xpOther + S.points; }
+let lastEggTry = 0;
+/** Etter et svar som ga XP: kanskje et egg. Selve trekningen skjer i databasen. */
+function maybeEgg(): void {
+  if (!S.petsReady || Date.now() - lastEggTry < CHANCE.cooldownMs) return;
+  lastEggTry = Date.now();
+  store.rollEgg(T.id).then((p) => { if (p) { S.pets.push(p); hooks.onEgg(p); } }, () => { /* prøver igjen neste gang */ });
+}
+/** Sier fra når et egg blir klart til å klekke. */
+function eggsReady(before: number): void {
+  const n = S.pets.filter((p) => !p.hatched_at && eggProgress(p, before) < 1 && eggProgress(p, xpTotal()) >= 1).length;
+  if (n) toast(n > 1 ? n + ' egg er klare til å klekke!' : 'Et egg er klart til å klekke!');
+}
 export function CARDS_KNOWN(): number { return T.content.cards.filter((c) => S.known[c.id] === 1).length; }
 
 // ---------- poeng én gang per spørsmål per dag ----------
@@ -165,11 +189,12 @@ if (typeof document !== 'undefined') {
 
 export function addPoints(n: number): void {
   row(S.mode).xp += n; scheduleFlush();
-  const before = lvl(S.points);
+  const before = lvl(S.points), xpBefore = xpTotal();
   S.points += n;
   hooks.onPoints(before, lvl(S.points), n);
+  eggsReady(xpBefore);
   store.award(T.id, n).then(
-    (server) => { if (typeof server === 'number' && server > S.points) S.points = server; },
+    (server) => { if (typeof server === 'number' && server > S.points) S.points = server; if (n > 0) maybeEgg(); },
     () => { toast('Poengene ble ikke lagret. Sjekk nettet.'); },
   );
 }
