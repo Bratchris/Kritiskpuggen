@@ -736,3 +736,33 @@ canvas.confetti { position: fixed; inset: 0; width: 100vw; height: 100vh; z-inde
 .privbox .row { justify-content: flex-end; }
 .privrow { margin: 16px 0; padding-top: 14px; border-top: 1px solid var(--line); }
 .privrow h3 { margin: 0 0 4px; font-family: var(--font-display); font-size: 1.05rem; }
+
+/* ---------- Sesonghendelser ---------- */
+.seasonbanner { --sc: #f2761e; --sc2: #2b2235; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; width: 100%; padding: 14px 16px; margin-bottom: 14px; border-radius: 16px; border: 0; color: #fff; font: inherit; text-align: left; cursor: pointer; background: linear-gradient(120deg, var(--sc2), var(--sc)); box-shadow: 0 6px 18px color-mix(in srgb, var(--sc) 35%, transparent); }
+.seasonbanner.season-jul { --sc: #d9453b; --sc2: #1f6b3a; }
+.seasonbanner.season-prove { --sc: #4c6ef5; --sc2: #1e2a78; }
+.sbtxt { display: flex; flex-direction: column; }
+.sbtxt .eyebrow { color: rgba(255,255,255,.8); margin: 0; }
+.sbtxt b { font-family: var(--font-display); font-size: 1.35rem; }
+.sbtxt > span:last-child { font-size: .85rem; opacity: .9; }
+.sbtags { display: flex; flex-wrap: wrap; gap: 6px; }
+.sbtags i { font-style: normal; font-weight: 800; font-size: .8rem; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.35); }
+.seasonhead { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; margin: 14px 0 10px; border-radius: 14px; color: #fff; background: linear-gradient(120deg, #2b2235, #f2761e); }
+.seasonhead.season-jul { background: linear-gradient(120deg, #1f6b3a, #d9453b); }
+.seasonhead.season-prove { background: linear-gradient(120deg, #1e2a78, #4c6ef5); }
+.seasonhead b { font-family: var(--font-display); font-size: 1.15rem; }
+.seasonhead span { font-size: .86rem; opacity: .92; }
+.seasonhead + .skins + .bgs { margin-top: 10px; }
+.subtab.seasontab { color: var(--sand); }
+.subtab.seasontab[aria-current="true"] { background: var(--sand); color: var(--sand-ink); }
+#snow { position: fixed; inset: 0; pointer-events: none; z-index: 5; background-image: radial-gradient(3px 3px at 20px 30px, #fff, transparent), radial-gradient(2px 2px at 80px 120px, #fff, transparent), radial-gradient(3px 3px at 150px 60px, rgba(255,255,255,.9), transparent), radial-gradient(2px 2px at 210px 170px, #fff, transparent), radial-gradient(2.5px 2.5px at 260px 20px, rgba(255,255,255,.85), transparent); background-size: 300px 220px; opacity: .75; animation: snowfall 14s linear infinite; }
+@keyframes snowfall { from { background-position: 0 -220px; } to { background-position: 60px 220px; } }
+:root:not([data-mode="dark"]) #snow { filter: drop-shadow(0 0 1px rgba(80,110,160,.6)); }
+:root[data-motion="rolig"] #snow { display: none; }
+/* Dyr som vokser */
+.petlv { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2px 8px; width: 100%; font-size: .8rem; }
+.petlv .muted { color: var(--muted); }
+.petbar i { background: linear-gradient(90deg, #4fae6b, #ffd25a); }
+.growhint { margin-top: 6px; }
+.dexcells.season { margin-top: 4px; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 45%; }
+@media (max-width: 560px) { .dexcells.season { max-width: none; } }

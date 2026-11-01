@@ -1,9 +1,10 @@
 // Kjæledyr og egg. Artene, fargevariantene og vektene må stemme med hatch_egg i
 // supabase/migrations/20261029800000_pets.sql, som avgjør hva som klekker.
 
-export type EggKind = 'vanlig' | 'mytisk';
+/** halloween, jul og prove er sesongegg, se src/seasons/catalog.ts. */
+export type EggKind = 'vanlig' | 'mytisk' | 'halloween' | 'jul' | 'prove';
 export type Species = 'ku' | 'sau' | 'kanin' | 'hund' | 'katt' | 'skilpadde' | 'minigris' | 'enhjorning' | 'drage' | 'ugle' | 'rev' | 'elefant' | 'foniks';
-export type Variant = 'vanlig' | 'stripete' | 'bronse' | 'solv' | 'smaragd' | 'neon' | 'gull';
+export type Variant = 'vanlig' | 'stripete' | 'bronse' | 'solv' | 'smaragd' | 'neon' | 'gull' | 'halloween' | 'jul' | 'prove';
 
 export interface Pet {
   id: string;
@@ -17,6 +18,8 @@ export interface Pet {
   species: Species | null;
   variant: Variant | null;
   rarity: number | null;
+  /** XP dyret har fått som følgesvenn ved avataren. */
+  pet_xp?: number;
 }
 
 export const SPECIES: { id: Species; name: string; tier: number; w: number; egg: EggKind | 'belonning' }[] = [
@@ -44,16 +47,35 @@ export const VARIANTS: { id: Variant; name: string; prefix: string; tier: number
   { id: 'neon', name: 'Neon', prefix: 'Neon', tier: 3, w: 3 },
   { id: 'gull', name: 'Gull', prefix: 'Gull', tier: 4, w: 1 },
 ];
+/** Fargene fra sesongegg. Finnes bare mens læreren har sesongen på. */
+export const SEASON_VARIANTS: { id: Variant; name: string; prefix: string; tier: number; w: number }[] = [
+  { id: 'halloween', name: 'Halloween', prefix: 'Halloween-', tier: 3, w: 0 },
+  { id: 'jul', name: 'Jul', prefix: 'Jule', tier: 3, w: 0 },
+  { id: 'prove', name: 'Geni', prefix: 'Geni', tier: 3, w: 0 },
+];
 export const RARITIES = ['Vanlig', 'Sjelden', 'Veldig sjelden', 'Episk', 'Legendarisk'];
 export const EGGS: Record<EggKind, { name: string; need: number; desc: string }> = {
   vanlig: { name: 'Egg', need: 300, desc: 'Et prikkete egg. Noe lite rører seg inni.' },
   mytisk: { name: 'Mytisk egg', need: 600, desc: 'Et glødende egg med skjell. Det er varmt å holde i.' },
+  halloween: { name: 'Gresskaregg', need: 300, desc: 'Et oransje egg som gløder svakt. Dyret inni får halloweenfarger.' },
+  jul: { name: 'Juleegg', need: 300, desc: 'Et egg pakket inn som en gave. Dyret inni får julefarger.' },
+  prove: { name: 'Kunnskapsegg', need: 300, desc: 'Et blått egg med stjerner. Dyret inni blir et lite geni.' },
 };
+export const isSeasonEgg = (e: string) => e === 'halloween' || e === 'jul' || e === 'prove';
+
+// ---------- dyr som vokser ----------
+/** Dyret ved avataren får XP. Nivå L nås ved 20 · L · (L − 1) XP, opp til nivå 10. */
+export const PET_MAX = 10;
+export const petLevelXp = (l: number) => 20 * l * (l - 1);
+export function petLevel(xp = 0): number { let l = 1; while (l < PET_MAX && xp >= petLevelXp(l + 1)) l++; return l; }
+/** 1 = liten (nivå 1–4), 2 = ung (5–9), 3 = mester (10). */
+export function petStage(xp = 0): 1 | 2 | 3 { const l = petLevel(xp); return l >= 10 ? 3 : l >= 5 ? 2 : 1; }
+export const STAGE_NAMES = ['', 'Liten', 'Ung', 'Mester'];
 /** Sjansen per svar som gir XP. Står også i roll_egg i databasen. */
 export const CHANCE = { vanlig: 0.025, mytisk: 0.0015, perDay: 5, maxEggs: 8, cooldownMs: 12000 };
 
 export const speciesOf = (id: string | null) => SPECIES.find((s) => s.id === id);
-export const variantOf = (id: string | null) => VARIANTS.find((v) => v.id === id);
+export const variantOf = (id: string | null) => VARIANTS.find((v) => v.id === id) || SEASON_VARIANTS.find((v) => v.id === id);
 export function rarityOf(sp: string | null, va: string | null): number { return Math.min(4, (speciesOf(sp)?.tier ?? 0) + (variantOf(va)?.tier ?? 0)); }
 
 /** «Gullkatt», «Stripete hund», «Smaragddrage». */

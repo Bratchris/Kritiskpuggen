@@ -4,21 +4,23 @@ import { friendly } from '../lib/supabase';
 import { S, T, store, panel, hooks } from '../app/core';
 import {
   AvatarCfg, ColorKey, Slot, Skin, GENDERS, SKIN_TONES, HAIR_STYLES, HAIR_COLORS, HEADWEAR, EYE_COLORS, LIP_COLORS, SHADOW_COLORS, BLUSH_COLORS,
-  CLOTH_COLORS, TOPS, BOTTOMS, SHOES, EYES, MOUTHS, SKINS, SLOT_NAMES, skinById, isMerch, isAch, Swatch, Opt,
+  CLOTH_COLORS, TOPS, BOTTOMS, SHOES, EYES, MOUTHS, SKINS, SLOT_NAMES, skinById, isMerch, isAch, isSeasonal, Swatch, Opt,
 } from './catalog';
 import { avatarSVG, tintOf } from './render';
 import { petsHTML, wirePets, companionSVG } from '../pets/screen';
 import { achHTML } from '../achievements/screen';
 import { achieve } from '../achievements/engine';
 import { achForSkin } from '../achievements/catalog';
+import { type SeasonId, seasonById, untilText } from '../seasons/catalog';
 import { BACKGROUNDS, BG_GROUPS, Background, bgById, bgImage, bgFit, applyBackground } from './backgrounds';
 
 // Hvilken del som vises, styres av menyen i app.ts: profilen (avatar, garderobe, dyr) eller butikken (kostymer, CRISPY-G, bakgrunner).
 type Part = 'kropp' | 'har' | 'ansikt' | 'sminke' | 'klaer';
-type Tab = Part | 'garderobe' | 'dyr' | 'ach' | 'bakgrunn' | 'kostymer' | 'merch';
+type Tab = Part | 'garderobe' | 'dyr' | 'ach' | 'bakgrunn' | 'kostymer' | 'merch' | 'sesong';
 const PARTS: [Part, string][] = [['kropp', 'Kropp'], ['har', 'Hår'], ['ansikt', 'Ansikt'], ['sminke', 'Sminke'], ['klaer', 'Klær']];
 const HEADS: Record<string, [string, string]> = {
   garderobe: ['Garderoben', 'Kostymer og merch du eier. Ta på og av så mye du vil.'],
+  sesong: ['Sesong', 'Varer som bare finnes mens sesonghendelsen pågår.'],
   ach: ['Achievements', 'Mestre spillene og samle medaljer. Noen gir kostymer og dyr som ikke finnes andre steder.'],
   dyr: ['Dyr og egg', 'Egg du har funnet, dyrene som har klekket, og dyreboka.'],
   kostymer: ['Kostymer', 'Kostymer til avataren, kjøpt med poengene dine.'],
@@ -93,7 +95,7 @@ function section(title: string, body: string) { return '<div class="avsec"><h3>'
 // ---------- butikkene ----------
 function card(k: Skin): string {
   const s = st(), bal = S.points - S.spent;
-  const own = S.owned.has(k.id), worn = S.avatar.eq[k.slot] === k.id, can = bal >= k.price, armed = s.arm === k.id, here = k.theme === T.id || isMerch(k);
+  const own = S.owned.has(k.id), worn = S.avatar.eq[k.slot] === k.id, can = bal >= k.price, armed = s.arm === k.id, here = k.theme === T.id || isMerch(k) || (isSeasonal(k) && S.seasons.includes(k.theme as SeasonId));
   let btn: string;
   if (own) btn = '<button class="btn' + (worn ? '' : ' primary') + '" type="button" data-wear="' + k.id + '">' + (worn ? 'Ta av' : 'Ta på') + '</button>';
   else if (!here) btn = '';
@@ -102,7 +104,7 @@ function card(k: Skin): string {
   const tintBtn = own && k.tint ? '<button class="btn ghost" type="button" data-open="' + ck + '" aria-expanded="' + tintOpen + '">' + (tintOpen ? 'Ferdig' : 'Endre farge') + '</button>' : '';
   return '<article class="skin' + (worn ? ' worn' : '') + (isMerch(k) ? ' merch' : '') + (tintOpen ? ' wide' : '') + '"><div class="skinart">' +
     avatarSVG({ ...S.avatar, eq: { [k.slot]: k.id } }, { crop: k.slot === 'hat' || k.slot === 'face' ? 'head' : 'full' }) + '</div><div class="skininfo">' +
-    '<h4>' + esc(k.name) + '</h4><p>' + esc(k.desc) + (isAch(k) && !own ? ' Lås opp «' + esc(achForSkin(k.id)?.name || '') + '».' : '') + '</p><div class="pfoot"><span class="price">' + (own ? 'Eies' : isAch(k) ? 'Achievement' : k.price + ' poeng') + '</span><span class="tsub">' + esc(SLOT_NAMES[k.slot]) + (k.tint ? ' · kan fargelegges' : '') + '</span></div>' +
+    '<h4>' + esc(k.name) + '</h4><p>' + esc(k.desc) + (isAch(k) && !own ? ' Lås opp «' + esc(achForSkin(k.id)?.name || '') + '».' : '') + '</p><div class="pfoot"><span class="price">' + (own ? 'Eies' : isAch(k) ? 'Achievement' : isSeasonal(k) && !here ? 'Bare i ' + (seasonById(k.theme)?.name || 'sesongen') : k.price + ' poeng') + '</span><span class="tsub">' + esc(SLOT_NAMES[k.slot]) + (k.tint ? ' · kan fargelegges' : '') + '</span></div>' +
     (tintOpen ? colorField(ck, CLOTH_COLORS, 'Farge på ' + k.name.toLowerCase()) : '') + btn + tintBtn + '</div></article>';
 }
 
@@ -114,7 +116,7 @@ const notReady = '<p class="fb bad">Butikken er ikke klar ennå. Læreren må op
 
 function shopHTML(): string {
   if (!S.avaReady) return notReady;
-  const here = SKINS.filter((k) => k.theme === T.id), other = SKINS.filter((k) => k.theme !== T.id && !isMerch(k) && !isAch(k) && S.owned.has(k.id));
+  const here = SKINS.filter((k) => k.theme === T.id), other = SKINS.filter((k) => k.theme !== T.id && !isMerch(k) && !isAch(k) && !isSeasonal(k) && S.owned.has(k.id));
   const ach = SKINS.filter(isAch);
   return balHTML('Kostymene kjøpes med de samme poengene som i ' + esc((T.modes.find((m) => m.id === 'shop') || { name: 'butikken' }).name) + '. Et kostyme du har kjøpt, er ditt for godt.') +
     '<div class="skins">' + here.map(card).join('') + '</div>' +
@@ -133,19 +135,37 @@ function merchHTML(): string {
 
 const bgStyle = (b: Background) => { const f = bgFit(b, 0.75); return 'background-color:' + b.color + ';background-image:' + bgImage(b).replace(/"/g, "'") + ';background-size:' + f.size + ';background-repeat:' + f.repeat + ';background-position:' + f.pos + (b.pixel ? ';image-rendering:pixelated' : ''); };
 
-function bgHTML(): string {
-  const s = st(), bal = S.points - S.spent, cur = S.avatar.bg || '';
-  const card = (b: Background) => {
+function bgCard(b: Background): string {
+    const s = st(), bal = S.points - S.spent, cur = S.avatar.bg || '';
     const own = b.price === 0 || S.owned.has(b.id), on = cur === b.id, can = bal >= b.price, armed = s.arm === b.id;
+    const closed = !!b.season && !S.seasons.includes(b.season as SeasonId);
     let btn: string;
     if (own) btn = '<button class="btn' + (on ? '' : ' primary') + '" type="button" data-bg="' + b.id + '"' + (on ? ' aria-pressed="true"' : '') + '>' + (on ? 'I bruk' : 'Bruk') + '</button>';
     else if (!S.avaReady) btn = '';
+    else if (closed) btn = '<button class="btn" type="button" disabled>Bare i ' + esc(seasonById(b.season!)?.name || 'sesongen') + '</button>';
     else btn = '<button class="btn' + (armed ? ' primary' : '') + '" type="button" data-bgbuy="' + b.id + '"' + (can && !s.busy ? '' : ' disabled') + '>' + (can ? (armed ? 'Bekreft kjøp' : 'Kjøp') : 'Mangler ' + (b.price - bal) + ' poeng') + '</button>';
     return '<article class="bgcard' + (on ? ' on' : '') + '"><div class="bgprev" style="' + bgStyle(b) + '"></div><h4>' + esc(b.name) + '</h4><span class="price">' + (b.price === 0 ? 'Gratis' : own ? 'Eies' : b.price + ' poeng') + '</span>' + btn + '</article>';
-  };
+}
+
+/** Butikken for sesongene som pågår: sesongkostymer og -bakgrunner. */
+function seasonHTML(): string {
+  if (!S.avaReady) return notReady;
+  if (!S.seasons.length) return '<p class="keyhint">Ingen sesonghendelse pågår nå. Læreren din bestemmer når de starter.</p>';
+  return balHTML('Sesongvarene kan bare kjøpes mens hendelsen pågår. Det du kjøper, er ditt for godt.') + S.seasons.map((id) => {
+    const se = seasonById(id)!, until = S.events[id]?.until;
+    return '<div class="seasonhead season-' + id + '"><b>' + esc(se.name) + '</b><span>' + esc(se.desc) + (until ? ' Varer til ' + esc(untilText(until)) + '.' : '') + '</span></div>' +
+      '<div class="skins">' + SKINS.filter((k) => k.theme === id).map(card).join('') + '</div>' +
+      '<div class="bgs">' + BACKGROUNDS.filter((b) => b.season === id).map(bgCard).join('') + '</div>';
+  }).join('');
+}
+
+function bgHTML(): string {
+  const cur = S.avatar.bg || '';
+  const mineSeason = BACKGROUNDS.filter((b) => b.season && S.owned.has(b.id));
   return balHTML('Bakgrunnen vises bak hele appen, i alle temaer. Noen er gratis, resten kjøpes med poeng.') +
     '<div class="row"><button class="btn' + (cur ? '' : ' primary') + '" type="button" data-bg=""' + (cur ? '' : ' aria-pressed="true"') + '>' + (cur ? 'Bruk vanlig bakgrunn' : 'Vanlig bakgrunn er i bruk') + '</button></div>' +
-    BG_GROUPS.map((g) => '<h3 class="grp">' + g.name + '</h3><div class="bgs">' + BACKGROUNDS.filter((b) => b.group === g.id).map(card).join('') + '</div>').join('');
+    BG_GROUPS.map((g) => '<h3 class="grp">' + g.name + '</h3><div class="bgs">' + BACKGROUNDS.filter((b) => b.group === g.id).map(bgCard).join('') + '</div>').join('') +
+    (mineSeason.length ? '<h3 class="grp">Fra sesonghendelser</h3><div class="bgs">' + mineSeason.map(bgCard).join('') + '</div>' : '');
 }
 
 function wardrobeHTML(): string {
@@ -179,6 +199,7 @@ export function renderAvatar(): void {
   if (s.tab === 'dyr') body = petsHTML();
   if (s.tab === 'garderobe') body = wardrobeHTML();
   if (s.tab === 'ach') body = achHTML();
+  if (s.tab === 'sesong') body = seasonHTML();
   const sbg = bgById(a.bg), isPart = PARTS.some(([id]) => id === s.tab);
   const hd = isPart ? ['Avataren din', 'Endringene lagres med en gang.'] : HEADS[s.tab];
 

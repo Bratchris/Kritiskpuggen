@@ -4,7 +4,8 @@ import { $, esc, toast } from '../lib/dom';
 import type { Store, SavedState, Gift, ActivityRow } from '../lib/store';
 import type { Theme, Mode, Level, RoomItem, Placement, Topic } from '../themes/types';
 import { defaultAvatar, type AvatarCfg } from '../avatar/catalog';
-import { type Pet, CHANCE, eggProgress } from '../pets/catalog';
+import { type Pet, CHANCE, eggProgress, petLevel } from '../pets/catalog';
+import { type Events, type SeasonId, xpMult } from '../seasons/catalog';
 import { getPrefs } from '../lib/prefs';
 
 export interface AppState {
@@ -37,9 +38,12 @@ export interface AppState {
   day: { d: string; xp: number };
   streak: { n: number; last: string; best: number; days: string[] };
   combo: number;
+  /** Sesonghendelsene læreren har satt for klassen, og hvilke som pågår nå. */
+  events: Events;
+  seasons: SeasonId[];
 }
 
-export const S: AppState = { topic: 'alle', mode: 'quiz', last: 'quiz', points: 0, spent: 0, gifts: [], home: null, seenLvl: -1, seeded: [], earned: {}, known: {}, notes: {}, cur: {}, avatar: defaultAvatar(0.37), owned: new Set(), avaReady: false, pets: [], petsReady: false, xpOther: 0, ach: new Set(), achReady: false, played: [], day: { d: '', xp: 0 }, streak: { n: 0, last: '', best: 0, days: [] }, combo: 0 };
+export const S: AppState = { topic: 'alle', mode: 'quiz', last: 'quiz', points: 0, spent: 0, gifts: [], home: null, seenLvl: -1, seeded: [], earned: {}, known: {}, notes: {}, cur: {}, avatar: defaultAvatar(0.37), owned: new Set(), avaReady: false, pets: [], petsReady: false, xpOther: 0, ach: new Set(), achReady: false, played: [], day: { d: '', xp: 0 }, streak: { n: 0, last: '', best: 0, days: [] }, combo: 0, events: {}, seasons: [] };
 
 export let T: Theme;
 export let store: Store;
@@ -113,9 +117,21 @@ export const hooks = {
   onGoal: () => {},
   /** Riktige svar på rad endret seg. */
   onCombo: (_n: number) => {},
+  /** Dyret ved avataren gikk opp i nivå. */
+  onPetLevel: (_p: Pet, _level: number) => {},
   /** Åpner en side, for eksempel dyrene i avatarskjermen. */
   open: (_mode: string, _tab?: string) => {},
 };
+
+/** Dyret ved avataren får like mye XP som eleven. Databasen gjør det samme i award_points. */
+function growPet(n: number): void {
+  const p = S.pets.find((x) => x.id === S.avatar.pet && x.hatched_at);
+  if (!p) return;
+  const before = petLevel(p.pet_xp);
+  p.pet_xp = (p.pet_xp || 0) + n;
+  const after = petLevel(p.pet_xp);
+  if (after > before) hooks.onPetLevel(p, after);
+}
 
 /** Gårsdagens dato, ÅÅÅÅ-MM-DD. */
 export function yesterday(): string { const d = new Date(); d.setDate(d.getDate() - 1); const p = (n: number) => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
@@ -164,7 +180,8 @@ export function earnedToday(key: string): boolean { return S.earned[key] === tod
 export function earnOnce(key: string, n: number): number {
   if (earnedToday(key)) return 0;
   S.earned[key] = today(); save(); addPoints(n);
-  return n;
+  // Med sesongbonus får eleven mer enn grunnpoengene. Det er det som vises.
+  return n * xpMult(S.events);
 }
 
 // ---------- lesetid ----------
@@ -224,16 +241,20 @@ if (typeof document !== 'undefined') {
   window.addEventListener('pagehide', () => { void flushActivity(); });
 }
 
-export function addPoints(n: number): void {
+/** Gir poeng. Returnerer det eleven faktisk fikk, med sesongbonus. */
+export function addPoints(base: number): number {
+  // Sesongbonus: databasen ganger med det samme selv, så her vises bare det eleven faktisk får.
+  const mult = xpMult(S.events), n = base * mult;
   row(S.mode).xp += n; scheduleFlush();
-  if (n > 0) countDay(n);
+  if (n > 0) { countDay(n); growPet(n); }
   if (n > 0 && !S.played.includes(S.mode) && T.modes.some((m) => m.id === S.mode && !m.g)) { S.played.push(S.mode); save(); }
   const before = lvl(S.points), xpBefore = xpTotal();
   S.points += n;
   hooks.onPoints(before, lvl(S.points), n);
   eggsReady(xpBefore);
-  store.award(T.id, n).then(
+  store.award(T.id, base, mult).then(
     (server) => { if (typeof server === 'number' && server > S.points) S.points = server; if (n > 0) maybeEgg(); },
     (e) => { toast(/for mange poeng/i.test(String((e as Error)?.message)) ? 'Rolig nå! Poengene ble ikke lagret fordi du svarte veldig fort.' : 'Poengene ble ikke lagret. Sjekk nettet.'); },
   );
+  return n;
 }

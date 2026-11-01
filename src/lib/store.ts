@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import type { Placement } from '../themes/types';
-import { type Pet, type EggKind, type Species, EGGS, CHANCE, SPECIES, VARIANTS, pick, rarityOf } from '../pets/catalog';
+import { type Pet, type EggKind, type Species, type Variant, EGGS, CHANCE, SPECIES, VARIANTS, pick, rarityOf, isSeasonEgg } from '../pets/catalog';
 import { achById } from '../achievements/catalog';
 
 /** Det som lagres per elev og tema, i tillegg til poengene. */
@@ -41,7 +41,8 @@ export interface Store {
   load(theme: string): Promise<Progress>;
   saveState(theme: string, state: SavedState): void;
   flush(): Promise<void>;
-  award(theme: string, n: number): Promise<number>;
+  /** n er grunnpoengene. Databasen ganger med XP-bonusen for sesongen selv; mult brukes bare i forhåndsvisningen. */
+  award(theme: string, n: number, mult?: number): Promise<number>;
   buy(theme: string, itemId: string, price: number): Promise<number>;
   leaderboard(theme: string): Promise<LbRow[]>;
   logActivity(theme: string, rows: ActivityRow[]): Promise<void>;
@@ -226,7 +227,15 @@ export class PreviewStore implements Store {
   async load(theme: string) { return this.read(theme); }
   saveState(theme: string, state: SavedState) { const p = this.read(theme); p.state = state; this.write(theme, p); }
   async flush() { /* alt er allerede lagret */ }
-  async award(theme: string, n: number) { const p = this.read(theme); p.points += n; this.write(theme, p); return p.points; }
+  async award(theme: string, n: number, mult = 1) {
+    const p = this.read(theme), gain = n * mult; p.points += gain; this.write(theme, p);
+    // Dyret ved avataren får like mye XP, som i databasen.
+    const a = await this.loadAvatar(), id = (a.cfg as { pet?: string } | null)?.pet;
+    if (id) { const all = this.petsRead(), pet = all.find((x) => x.id === id && x.hatched_at); if (pet) { pet.pet_xp = (pet.pet_xp || 0) + gain; this.petsWrite(all); } }
+    return p.points;
+  }
+  /** Sesongene som pågår i klassen læreren forhåndsviser. */
+  seasons: string[] = [];
   async buy(theme: string, itemId: string, price: number) {
     const p = this.read(theme);
     if (p.points - p.spent < price) throw new Error('Ikke nok poeng');
@@ -269,7 +278,8 @@ export class PreviewStore implements Store {
     const all = this.petsRead(), day = new Date().toISOString().slice(0, 10);
     if (all.filter((p) => !p.hatched_at).length >= CHANCE.maxEggs || all.filter((p) => p.found_at.slice(0, 10) === day).length >= CHANCE.perDay) return null;
     const r = Math.random();
-    const egg: EggKind | null = r < CHANCE.mytisk ? 'mytisk' : r < CHANCE.mytisk + CHANCE.vanlig ? 'vanlig' : null;
+    let egg: EggKind | null = r < CHANCE.mytisk ? 'mytisk' : r < CHANCE.mytisk + CHANCE.vanlig ? 'vanlig' : null;
+    if (egg === 'vanlig' && this.seasons.length && Math.random() < 0.6) egg = this.seasons[Math.floor(Math.random() * this.seasons.length)] as EggKind;
     return egg ? this.giveEgg(theme, egg) : null;
   }
   async hatchEgg(id: string): Promise<Pet> {
@@ -278,7 +288,7 @@ export class PreviewStore implements Store {
     if (p.hatched_at) return p;
     if (this.total() < p.xp_start + p.xp_need) throw new Error('Egget er ikke klart til å klekke ennå');
     p.species = p.egg === 'mytisk' ? 'drage' : pick(SPECIES.filter((s) => s.egg === 'vanlig')).id;
-    p.variant = pick(VARIANTS).id;
+    p.variant = isSeasonEgg(p.egg) ? (p.egg as Variant) : pick(VARIANTS).id;
     p.rarity = rarityOf(p.species, p.variant);
     p.hatched_at = new Date().toISOString();
     this.petsWrite(all);

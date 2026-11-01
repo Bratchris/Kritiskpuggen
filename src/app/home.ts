@@ -8,6 +8,7 @@ import { eggSVG } from '../pets/render';
 import { eggProgress } from '../pets/catalog';
 import { ACHS } from '../achievements/catalog';
 import { getPrefs } from '../lib/prefs';
+import { seasonById, untilText } from '../seasons/catalog';
 
 /** Kort undertittel på flisene. Spill som mangler her, får første setning av beskrivelsen. */
 const TAG: Record<string, string> = {
@@ -16,6 +17,15 @@ const TAG: Record<string, string> = {
 };
 let firstName = '';
 const DAYS = ['M', 'T', 'O', 'T', 'F', 'L', 'S'];
+
+/** Banner for sesonghendelsene som pågår. */
+function seasonBanner(): string {
+  return S.seasons.map((id) => {
+    const se = seasonById(id)!, ev = S.events[id]!, x = Math.round(Number(ev.xp) || 1);
+    return '<button type="button" class="seasonbanner season-' + id + '" data-go="avatar:sesong"><span class="sbtxt"><span class="eyebrow">Pågår nå</span><b>' + esc(se.name) + '</b><span>Varer til ' + esc(untilText(ev.until)) + '</span></span>' +
+      '<span class="sbtags">' + (x > 1 ? '<i>' + x + '× XP</i>' : '') + '<i>' + esc(se.egg.name) + '</i><i>Sesongvarer</i></span></button>';
+  }).join('');
+}
 
 /** Dagens mål som en ring, rekka med flamme, og denne uka. */
 function goalHTML(): string {
@@ -64,7 +74,7 @@ export function renderHome(): void {
         (hasTop ? '<button type="button" class="hstat" data-go="top"><b>' + esc(myRankText()) + '</b><span>i klassen</span></button>' : '') +
       '</div>' +
       '<div id="stripes" class="stripes mini" role="img" aria-label="' + known + ' av ' + n + ' kort mestret">' + cards.map((c, i) => '<i class="' + (S.known[c.id] === 1 ? 'on' : '') + '" style="background:' + gradient(T.stripes, i / Math.max(1, n - 1)) + '"></i>').join('') + '</div>' +
-    '</section>' + goalHTML() +
+    '</section>' + seasonBanner() + goalHTML() +
     (eggs.length ? '<button type="button" class="eggstrip' + (ready ? ' ready' : '') + '" data-go="avatar:dyr"><span class="eggrow">' + eggs.slice(0, 5).map((x) => eggSVG(x.egg, eggProgress(x, xpTotal()), eggProgress(x, xpTotal()) >= 1 ? 'wobble' : '')).join('') + '</span>' +
       '<span><b>' + (ready ? (ready > 1 ? ready + ' egg er klare til å klekke!' : 'Et egg er klart til å klekke!') : eggs.length + ' egg på vei') + '</b><span>' + (ready ? 'Trykk for å klekke' : 'De klekker når du tjener XP') + '</span></span></button>' : '') +
     (lastGame ? '<button type="button" class="continue" data-go="' + lastGame.id + '">' + icon(lastGame.id) + '<span><span class="eyebrow">Fortsett</span><b>' + esc(lastGame.name) + '</b></span>' + icon('pil', 'flip') + '</button>' : '') +

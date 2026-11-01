@@ -24,6 +24,8 @@ import { renderAvatar } from '../avatar/screen';
 import { renderHome, setHomeName, heroStats, games } from './home';
 import { renderSettings, setSettingsActions } from './settings';
 import { icon } from './icons';
+import { type Events, activeSeasons, seasonById } from '../seasons/catalog';
+import { petName } from '../pets/catalog';
 import { floatXP, confetti, celebrate, showCombo, countTo } from './juice';
 import { getPrefs } from '../lib/prefs';
 import { checkProgress, checkPets } from '../achievements/engine';
@@ -45,12 +47,18 @@ export interface MountOptions {
   onReset?: () => void;
   /** Av når læreren har slått av topplisten for klassen. */
   leaderboard?: boolean;
+  /** Sesonghendelsene læreren har satt for klassen (classes.events). */
+  events?: Events;
 }
 
 /** Bygger øvingsappen i root for et tema. Fremgangen hentes fra store. */
 export async function mountApp(root: HTMLElement, theme: Theme, store: Store, opts: MountOptions): Promise<void> {
   document.documentElement.dataset.tema = theme.id;
   setTheme(theme, store, { leaderboard: opts.leaderboard });
+  S.events = (opts.events && typeof opts.events === 'object' ? opts.events : {}) as Events;
+  S.seasons = activeSeasons(S.events);
+  if (store instanceof PreviewStore) store.seasons = S.seasons;
+  seasonDecor();
   root.innerHTML = '<div class="wrap"><p class="loading">Henter fremgangen din …</p></div>';
   let progress;
   try { progress = await store.load(theme.id); } catch (e) {
@@ -144,6 +152,12 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
   let starsBefore = stars(S.points);
   hooks.onGoal = () => { const n = streakNow(); celebrate('Dagens mål er nådd!', n > 1 ? n + ' dager på rad. Kom tilbake i morgen for å holde rekka.' : 'Rekka di har startet. Kom tilbake i morgen for å holde den.'); renderHeader(); if (S.mode === 'hjem') renderHome(); };
   hooks.onCombo = (n) => showCombo(n);
+  hooks.onPetLevel = (p, l) => {
+    const name = petName(p.species, p.variant);
+    if (l === 5 || l === 10) celebrate(name + ' har vokst!', 'Nivå ' + l + ': ' + (l === 10 ? 'Nå er den en mester, med krone og gyllen glans.' : 'Nå er den ung og har fått skjerf.'));
+    else toast(name + ' nådde nivå ' + l);
+    hooks.refresh();
+  };
   hooks.onPoints = (before, after, n) => {
     renderHeader(); renderNav(); checkProgress();
     const st = stars(S.points);
@@ -159,7 +173,7 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
 
 // ---------- meny ----------
 const PARTS = ['kropp', 'har', 'ansikt', 'sminke', 'klaer'];
-const SHOP_TABS = ['kostymer', 'merch', 'bakgrunn'];
+const SHOP_TABS = ['kostymer', 'merch', 'bakgrunn', 'sesong'];
 const navSub: Record<string, string> = { butikk: 'shop' };
 
 /** Hvilken knapp i hovedmenyen som hører til skjermen eleven er på. */
@@ -194,7 +208,7 @@ function renderSub(): void {
   if (g === 'butikk') {
     const shopName = modeOf('shop').name.replace(/butikken$/i, '');
     const t = S.mode === 'avatar' ? S.cur.ava.tab : '';
-    h = '<div class="subtabs" role="tablist" aria-label="Butikken">' + tab('shop', esc(shopName || 'Gaver'), S.mode === 'shop') + tab('avatar:kostymer', 'Kostymer', t === 'kostymer') + tab('avatar:merch', 'CRISPY-G', t === 'merch', ' cgtab') + tab('avatar:bakgrunn', 'Bakgrunner', t === 'bakgrunn') + '</div>';
+    h = '<div class="subtabs" role="tablist" aria-label="Butikken">' + tab('shop', esc(shopName || 'Gaver'), S.mode === 'shop') + tab('avatar:kostymer', 'Kostymer', t === 'kostymer') + tab('avatar:merch', 'CRISPY-G', t === 'merch', ' cgtab') + tab('avatar:bakgrunn', 'Bakgrunner', t === 'bakgrunn') + (S.seasons.length ? tab('avatar:sesong', esc(S.seasons.map((id) => seasonById(id)!.short).join(' og ')), t === 'sesong', ' seasontab') : '') + '</div>';
   } else if (g === 'profil') {
     const t = S.cur.ava.tab, part = S.cur.ava.part || 'kropp';
     h = '<div class="subtabs" role="tablist" aria-label="Profilen din">' + tab('avatar:' + part, 'Avatar', PARTS.includes(t)) + tab('avatar:garderobe', 'Garderobe', t === 'garderobe') + tab('avatar:dyr', 'Dyr og egg', t === 'dyr') + tab('avatar:ach', 'Achievements', t === 'ach') + '</div>';
@@ -209,6 +223,15 @@ function renderSub(): void {
     }
   }
   el.hidden = !h; el.innerHTML = h;
+}
+
+/** Snø over hele appen i juleuka. Slås av med rolige animasjoner. */
+function seasonDecor(): void {
+  document.getElementById('snow')?.remove();
+  document.documentElement.dataset.season = S.seasons[0] || '';
+  if (!S.seasons.includes('jul')) return;
+  const el = document.createElement('div'); el.id = 'snow'; el.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(el);
 }
 
 let lastRendered = '';

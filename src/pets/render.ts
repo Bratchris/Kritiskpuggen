@@ -23,6 +23,9 @@ const METAL: Partial<Record<Variant, Pal>> = {
   gull: { main: '#f2c230', belly: '#ffe68f', dark: '#b07d10', accent: '#ffb3a0', horn: '#fff3c0' },
   smaragd: { main: '#2fbf71', belly: '#a9f0c8', dark: '#137a45', accent: '#ff9cbc', horn: '#d6ffe8' },
   neon: { main: '#ff4fd8', belly: '#62f4ff', dark: '#7a2cff', accent: '#fff36a', horn: '#62f4ff' },
+  halloween: { main: '#f2761e', belly: '#ffd9a8', dark: '#2b2235', accent: '#b06bff', horn: '#2b2235' },
+  jul: { main: '#d9453b', belly: '#ffffff', dark: '#1f6b3a', accent: '#ffd25a', horn: '#ffffff' },
+  prove: { main: '#3b5bdb', belly: '#dbe4ff', dark: '#1e2a78', accent: '#ffd25a', horn: '#ffd25a' },
 };
 function pal(sp: Species, va: Variant): Pal {
   const m = METAL[va];
@@ -138,17 +141,34 @@ function finish(va: Variant): string {
   const sp = (x: number, y: number, s: number, c: string) => '<path transform="translate(' + x + ' ' + y + ') scale(' + s + ')" d="M0,-6 Q1,-1 6,0 Q1,1 0,6 Q-1,1 -6,0 Q-1,-1 0,-6Z" fill="' + c + '"/>';
   if (va === 'gull') return E(40, 34, 7, 3.5, '#fff', ' opacity=".55"' + rot(-30, 40, 34)) + sp(80, 22, 1, '#fff6c0') + sp(18, 52, 0.7, '#fff6c0') + sp(84, 60, 0.6, '#ffffff');
   if (va === 'solv' || va === 'bronse') return E(40, 34, 7, 3.5, '#fff', ' opacity=".5"' + rot(-30, 40, 34)) + sp(80, 24, 0.7, '#ffffff');
+  // Sesongfargene får en hatt på toppen av hodet.
+  if (va === 'halloween') return P('M38,24 Q50,20 62,24 L60,26 Q50,23 40,26Z', '#2b2235') + P('M43,24 L52,4 Q55,2 55,6 L57,23Z', '#2b2235') + P('M44,21 H56 L56.6,23 H43.6Z', '#b06bff') + sp(80, 30, 0.7, '#ffd25a');
+  if (va === 'jul') return P('M38,26 Q40,10 54,8 Q66,8 70,22 Q62,16 58,18 L62,26Z', '#d9453b') + E(50, 26, 14, 4, '#ffffff') + C(71, 23, 4, '#ffffff') + sp(18, 40, 0.6, '#ffffff') + sp(82, 56, 0.5, '#ffffff');
+  if (va === 'prove') return P('M30,18 L50,10 L70,18 L50,26Z', '#1e2a78') + P('M42,21 Q50,26 58,21 L58,25 Q50,29 42,25Z', '#15205a') + C(50, 18, 1.6, '#ffd25a') + L('M50,18 Q62,20 64,28 V34', '#ffd25a', 1.2) + C(64, 35, 1.8, '#ffd25a') + sp(80, 46, 0.6, '#ffd25a');
   if (va === 'smaragd') return L('M36,64 L44,76 L56,62 L64,76', '#d6ffe8', 1, ' opacity=".6"') + sp(80, 22, 0.9, '#d6ffe8') + sp(18, 50, 0.6, '#ffffff') + E(40, 34, 6, 3, '#fff', ' opacity=".45"' + rot(-30, 40, 34));
   return '';
 }
 
-export function petG(sp: Species, va: Variant): string {
-  const p = pal(sp, va), d = DRAW[sp](p);
-  return (d.back || '') + d.main + (va === 'stripete' ? stripesOn(shade(p.dark === p.main ? p.main : p.dark, -0.1)) : '') + finish(va);
+/** Det dyret får når det vokser: skjerf ved nivå 5, og krone, gyllen glans og større kropp ved nivå 10. */
+function growth(p: Pal, stage: number): { back: string; front: string } {
+  if (stage < 2) return { back: '', front: '' };
+  const scarf = P('M34,58 Q50,66 66,58 L67,63 Q50,71 33,63Z', p.accent) + P('M58,63 L64,63 L66,76 L60,74Z', shade(p.accent, -0.15)) + L('M38,60.5 Q50,67 62,60.5', shade(p.accent, -0.25), 0.8);
+  if (stage < 3) return { back: '', front: scarf };
+  const crown = P('M40,22 L39,10 L45,15 L50,7 L55,15 L61,10 L60,22 Q50,19 40,22Z', '#ffd25a', ' stroke="#c08a1e" stroke-width="1"') + C(50, 14.5, 1.6, '#d9453b') + C(43.5, 18, 1.1, '#2e86c1') + C(56.5, 18, 1.1, '#4fae6b');
+  return { back: C(50, 58, 44, 'url(#petglow)') , front: scarf + crown };
 }
 
-export function petSVG(sp: Species, va: Variant, cls = ''): string {
-  return '<svg class="pet ' + va + ' ' + cls + '" viewBox="0 0 100 100" aria-hidden="true">' + E(50, 93, 26, 4, '#000', ' opacity=".12"') + petG(sp, va) + '</svg>';
+export function petG(sp: Species, va: Variant, stage = 1): string {
+  const p = pal(sp, va), d = DRAW[sp](p), g = growth(p, stage);
+  const body = (d.back || '') + d.main + (va === 'stripete' ? stripesOn(shade(p.dark === p.main ? p.main : p.dark, -0.1)) : '') + g.front + finish(va);
+  // Små dyr er litt mindre, mestere litt større. Skaleres rundt føttene.
+  const k = stage === 1 ? 0.86 : stage === 3 ? 1.06 : 1;
+  return g.back + (k === 1 ? body : '<g transform="translate(' + (50 * (1 - k)).toFixed(1) + ' ' + (92 * (1 - k)).toFixed(1) + ') scale(' + k + ')">' + body + '</g>');
+}
+
+const GLOW = '<defs><radialGradient id="petglow"><stop offset="0" stop-color="#ffe27a" stop-opacity=".75"/><stop offset=".6" stop-color="#ffd25a" stop-opacity=".25"/><stop offset="1" stop-color="#ffd25a" stop-opacity="0"/></radialGradient></defs>';
+export function petSVG(sp: Species, va: Variant, cls = '', stage = 1): string {
+  return '<svg class="pet ' + va + ' stage' + stage + ' ' + cls + '" viewBox="0 0 100 100" aria-hidden="true">' + (stage === 3 ? GLOW : '') + E(50, 93, 26, 4, '#000', ' opacity=".12"') + petG(sp, va, stage) + '</svg>';
 }
 
 const EGG = 'M50,8 C72,8 84,44 84,62 C84,82 68,94 50,94 C32,94 16,82 16,62 C16,44 28,8 50,8Z';
@@ -159,11 +179,19 @@ export function eggG(kind: EggKind | 'belonning', progress: number): string {
     s = E(50, 56, 44, 44, '#b06bff', ' opacity=".25"') + P(EGG, '#3a1f5c') + P('M50,8 C60,8 70,22 76,38 C66,30 58,28 50,30 C42,28 34,30 24,38 C30,22 40,8 50,8Z', '#5a2f8a');
     for (const [x, y] of [[36, 50], [50, 46], [64, 50], [30, 64], [43, 62], [57, 62], [70, 64], [36, 76], [50, 74], [64, 76], [44, 86], [56, 86]]) s += P('M' + (x - 6) + ',' + y + ' Q' + x + ',' + (y + 7) + ' ' + (x + 6) + ',' + y, 'none', ' stroke="#ffd36a" stroke-width="1.4" opacity=".75"');
     s += E(38, 26, 5, 9, '#fff', ' opacity=".18"' + rot(-20, 38, 26)) + P('M50,58 l3,7 7,1 -5,5 1,7 -6,-3 -6,3 1,-7 -5,-5 7,-1z', '#ffd36a', ' opacity=".9"');
+  } else if (kind === 'halloween') {
+    s = P(EGG, '#f2761e') + L('M50,9 Q40,50 50,93 M50,9 Q30,40 30,80 M50,9 Q70,40 70,80', '#c95a10', 1.6) + P('M38,52 L44,44 L48,52Z', '#2b2235') + P('M52,52 L56,44 L62,52Z', '#2b2235') + P('M36,64 Q50,76 64,64 L60,66 L56,63 L52,67 L48,63 L44,67 L40,64Z', '#2b2235') + L('M50,9 Q52,2 58,2', '#4a7a2a', 3) + E(38, 26, 4, 8, '#fff', ' opacity=".35"' + rot(-20, 38, 26));
+  } else if (kind === 'jul') {
+    s = P(EGG, '#d9453b') + P('M45,8.4 H55 V94 H45Z', '#1f8a4c') + P('M17,58 H83 V67 H17Z', '#1f8a4c') + P('M50,10 Q38,-2 34,8 Q40,14 50,10Z', '#ffd25a') + P('M50,10 Q62,-2 66,8 Q60,14 50,10Z', '#ffd25a') + C(50, 10, 3, '#e3ad33') + C(30, 40, 2, '#fff') + C(70, 32, 2, '#fff') + C(28, 80, 2, '#fff') + C(72, 80, 2, '#fff') + E(36, 26, 4, 7, '#fff', ' opacity=".3"' + rot(-20, 36, 26));
+  } else if (kind === 'prove') {
+    s = P(EGG, '#3b5bdb') + P('M50,8 C60,8 70,22 76,38 C66,32 58,30 50,32 C42,30 34,32 24,38 C30,22 40,8 50,8Z', '#4c6ef5');
+    for (const [x, y, k] of [[34, 52, 1], [62, 46, 0.8], [46, 72, 1.1], [68, 70, 0.7], [30, 76, 0.6]] as [number, number, number][]) s += '<path transform="translate(' + x + ' ' + y + ') scale(' + k + ')" d="M0,-6 l1.8,4 4.2,.4-3.2,2.8 1,4.2-3.8-2.2-3.8,2.2 1-4.2-3.2-2.8 4.2-.4z" fill="#ffd25a"/>';
+    s += '<text x="50" y="60" text-anchor="middle" font-family="Georgia,serif" font-size="14" font-weight="700" fill="#fff">A+</text>' + E(38, 26, 4, 8, '#fff', ' opacity=".3"' + rot(-20, 38, 26));
   } else {
     s = P(EGG, '#fff3dc') + E(32, 46, 6, 5, '#ffb3cf') + E(62, 34, 5, 4, '#8fd3ff') + E(66, 64, 7, 6, '#ffe27a') + E(40, 76, 6, 5, '#8fe3c0') + E(54, 54, 4, 3.4, '#c9a6ff') + E(24, 66, 3, 4, '#8fd3ff') + E(38, 26, 5, 9, '#fff', ' opacity=".7"' + rot(-20, 38, 26)) +
       P(EGG, 'none', ' stroke="#e8d6b0" stroke-width="1.6"');
   }
-  const ink = kind === 'mytisk' ? '#ffd36a' : '#6b5a44';
+  const ink = kind === 'mytisk' ? '#ffd36a' : kind === 'vanlig' || kind === 'belonning' ? '#6b5a44' : '#ffffff';
   if (progress >= 0.5) s += L('M60,30 L56,36 L62,40 L58,46', ink, 1.6);
   if (progress >= 0.85) s += L('M30,58 L36,54 L40,60 L46,55', ink, 1.6);
   if (progress >= 1) s += L('M18,62 L26,58 L32,64 L40,58 L48,64 L56,58 L64,64 L72,58 L82,62', ink, 2.2);

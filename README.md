@@ -9,7 +9,7 @@ Teknikk: Vite + TypeScript i nettleseren, Supabase (Postgres, Auth og en Edge Fu
 ### 1. Supabase
 
 1. Lag et prosjekt på [supabase.com](https://supabase.com). Velg en region i EU, for eksempel Stockholm (`eu-north-1`).
-2. Åpne **SQL Editor** og kjør filene i `supabase/migrations/` én om gangen, i rekkefølge etter navn: først `20261020000000_init.sql`, så `20261029000000_fix_student_role.sql` så `20261029100000_leaderboard.sql` så `20261029200000_leaderboard_top3.sql` så `20261029300000_activity.sql` så `20261029400000_avatar.sql` så `20261029500000_merch.sql` så `20261029600000_backgrounds.sql` så `20261029700000_nordlys.sql` så `20261029800000_pets.sql` så `20261029900000_pirat.sql` så `20261030000000_more_eggs.sql` så `20261101000000_achievements.sql` så `20261102000000_security.sql` så `20261102100000_teacher_invites.sql` og til slutt `20261102200000_invite_admin.sql`. Har du Supabase CLI, kan du i stedet kjøre `supabase link` og så `supabase db push`.
+2. Åpne **SQL Editor** og kjør filene i `supabase/migrations/` én om gangen, i rekkefølge etter navn: først `20261020000000_init.sql`, så `20261029000000_fix_student_role.sql` så `20261029100000_leaderboard.sql` så `20261029200000_leaderboard_top3.sql` så `20261029300000_activity.sql` så `20261029400000_avatar.sql` så `20261029500000_merch.sql` så `20261029600000_backgrounds.sql` så `20261029700000_nordlys.sql` så `20261029800000_pets.sql` så `20261029900000_pirat.sql` så `20261030000000_more_eggs.sql` så `20261101000000_achievements.sql` så `20261102000000_security.sql` så `20261102100000_teacher_invites.sql` så `20261102200000_invite_admin.sql` og til slutt `20261102300000_seasons_petlevels.sql`. Har du Supabase CLI, kan du i stedet kjøre `supabase link` og så `supabase db push`.
 3. Publiser edge-funksjonen som lager elevkontoer:
    ```bash
    npx supabase login
@@ -101,6 +101,21 @@ Når et svar gir XP, er det 2,5 % sjanse for å finne et egg og 0,15 % for et my
 Vanlige egg gir ku, sau, kanin, hund, katt, skilpadde, minigris eller enhjørning. Mytiske egg gir alltid en drage. Hvert dyr får en farge: vanlig, stripete, bronse, sølv, smaragd, neon eller gull. Art og farge gir sjeldenhetsgraden: vanlig (grå), sjelden (grønn), veldig sjelden (blå), episk (lilla) eller legendarisk (oransje). Vektene står både i `src/pets/catalog.ts` og i `hatch_egg`, og de må endres begge steder.
 
 Eleven ser eggene, dyrene og dyreboka (alle 63 kombinasjoner) under «Dyr og egg» i avatarskjermen. Et egg eller dyr kan stå ved siden av avataren øverst i appen, på avatarskjermen og i troférommet. I lærerens forhåndsvisning finnes knapper for å få et egg og gjøre eggene klare med en gang.
+
+## Sesonghendelser
+
+Under «Innstillinger for klassen» i lærerrommet kan læreren starte Halloween-uka, Juleuka eller Prøveuka for klassen i 7 dager, forlenge den eller avslutte den. For hver hendelse velger læreren XP-bonus: vanlig, 2× eller 3× (Prøveuka står på 2× som standard). Mens en hendelse pågår:
+
+- vises et banner på startsiden, og i Juleuka faller det snø over appen,
+- blir 6 av 10 egg til sesongegg (gresskaregg, juleegg eller kunnskapsegg). De gir de vanlige dyrene i sesongfargen, med hatt, og er alltid episke eller legendariske,
+- finnes en egen «Sesong»-fane i butikken med sesongkostymer og -bakgrunner, som bare kan kjøpes mens hendelsen pågår. Det eleven har kjøpt, beholder hen,
+- gir hvert poeng XP-bonusen. Bonusen regnes ut i `award_points` i databasen, så eleven kan ikke sette den selv.
+
+Hendelsene lagres i `classes.events`. Innholdet står i `src/seasons/catalog.ts`.
+
+## Dyr som vokser
+
+Dyret som står ved avataren, får like mye XP som eleven tjener (også det står i `award_points`). Nivå L nås ved 20 · L · (L − 1) XP, opp til nivå 10. På nivå 5 blir dyret ungt og får skjerf, og på nivå 10 blir det en mester med krone, gyllen glans og litt større kropp. Små dyr (nivå 1–4) er litt mindre. Eleven får et varsel med konfetti når dyret vokser.
 
 ## Achievements
 

@@ -1,4 +1,5 @@
 import { applyBackground } from './avatar/backgrounds';
+import type { Events } from './seasons/catalog';
 import './styles/fonts.css';
 import './styles/base.css';
 import './styles/app.css';
@@ -17,6 +18,8 @@ import { mountTeacher } from './teacher/teacher';
 const root = $('#app') as HTMLElement;
 const LAST_THEME = 'puggen-last-theme';
 let current = '';
+/** Tilbake til nøytralt utseende utenfor øvingsappen: ingen egen bakgrunn og ingen snø. */
+function clearLook(): void { applyBackground(null); document.getElementById('snow')?.remove(); document.documentElement.dataset.season = ''; }
 
 async function route(): Promise<void> {
   if (!configured) {
@@ -24,7 +27,7 @@ async function route(): Promise<void> {
     return;
   }
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) { current = ''; applyBackground(null); renderLogin(root, new URLSearchParams(location.search).has('invitasjon') ? 'ny' : 'elev'); return; }
+  if (!session) { current = ''; clearLook(); renderLogin(root, new URLSearchParams(location.search).has('invitasjon') ? 'ny' : 'elev'); return; }
   const uid = session.user.id;
   if (current === uid) return;
   current = uid;
@@ -44,9 +47,11 @@ async function route(): Promise<void> {
   }
 
   if (me.role === 'teacher') {
-    const openTeacher = () => (applyBackground(null), mountTeacher)(root, { id: me.id, name: me.display_name }, (theme, classId) => {
+    const openTeacher = () => (clearLook(), mountTeacher)(root, { id: me.id, name: me.display_name }, async (theme, classId) => {
       const store = new PreviewStore(classId);
+      const { data: ev } = await supabase.from('classes').select('events').eq('id', classId).maybeSingle();
       void mountApp(root, THEMES[theme], store, {
+        events: (ev as { events?: Events } | null)?.events,
         who: me.display_name + ' · forhåndsvisning', preview: true,
         onExit: () => { void openTeacher(); },
         onReset: () => { store.reset(theme); void openTeacher(); },
@@ -71,13 +76,14 @@ async function route(): Promise<void> {
     void mountApp(root, THEMES[theme], store, {
       who,
       leaderboard: klass?.leaderboard !== false,
+      events: klass?.events,
       onSwitchTheme: themes.length > 1 ? pick : undefined,
       onLogout: () => { void supabase.auth.signOut(); },
     });
   };
   function pick() {
     document.documentElement.dataset.tema = '';
-    applyBackground(null);
+    clearLook();
     root.innerHTML = '<div class="wrap"><header class="apphead"><div class="topbar"><p class="eyebrow">' + esc(who) + '</p><div class="who"><button class="lnk" id="out" type="button">Logg ut</button></div></div><h1 class="brand">Hva vil du øve på?</h1></header>' +
       '<div class="themepick">' + themes.map((t: string) => '<button class="tpick" type="button" data-pick="' + t + '" data-tema-card="' + t + '"><span class="eyebrow">' + esc(THEMES[t].eyebrow) + '</span><b>' + esc(THEMES[t].title) + '</b><span>' + THEMES[t].content.cards.length + ' kort · ' + THEMES[t].room.levels.length + ' nivåer</span></button>').join('') + '</div></div>';
     $('#out').onclick = () => supabase.auth.signOut();

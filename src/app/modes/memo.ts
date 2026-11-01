@@ -29,7 +29,7 @@ export function renderMemo(): void {
   const g: Game = S.cur.memo, p = panel(), n = g.cards.length / 2, nf = Object.keys(g.found).length;
 
   if (nf === n) {
-    if (g.paid < 0) { g.paid = memoPoints(g.tries); addPoints(g.paid); if (g.tries <= 8) achieve('memo_skarp'); }
+    if (g.paid < 0) { g.paid = addPoints(memoPoints(g.tries)); if (g.tries <= 8) achieve('memo_skarp'); }
     p.innerHTML = head('memo') + '<div class="result">' + resultStars(g.tries <= 8 ? 3 : g.tries <= 12 ? 2 : 1, 3) + '<p class="big">Alle ' + n + ' par funnet</p><p>Du brukte ' + g.tries + ' forsøk og fikk ' + g.paid + ' poeng. ' +
       (g.tries <= 9 ? 'Sterk hukommelse.' : 'Klarer du det på færre forsøk neste gang? Under 10 forsøk gir flest poeng.') + '</p>' +
       '<button class="btn primary" data-focus id="m-new" type="button">Nytt spill</button></div>';

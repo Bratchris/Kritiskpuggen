@@ -225,6 +225,26 @@ const SKIN_DRAW: Record<string, (x: Ctx) => Layers> = {
   },
   cg_fotball: ({ B }) => { const [x, y] = B.hand[1]; const cx = x + 4, cy = y + 8; return { front: circ(cx, cy, 8, '#f4f1e8', ';stroke:#1e1a24;stroke-width:1') + path('M' + cx + ',' + (cy - 3) + ' l3,2.2 -1.2,3.4 h-3.6 l-1.2,-3.4z', '#1e1a24') + line('M' + cx + ',' + (cy - 3) + ' V' + (cy - 8) + ' M' + (cx + 3) + ',' + (cy - 0.8) + ' L' + (cx + 7.6) + ',' + (cy - 2.4) + ' M' + (cx - 3) + ',' + (cy - 0.8) + ' L' + (cx - 7.6) + ',' + (cy - 2.4) + ' M' + (cx - 1.8) + ',' + (cy + 2.6) + ' L' + (cx - 4.6) + ',' + (cy + 6.4) + ' M' + (cx + 1.8) + ',' + (cy + 2.6) + ' L' + (cx + 4.6) + ',' + (cy + 6.4), '#1e1a24', 0.9) }; },
   cg_gullball: ({ B }) => { const [x, y] = B.hand[1]; const cx = x + 2, cy = y - 12; return { front: rect(cx - 6, cy + 9, 12, 5, '#7a5310') + path('M' + (cx - 3) + ',' + (cy + 9) + ' L' + (cx - 2) + ',' + (cy + 5) + ' H' + (cx + 2) + ' L' + (cx + 3) + ',' + (cy + 9) + 'Z', '#e3ad33') + circ(cx, cy - 2, 9, '#ffd25a', ';stroke:#c08a1e;stroke-width:1.2') + path('M' + cx + ',' + (cy - 5) + ' l3,2.2 -1.2,3.4 h-3.6 l-1.2,-3.4z', '#e3ad33') + circ(cx - 3.6, cy - 5.6, 2, '#fff8d0', ';opacity:.8') }; },
+  // Sesong
+  hw_horn: () => ({ front: path('M42,24 Q36,10 42,4 Q42,14 48,20Z', '#d9453b', ';stroke:#9e2a22;stroke-width:1') + path('M78,24 Q84,10 78,4 Q78,14 72,20Z', '#d9453b', ';stroke:#9e2a22;stroke-width:1') }),
+  hw_kost: ({ B }) => { const [x, y] = B.hand[1]; return { front: line('M' + (x - 10) + ',' + (y - 40) + ' L' + (x + 4) + ',' + (y + 22), '#8a5a2b', 3) + path('M' + (x + 1) + ',' + (y + 14) + ' l10,4 4,16 -14,-4 -6,-10z', '#d9b25a', ';stroke:#a8843a;stroke-width:.8') + line('M' + (x + 2) + ',' + (y + 18) + ' l6,12 M' + (x + 6) + ',' + (y + 18) + ' l5,12', '#a8843a', .8) }; },
+  hw_lykt: ({ B }) => { const [x, y] = B.hand[1]; const cx = x + 2, cy = y + 12; return { front: line('M' + x + ',' + y + ' Q' + (cx + 6) + ',' + (cy - 12) + ' ' + cx + ',' + (cy - 7), '#3a2a1c', 1.4) + ell(cx, cy, 9, 7.5, '#f2761e') + ell(cx - 3.5, cy, 3, 7, '#f58a2c') + ell(cx + 3.5, cy, 3, 7, '#f58a2c') + path('M' + (cx - 5) + ',' + (cy - 2) + ' l2,-3 2,3z M' + (cx + 1) + ',' + (cy - 2) + ' l2,-3 2,3z', '#ffe27a') + path('M' + (cx - 5) + ',' + (cy + 2) + ' q5,5 10,0z', '#ffe27a') + line('M' + cx + ',' + (cy - 7) + ' v-2', '#4a7a2a', 2) }; },
+  jul_nisselue: () => ({ front: path('M34,32 Q36,12 58,10 Q80,10 92,30 Q84,24 80,26 L86,32Z', '#d9453b') + path('M32,30 Q60,22 88,30 L88,37 Q60,29 32,37Z', '#f4f1e8') + circ(93, 31, 5, '#f4f1e8') + line('M46,14 Q60,12 74,18', '#b8392f', 1.2) }),
+  jul_gevir: () => ({ front: line('M36,32 Q60,14 84,32', '#5a3a22', 2.4) + line('M40,26 L32,12 M33,15 L26,12 M34,18 L28,20 M80,26 L88,12 M87,15 L94,12 M86,18 L92,20', '#8a5a2b', 2.6) }),
+  jul_skjerf: () => ({ front: path('M44,74 Q60,84 76,74 L77,81 Q60,91 43,81Z', '#d9453b') + line('M48,77 L50,84 M56,79 L57,86 M64,79 L63,86 M72,77 L70,84', '#f4f1e8', 2.2) + path('M66,82 L74,82 L76,104 L68,104Z', '#d9453b') + line('M67,88 H75 M68,95 H76', '#f4f1e8', 2.2) + line('M68,104 V108 M71,104 V108 M74,104 V108', '#d9453b', 1.2) }),
+  jul_genser: ({ B }) => {
+    const r = '#b8392f', w = '#f4f1e8', g = '#2f7d4a';
+    let s = arm(B, r, 0.88, 11) + path(B.torso, r) + path('M40,86 H80 V92 H40Z', w);
+    for (let x = 42; x < 80; x += 6) s += path('M' + x + ',86 l3,-4 3,4z', w) + path('M' + x + ',92 l3,4 3,-4z', w);
+    s += path('M60,96 l-7,12 h4 l-5,8 h16 l-5,-8 h4z', g) + circ(60, 95, 1.8, '#ffd25a') + circ(57, 106, 1, '#ffd25a') + circ(63, 111, 1, '#d9453b') + line('M42,116 H78', w, 3);
+    return { body: s };
+  },
+  prove_hodetelefoner: () => ({ front: line('M36,44 Q36,14 60,14 Q84,14 84,44', '#2b2b2b', 4) + path('M28,40 h10 v16 h-10 q-4,-8 0,-16z', '#3b5bdb') + path('M92,40 h-10 v16 h10 q4,-8 0,-16z', '#3b5bdb') + line('M33,42 v12 M87,42 v12', '#1e2a78', 1.4) }),
+  prove_kopp: ({ B }) => { const [x, y] = B.hand[1]; return { front: path('M' + (x - 6) + ',' + (y - 8) + ' h13 l-1.5,15 h-10z', '#f4f1e8', ';stroke:#c3cbce;stroke-width:1') + path('M' + (x + 7) + ',' + (y - 5) + ' q6,1 4,7 q-2,3 -5,2', 'none', ';stroke:#c3cbce;stroke-width:1.6') + path('M' + (x - 5) + ',' + (y - 6) + ' h11 v2 h-11z', '#7a4a2a') + circ(x, y + 1, 2.2, '#d9453b') + line('M' + (x - 2) + ',' + (y - 12) + ' q-2,-3 0,-6 M' + (x + 3) + ',' + (y - 12) + ' q-2,-3 0,-6', '#c3cbce', 1.2) }; },
+  prove_hoodie: ({ B }) => {
+    const c = '#1e2a78', d = shade('#1e2a78', -0.25);
+    return { body: arm(B, c, 0.88, 11) + path(B.torso, c) + path('M44,77 Q60,92 76,77 Q74,70 60,70 Q46,70 44,77Z', d) + path('M48,104 H72 L70,114 H50Z', d) + line('M56,80 V92 M64,80 V92', '#ffd25a', 1.4) + txt(60, 102, 12, '#ffd25a', 'A+') };
+  },
   // Belønninger fra achievements
   ach_krone: () => ({ front: path('M38,26 L36,8 L44,17 L50,4 L56,17 L64,8 L62,26 Q50,22 38,26Z', '#ffd25a', ';stroke:#c08a1e;stroke-width:1.2') + path('M37,22 Q50,18 63,22 L63,27 Q50,23 37,27Z', '#e3ad33') + circ(44, 22.6, 1.8, '#d9453b') + circ(50, 21.6, 2.2, '#2e86c1') + circ(56, 22.6, 1.8, '#4fae6b') + circ(50, 4, 2, '#fff3b0') }),
   ach_laurbaer: () => {

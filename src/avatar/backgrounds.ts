@@ -5,12 +5,12 @@ import { piratePNG } from './pirate';
 // Pris 0 = gratis for alle. Andre kjøpes med poeng gjennom buy_skin, og prisene må stemme med skin_items
 // (supabase/migrations/20261029600000_backgrounds.sql).
 
-export type BgGroup = 'sot' | 'kul' | 'halloween' | 'natur' | 'pirat';
+export type BgGroup = 'sot' | 'kul' | 'halloween' | 'natur' | 'pirat' | 'sesong';
 export const BG_GROUPS: { id: BgGroup; name: string }[] = [
   { id: 'sot', name: 'Søte' }, { id: 'kul', name: 'Kule' }, { id: 'halloween', name: 'Halloween' }, { id: 'natur', name: 'Natur' }, { id: 'pirat', name: 'Piratøya' },
 ];
 /** cover = ett stort bilde som fyller skjermen i stedet for et mønster. pixel = skarpe piksler når bildet forstørres. image = ferdig bildeadresse i stedet for SVG. */
-export interface Background { id: string; group: BgGroup; name: string; price: number; color: string; size: number; tile: () => string; cover?: boolean; pixel?: boolean; image?: () => string }
+export interface Background { id: string; group: BgGroup; name: string; price: number; color: string; size: number; tile: () => string; cover?: boolean; pixel?: boolean; image?: () => string; /** Bare til salgs i denne sesonghendelsen. */ season?: string }
 
 const r = (n: number) => Math.round(n * 10) / 10;
 const P = (d: string, f: string, x = '') => '<path d="' + d + '" fill="' + f + '"' + x + '/>';
@@ -126,6 +126,34 @@ export const BACKGROUNDS: Background[] = [
   { id: 'bg_kirkegard', group: 'halloween', name: 'Kirkegård', price: 65, color: '#27303d', size: 140, tile: () => svg(140, '#27303d',
     at(112, 28, 1, C(0, 0, 12, '#f2ecd0') + C(-5, -3, 12, '#27303d')) + at(36, 50, 1.1, grave('#9aa5b1')) + at(100, 110, 1, grave('#828e9b')) + at(32, 118, 0.8, P('M-2,-12 H2 V-4 H8 V0 H2 V12 H-2 V0 H-8 V-4 H-2Z', '#9aa5b1')) +
     at(76, 60, 0.6, bat('#11151c')) + C(60, 14, 1, '#fff') + C(10, 20, 1, '#fff') + C(132, 80, 1, '#fff')) },
+  // ---------- sesong (bare til salgs mens læreren har sesongen på) ----------
+  { id: 'bg_heksenatt', group: 'sesong', season: 'halloween', name: 'Heksenatt', price: 70, color: '#2a1f4a', size: 160, tile: () => svg(160, '#2a1f4a',
+    at(40, 40, 1, C(0, 0, 20, '#ffe9a8') + C(-7, -5, 4, '#f5d98a') + C(6, 7, 3, '#f5d98a')) +
+    at(112, 108, 1, L('M-22,6 L18,-4', '#6b4a2a', 2.6) + P('M18,-4 L30,-10 L28,0 L32,6 L18,2Z', '#c9a86a') + C(-2, -6, 4, '#1e1a24') + P('M-6,-4 Q-2,6 4,-2 L2,2 Q-4,8 -10,0Z', '#1e1a24') + P('M-8,-10 L-2,-24 L4,-10Z', '#1e1a24')) +
+    at(120, 30, 0.7, bat('#120d1e')) + at(30, 120, 0.6, bat('#120d1e')) + C(80, 70, 1.2, '#fff') + C(150, 60, 1, '#fff') + C(10, 90, 1, '#fff')) },
+  { id: 'bg_sno', group: 'sesong', season: 'jul', name: 'Snøfall', price: 60, color: '#1b2f57', size: 120, tile: () => {
+    const flake = (c: string) => L('M0,-8 V8 M-7,-4 L7,4 M-7,4 L7,-4 M-2,-6 L0,-4 L2,-6 M-2,6 L0,4 L2,6', c, 1.4);
+    return svg(120, '#1b2f57', at(28, 30, 1.1, flake('#ffffff')) + at(88, 86, 0.9, flake('#dbe8ff')) + at(90, 24, 0.6, flake('#ffffff')) + at(26, 92, 0.5, flake('#dbe8ff')) + C(60, 58, 2, '#fff', ' opacity=".8"') + C(108, 54, 1.5, '#fff', ' opacity=".7"') + C(54, 112, 1.6, '#fff', ' opacity=".7"') + C(8, 60, 1.2, '#fff', ' opacity=".6"'));
+  } },
+  { id: 'bg_julelys', group: 'sesong', season: 'jul', name: 'Julelys', price: 70, color: '#16382a', size: 140, tile: () => {
+    const bulb = (x: number, y: number, c: string) => L('M' + x + ',' + (y - 6) + ' V' + (y - 3), '#3a3a3a', 1.6) + E(x, y + 2, 4, 6, c) + E(x - 1.4, y, 1.2, 2, '#fff', ' opacity=".6"');
+    const cs = ['#ff4d4d', '#ffd25a', '#4fc3f7', '#7ed957', '#ff8ae0'];
+    let w = L('M0,20 Q35,36 70,20 T140,20', '#2b2b2b', 1.4) + L('M0,90 Q35,106 70,90 T140,90', '#2b2b2b', 1.4);
+    [10, 35, 60, 85, 110, 132].forEach((x, i) => { w += bulb(x, 20 + Math.round(Math.sin(x / 140 * Math.PI * 2) * 7) + 6, cs[i % 5]) + bulb(x, 90 + Math.round(Math.sin(x / 140 * Math.PI * 2) * 7) + 6, cs[(i + 2) % 5]); });
+    return svg(140, '#16382a', w + at(40, 60, 0.5, star('#ffd25a')) + at(110, 130, 0.4, star('#ffffff')));
+  } },
+  { id: 'bg_bibliotek', group: 'sesong', season: 'prove', name: 'Biblioteket', price: 60, color: '#5a3a22', size: 120, tile: () => {
+    let b = P('M0,0 H120 V6 H0Z', '#3e2716') + P('M0,60 H120 V66 H0Z', '#3e2716');
+    const cs = ['#d9453b', '#2e86c1', '#4fae6b', '#f2c230', '#6a3d9a', '#e8742a', '#1f6b8a', '#b04fae'];
+    for (const y0 of [6, 66]) { let x = 2; let i = y0; while (x < 116) { const w = 8 + (i * 7) % 7, h = 40 + (i * 13) % 14; b += P('M' + x + ',' + (y0 + 54 - h) + ' h' + w + ' v' + h + ' h-' + w + 'z', cs[i % 8]) + L('M' + (x + 2) + ',' + (y0 + 60 - h) + ' h' + (w - 4), 'rgba(255,255,255,.5)', 1); x += w + 1; i++; } }
+    return svg(120, '#5a3a22', b);
+  } },
+  { id: 'bg_kladdebok', group: 'sesong', season: 'prove', name: 'Kladdeboka', price: 70, color: '#fbfaf3', size: 120, tile: () => {
+    let g = '';
+    for (let i = 0; i <= 120; i += 12) g += L('M' + i + ',0 V120 M0,' + i + ' H120', '#cfe0f2', 0.8);
+    return svg(120, '#fbfaf3', g + L('M10,30 h22 M21,19 v22', '#2e86c1', 2) + '<text x="70" y="40" font-family="Georgia,serif" font-size="16" fill="#d9453b" font-weight="700">A+</text>' +
+      L('M14,90 Q24,74 34,90 T54,90', '#4fae6b', 2) + '<text x="74" y="98" font-family="Georgia,serif" font-size="13" fill="#6a3d9a" font-style="italic">x²=4</text>' + at(102, 66, 0.6, star('#f2c230')));
+  } },
   // ---------- natur ----------
   { id: 'bg_nordlys', group: 'natur', name: 'Nordlys over skogen', price: 80, color: '#0c1b40', size: 0, cover: true, tile: nordlysSVG },
   { id: 'bg_nordlys_piksel', group: 'natur', name: 'Nordlys i piksler', price: 80, color: '#0c1a44', size: 0, cover: true, pixel: true, tile: () => '', image: nordlysPixelPNG },

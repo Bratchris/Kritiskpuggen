@@ -67,3 +67,12 @@ legend { font-weight: 600; font-size: .95rem; margin-bottom: 4px; }
 .invtbl { margin-top: 12px; }
 .invtbl code { font-size: .85rem; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.seasonrow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 8px 14px; padding: 10px 12px; margin-top: 8px; border-radius: 12px; border: 1px solid var(--line); }
+.seasonrow.on { border-color: var(--leaf); background: var(--good-bg); }
+.seasonrow b { display: block; }
+.seasonrow small { display: block; color: var(--muted); }
+.seasonrow .sstatus { display: block; font-size: .82rem; font-weight: 700; color: var(--leaf); margin-top: 2px; }
+.seasonrow .sxp { display: flex; align-items: center; gap: 6px; font-size: .85rem; }
+.seasonrow select { font: inherit; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.seasonrow .row { margin: 0; }
+@media (max-width: 640px) { .seasonrow { grid-template-columns: 1fr; } }

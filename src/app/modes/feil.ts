@@ -43,7 +43,7 @@ export function renderFeil(): void {
     b.onclick = () => {
       const j = +b.dataset.j!;
       track(!!toks[j].e);
-      if (toks[j].e) { z.got = 3 - z.miss.length; z.state = 'ok'; z.score++; z.pts += z.got; addPoints(z.got); }
+      if (toks[j].e) { z.state = 'ok'; z.score++; z.got = addPoints(3 - z.miss.length); z.pts += z.got; }
       else { z.miss.push(j); if (z.miss.length >= 3) z.state = 'bad'; }
       renderFeil();
       if (!z.state) {

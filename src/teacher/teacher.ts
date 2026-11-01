@@ -1,12 +1,13 @@
 // Lærerrommet: klasser, elevkoder, fremgang og gaver.
 import { showPrivacy, downloadJSON } from '../privacy';
+import { SEASONS, SEASON_DAYS, activeSeasons, untilText, type Events, type SeasonId } from '../seasons/catalog';
 import { $, esc, fmtDate } from '../lib/dom';
 import { supabase, friendly } from '../lib/supabase';
 import { THEMES, THEME_IDS, themeName } from '../themes';
 import { gradient } from '../app/room/iso';
 import { activityHTML, type ActRow } from './activity';
 
-interface Klass { id: string; name: string; code: string; themes: string[]; created_at: string; leaderboard?: boolean }
+interface Klass { id: string; name: string; code: string; themes: string[]; created_at: string; leaderboard?: boolean; events?: Events }
 interface Student { id: string; display_name: string; username: string; last_seen: string | null; created_at: string }
 interface Prog { student_id: string; theme: string; points: number; spent: number; state: any; updated_at: string }
 interface GiftRow { id: number; student_id: string; theme: string; item_id: string; price: number; created_at: string }
@@ -189,8 +190,21 @@ function classHTML(c: Klass): string {
     '<section class="panel"><h2>Innstillinger for klassen</h2><form id="cset" class="tform"><label class="afield" for="cs-name"><span>Navn</span><input id="cs-name" maxlength="60" value="' + esc(c.name) + '"></label><fieldset><legend>Temaer</legend>' + themeChecks(c.themes, 'cs-t') + '</fieldset>' +
     ('leaderboard' in c ? '<label class="check"><input type="checkbox" id="cs-lb"' + (c.leaderboard ? ' checked' : '') + '><span><b>Vis topplisten for elevene</b><small>Elevene ser navn og XP for topp 3 i klassen. Av som standard for nye klasser, av hensyn til personvernet. Slå på hvis klassen ønsker det.</small></span></label>' : '<p class="muted">Kjør databaseoppdateringen for topplisten for å kunne slå den av og på.</p>') +
     '<div class="row"><button class="btn" type="submit">Lagre</button></div></form>' +
+    seasonsHTML(c) +
     '<div class="privrow"><h3>Personvern</h3><p class="muted">Last ned alt som er lagret om elevene i klassen, for eksempel når en elev eller forelder ber om innsyn. Aktivitet eldre enn 180 dager slettes automatisk.</p><div class="row"><button class="btn" type="button" id="cls-export">Last ned klassens data (JSON)</button><button class="btn ghost" type="button" id="cls-priv">Personvernerklæringen</button></div><p class="msg" id="cls-exmsg" aria-live="polite"></p></div>' +
     '<div class="danger">' + (V.confirmDel ? '<span>Slette klassen og alle elevkontoene i den? Fremgang og gaver forsvinner.</span><button class="btn" id="del-yes" type="button">Ja, slett</button><button class="btn ghost" id="del-no" type="button">Avbryt</button>' : '<button class="btn ghost" id="del-ask" type="button">Slett klassen</button>') + '</div></section>';
+}
+
+function seasonsHTML(c: Klass): string {
+  if (!('events' in c)) return '<div class="privrow"><h3>Sesonghendelser</h3><p class="muted">Kjør databaseoppdateringen for sesonghendelser for å kunne slå dem på.</p></div>';
+  const ev = c.events || {}, act = activeSeasons(ev);
+  return '<div class="privrow seasons"><h3>Sesonghendelser</h3><p class="muted">Slå på en hendelse for klassen i 7 dager. Da kan elevene finne sesongegg, kjøpe sesongkostymer og -bakgrunner, og få mer XP hvis du velger det. XP-bonusen regnes ut i databasen.</p>' +
+    SEASONS.map((se) => {
+      const on = act.includes(se.id), e = ev[se.id], x = on ? Math.round(Number(e!.xp) || 1) : se.xp;
+      return '<div class="seasonrow' + (on ? ' on' : '') + '"><div><b>' + esc(se.name) + '</b><small>' + esc(se.desc) + '</small>' + (on ? '<span class="sstatus">Pågår til ' + esc(untilText(e!.until)) + '</span>' : '') + '</div>' +
+        '<label class="sxp"><span>XP</span><select data-sxp="' + se.id + '" aria-label="XP-bonus for ' + esc(se.name) + '">' + [1, 2, 3].map((n) => '<option value="' + n + '"' + (n === x ? ' selected' : '') + '>' + (n === 1 ? 'Vanlig' : n + '×') + '</option>').join('') + '</select></label>' +
+        '<div class="row">' + (on ? '<button class="btn" type="button" data-season="' + se.id + '" data-act="extend">Forleng 7 dager</button><button class="btn ghost" type="button" data-season="' + se.id + '" data-act="off">Avslutt</button>' : '<button class="btn primary" type="button" data-season="' + se.id + '" data-act="on">Start i 7 dager</button>') + '</div></div>';
+    }).join('') + '</div>';
 }
 
 function codesHTML(c: Klass): string {
@@ -300,6 +314,28 @@ function wire(): void {
     V.msg = error ? friendly(error) : ''; await loadClasses(); await loadClass();
   };
   $('#cls-priv').onclick = () => showPrivacy();
+  const saveEvents = async (ev: Events) => {
+    const { error } = await supabase.from('classes').update({ events: ev }).eq('id', V.sel);
+    V.msg = error ? friendly(error) : ''; await loadClasses(); draw();
+  };
+  root.querySelectorAll<HTMLElement>('[data-season]').forEach((b) => {
+    b.onclick = async () => {
+      const c = cls(); if (!c) return;
+      const id = b.dataset.season as SeasonId, ev: Events = { ...(c.events || {}) };
+      const xp = Number((root.querySelector('[data-sxp="' + id + '"]') as HTMLSelectElement)?.value) || 1;
+      const base = b.dataset.act === 'extend' && ev[id] ? Math.max(Date.now(), new Date(ev[id]!.until).getTime()) : Date.now();
+      if (b.dataset.act === 'off') delete ev[id];
+      else ev[id] = { until: new Date(base + SEASON_DAYS * 864e5).toISOString(), xp };
+      b.setAttribute('disabled', ''); await saveEvents(ev);
+    };
+  });
+  root.querySelectorAll<HTMLSelectElement>('[data-sxp]').forEach((sel) => {
+    sel.onchange = async () => {
+      const c = cls(); if (!c) return;
+      const id = sel.dataset.sxp as SeasonId, ev: Events = { ...(c.events || {}) };
+      if (ev[id] && activeSeasons(ev).includes(id)) { ev[id] = { ...ev[id]!, xp: Number(sel.value) || 1 }; await saveEvents(ev); }
+    };
+  });
   $('#cls-export').onclick = async () => {
     const m = $('#cls-exmsg'); m.textContent = 'Henter …';
     try {

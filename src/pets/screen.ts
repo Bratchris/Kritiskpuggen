@@ -3,9 +3,10 @@
 import { esc, toast } from '../lib/dom';
 import { friendly } from '../lib/supabase';
 import { S, T, store, hooks, xpTotal } from '../app/core';
-import { type Pet, type EggKind, SPECIES, VARIANTS, RARITIES, EGGS, CHANCE, petName, eggProgress, rarityOf } from './catalog';
+import { type Pet, type EggKind, SPECIES, VARIANTS, SEASON_VARIANTS, RARITIES, EGGS, CHANCE, petName, eggProgress, rarityOf, isSeasonEgg, petLevel, petLevelXp, petStage, PET_MAX, STAGE_NAMES } from './catalog';
 import { petSVG, petG, eggSVG, eggG } from './render';
 import { checkPets } from '../achievements/engine';
+import { seasonById } from '../seasons/catalog';
 import type { PreviewStore } from '../lib/store';
 
 const chosen = (): Pet | undefined => S.pets.find((p) => p.id === S.avatar.pet);
@@ -17,12 +18,12 @@ const fmtDate = (d: string) => new Date(d).toLocaleDateString('nb-NO', { day: 'n
 /** Dyret eller egget ved siden av avataren, som SVG. Tomt hvis eleven ikke har valgt noe. */
 export function companionSVG(cls = ''): string {
   const p = chosen(); if (!p) return '';
-  return p.hatched_at && p.species && p.variant ? petSVG(p.species, p.variant, 'companion ' + cls) : eggSVG(p.egg, eggProgress(p, xpTotal()), 'companion ' + cls);
+  return p.hatched_at && p.species && p.variant ? petSVG(p.species, p.variant, 'companion ' + cls, petStage(p.pet_xp)) : eggSVG(p.egg, eggProgress(p, xpTotal()), 'companion ' + cls);
 }
 /** Samme tegning uten svg-element, til troférommet. */
 export function companionG(): string {
   const p = chosen(); if (!p) return '';
-  return p.hatched_at && p.species && p.variant ? petG(p.species, p.variant) : eggG(p.egg, eggProgress(p, xpTotal()));
+  return p.hatched_at && p.species && p.variant ? petG(p.species, p.variant, petStage(p.pet_xp)) : eggG(p.egg, eggProgress(p, xpTotal()));
 }
 
 function choose(id: string | undefined): void {
@@ -60,9 +61,13 @@ export function showEggFound(p: Pet): void {
 
 function petCard(p: Pet, big = false): string {
   const on = S.avatar.pet === p.id;
-  return '<article class="petcard rr' + p.rarity + (on ? ' on' : '') + (big ? ' big' : '') + '">' + petSVG(p.species!, p.variant!) +
-    '<h4>' + esc(petName(p.species, p.variant)) + '</h4>' + rar(p.rarity) +
-    '<p class="keyhint">' + (p.egg === 'belonning' ? 'Belønning fra et achievement · ' + fmtDate(p.hatched_at!) : (p.egg === 'mytisk' ? 'Fra et mytisk egg · ' : '') + 'Klekket ' + fmtDate(p.hatched_at!)) + '</p>' +
+  const xp = p.pet_xp || 0, lv = petLevel(xp), st = petStage(xp);
+  const a = petLevelXp(lv), b = petLevelXp(lv + 1), pct = lv >= PET_MAX ? 1 : (xp - a) / (b - a);
+  const grow = '<div class="petlv"><span><b>Nivå ' + lv + '</b> · ' + STAGE_NAMES[st] + '</span>' + (lv < PET_MAX ? '<span class="muted">' + (b - xp) + ' XP til nivå ' + (lv + 1) + '</span>' : '<span class="muted">Fullt utvokst</span>') + '</div>' +
+    '<div class="eggbar petbar" role="progressbar" aria-label="Fram til neste nivå" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(pct * 100) + '"><i style="width:' + Math.round(pct * 100) + '%"></i></div>';
+  return '<article class="petcard rr' + p.rarity + (on ? ' on' : '') + (big ? ' big' : '') + '">' + petSVG(p.species!, p.variant!, '', st) +
+    '<h4>' + esc(petName(p.species, p.variant)) + '</h4>' + rar(p.rarity) + grow +
+    '<p class="keyhint">' + (p.egg === 'belonning' ? 'Belønning fra et achievement · ' + fmtDate(p.hatched_at!) : (p.egg === 'mytisk' ? 'Fra et mytisk egg · ' : isSeasonEgg(p.egg) ? 'Fra ' + (EGGS[p.egg as EggKind]?.name || 'sesongegg').toLowerCase() + ' · ' : '') + 'Klekket ' + fmtDate(p.hatched_at!)) + '</p>' +
     (big ? '' : '<button class="btn' + (on ? '' : ' primary') + '" type="button" data-show="' + p.id + '">' + (on ? 'Ta bort fra avataren' : 'Vis ved avataren') + '</button>') + '</article>';
 }
 
@@ -115,7 +120,7 @@ export function oddsHTML(): string {
   };
   return '<details class="dex oddsbox"><summary>Sjansene: hva klekker av eggene?</summary><div class="dexbody">' +
     '<p class="keyhint">Prosentene viser hvor sannsynlig hvert dyr er når et egg klekker. Fargen på tallet er sjeldenhetsgraden. For å finne et egg i det hele tatt er sjansen ' + pct(CHANCE.vanlig) + ' for et vanlig og ' + pct(CHANCE.mytisk) + ' for et mytisk egg per svar som gir XP.</p>' +
-    table('vanlig') + table('mytisk') + '</div></details>';
+    table('vanlig') + table('mytisk') + '<p class="keyhint">Sesongegg (gresskaregg, juleegg og kunnskapsegg) finnes bare når læreren har slått på en sesonghendelse. Mens den pågår, blir 6 av 10 vanlige egg til sesongegg. De gir de samme dyrene som vanlige egg, men alltid i sesongfargen, som er episk eller legendarisk.</p></div></details>';
 }
 
 function dexHTML(): string {
@@ -123,14 +128,14 @@ function dexHTML(): string {
   const cell = (s: typeof SPECIES[number], v: typeof VARIANTS[number]) => { const k = s.id + '/' + v.id, has = found.has(k); return '<span class="dexcell' + (has ? ' has' : '') + '" title="' + esc(has ? petName(s.id, v.id) : 'Ikke funnet ennå') + '">' + petSVG(s.id, v.id, has ? '' : 'unknown') + '<i>' + esc(s.egg === 'belonning' ? s.name : v.name) + '</i></span>'; };
   const rewards = SPECIES.filter((s) => s.egg === 'belonning');
   return SPECIES.filter((s) => s.egg !== 'belonning').map((s) => '<div class="dexrow"><span class="dexname">' + esc(s.name) + (s.egg === 'mytisk' ? ' <small>(mytisk egg)</small>' : '') + '</span><div class="dexcells">' +
-    VARIANTS.map((v) => cell(s, v)).join('') + '</div></div>').join('') +
+    VARIANTS.map((v) => cell(s, v)).join('') + '</div><div class="dexcells season">' + SEASON_VARIANTS.map((v) => cell(s, v)).join('') + '</div></div>').join('') +
     '<div class="dexrow"><span class="dexname">Belønningsdyr <small>(bare via achievements)</small></span><div class="dexcells">' + rewards.map((s) => cell(s, VARIANTS[0])).join('') + '</div></div>';
 }
 
 export function petsHTML(): string {
   if (!S.petsReady) return '<p class="fb bad">Dyrene er ikke klare ennå. Læreren må oppdatere databasen først.</p>';
   const tot = xpTotal(), E = eggs(), H = hatched().slice().reverse();
-  const nFound = new Set(hatched().map((p) => p.species + '/' + p.variant)).size, nAll = SPECIES.filter((x) => x.egg !== 'belonning').length * VARIANTS.length + SPECIES.filter((x) => x.egg === 'belonning').length;
+  const nFound = new Set(hatched().map((p) => p.species + '/' + p.variant)).size, nAll = SPECIES.filter((x) => x.egg !== 'belonning').length * (VARIANTS.length + SEASON_VARIANTS.length) + SPECIES.filter((x) => x.egg === 'belonning').length;
   const eggCard = (p: Pet) => {
     const pr = eggProgress(p, tot), ready = pr >= 1, on = S.avatar.pet === p.id, got = Math.min(p.xp_need, Math.max(0, tot - p.xp_start));
     return '<article class="eggcard' + (on ? ' on' : '') + (p.egg === 'mytisk' ? ' myth' : '') + '">' + eggSVG(p.egg, pr, ready ? 'wobble' : '') +
@@ -139,8 +144,8 @@ export function petsHTML(): string {
       (ready ? '<button class="btn primary" type="button" data-hatch="' + p.id + '">Klekk egget</button>' : '') +
       '<button class="btn' + (on ? '' : ' ghost') + '" type="button" data-show="' + p.id + '">' + (on ? 'Ta bort fra avataren' : 'Vis ved avataren') + '</button></article>';
   };
-  const prev = store.kind === 'preview' ? '<div class="previewnote"><span>Forhåndsvisning: prøv klekkingen uten å vente på flaksen.</span><span class="row"><button class="btn" type="button" data-give="vanlig">Gi et egg</button><button class="btn" type="button" data-give="mytisk">Gi et mytisk egg</button>' + (E.some((x) => eggProgress(x, tot) < 1) ? '<button class="btn" type="button" id="pv-ready">Gjør eggene klare</button>' : '') + '</span></div>' : '';
-  return prev + '<p class="keyhint">Når et svar gir XP, er det en liten sjanse for å finne et egg (omtrent 1 av ' + Math.round(1 / CHANCE.vanlig) + '). Et mytisk egg med en drage inni er mye sjeldnere. Eggene klekker når du har tjent nok XP etter at du fant dem. Du kan ha ' + CHANCE.maxEggs + ' egg om gangen og finne høyst ' + CHANCE.perDay + ' om dagen.</p>' +
+  const prev = store.kind === 'preview' ? '<div class="previewnote"><span>Forhåndsvisning: prøv klekkingen uten å vente på flaksen.</span><span class="row"><button class="btn" type="button" data-give="vanlig">Gi et egg</button><button class="btn" type="button" data-give="mytisk">Gi et mytisk egg</button>' + S.seasons.map((id) => '<button class="btn" type="button" data-give="' + id + '">Gi et ' + esc(EGGS[id].name.toLowerCase()) + '</button>').join('') + (E.some((x) => eggProgress(x, tot) < 1) ? '<button class="btn" type="button" id="pv-ready">Gjør eggene klare</button>' : '') + '</span></div>' : '';
+  return prev + '<p class="keyhint">Når et svar gir XP, er det en liten sjanse for å finne et egg (omtrent 1 av ' + Math.round(1 / CHANCE.vanlig) + '). Et mytisk egg med en drage inni er mye sjeldnere. Eggene klekker når du har tjent nok XP etter at du fant dem. Du kan ha ' + CHANCE.maxEggs + ' egg om gangen og finne høyst ' + CHANCE.perDay + ' om dagen.</p><p class="keyhint growhint"><b>Dyr som vokser:</b> dyret som står ved avataren, får like mye XP som deg. På nivå 5 blir det ungt og får skjerf, og på nivå 10 blir det en mester med krone og gyllen glans.' + (S.seasons.length ? ' Nå pågår ' + S.seasons.map((id) => seasonById(id)!.name).join(' og ') + ', så mange av eggene du finner er sesongegg.' : '') + '</p>' +
     '<div class="avsec"><h3>Eggene dine</h3>' + (E.length ? '<div class="eggs">' + E.map(eggCard).join('') + '</div>' : '<p class="keyhint">Ingen egg ennå. Fortsett å øve, så dukker det kanskje opp et.</p>') + '</div>' +
     '<div class="avsec"><h3>Dyrene dine</h3>' + (H.length ? '<div class="pets">' + H.map((p) => petCard(p)).join('') + '</div>' : '<p class="keyhint">Ingen dyr ennå. Klekk et egg for å få ditt første.</p>') + '</div>' +
     '<details class="dex"><summary>Dyreboka: ' + nFound + ' av ' + nAll + ' funnet</summary><div class="dexbody"></div></details>' +

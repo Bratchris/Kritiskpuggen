@@ -137,6 +137,17 @@ export const SKINS: Skin[] = [
   { id: 'cg_keeper', theme: 'merch', slot: 'outfit', name: 'Keeperdrakt', price: 170, desc: 'Langermet keeperdrakt med hansker.', tint: '#4fae6b' },
   { id: 'cg_tracksuit', theme: 'merch', slot: 'outfit', name: 'CRISPY-G tracksuit', price: 180, desc: 'Joggedress med tre striper og glidelås.', tint: '#6a3d9a' },
   { id: 'cg_gullball', theme: 'merch', slot: 'hand', name: 'Gullballen', price: 250, desc: 'Prisen for årets beste pugger.' },
+  // Sesongkostymer (theme = sesongens id). Kan bare kjøpes mens læreren har sesongen på.
+  { id: 'hw_horn', theme: 'halloween', slot: 'hat', name: 'Djevelhorn', price: 60, desc: 'Små røde horn. Litt skummelt, mest søtt.' },
+  { id: 'hw_kost', theme: 'halloween', slot: 'hand', name: 'Heksekost', price: 80, desc: 'Klar for nattlig flytur.' },
+  { id: 'hw_lykt', theme: 'halloween', slot: 'hand', name: 'Gresskarlykt', price: 90, desc: 'Lyser opp de mørkeste kveldene.' },
+  { id: 'jul_nisselue', theme: 'jul', slot: 'hat', name: 'Nisselue', price: 60, desc: 'Rød lue med hvit dusk.' },
+  { id: 'jul_gevir', theme: 'jul', slot: 'hat', name: 'Reinsdyrgevir', price: 70, desc: 'Gevir på hårbøyle. Rød nese følger ikke med.' },
+  { id: 'jul_skjerf', theme: 'jul', slot: 'neck', name: 'Juleskjerf', price: 70, desc: 'Stripete og varmt.' },
+  { id: 'jul_genser', theme: 'jul', slot: 'top', name: 'Julegenser', price: 120, desc: 'Strikket med juletrær og snøfnugg.' },
+  { id: 'prove_hodetelefoner', theme: 'prove', slot: 'hat', name: 'Hodetelefoner', price: 80, desc: 'For konsentrert lesing.' },
+  { id: 'prove_kopp', theme: 'prove', slot: 'hand', name: 'Kakaokopp', price: 60, desc: 'Varm kakao til en lang leseøkt.' },
+  { id: 'prove_hoodie', theme: 'prove', slot: 'top', name: 'Prøveuke-hoodie', price: 120, desc: 'Med A+ på brystet.' },
   // Bare via achievements (theme 'ach'). Kan ikke kjøpes.
   { id: 'ach_krone', theme: 'ach', slot: 'hat', name: 'Gullkrone', price: 0, desc: 'For en ekte quizmester.' },
   { id: 'ach_medalje', theme: 'ach', slot: 'neck', name: 'Gullmedalje', price: 0, desc: 'Til den som avslører alle løgnene.' },
@@ -151,6 +162,7 @@ export const SKINS: Skin[] = [
 export const skinById = (id: string) => SKINS.find((s) => s.id === id);
 export const isMerch = (s: Skin) => s.theme === 'merch';
 export const isAch = (s: Skin) => s.theme === 'ach';
+export const isSeasonal = (s: Skin) => s.theme === 'halloween' || s.theme === 'jul' || s.theme === 'prove';
 
 export function defaultAvatar(seed = Math.random()): AvatarCfg {
   const pick = <T>(a: T[], k: number) => a[Math.floor((seed * 9973 * (k + 1)) % a.length)];
