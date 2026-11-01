@@ -1,4 +1,5 @@
 import { applyBackground } from './avatar/backgrounds';
+import './styles/fonts.css';
 import './styles/base.css';
 import './styles/app.css';
 import './styles/themes.css';

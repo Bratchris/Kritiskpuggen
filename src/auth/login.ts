@@ -1,14 +1,15 @@
 // Innlogging. Elever bruker klassekode + brukernavn + kode fra læreren.
 // Lærere har en vanlig konto med e-post og passord.
 import { $, esc } from '../lib/dom';
-import { supabase, studentEmail, friendly } from '../lib/supabase';
+import { supabase, studentEmail, friendly, remembers, setRemember } from '../lib/supabase';
+import { showPrivacy } from '../privacy';
 
 const LAST = 'puggen-last-login';
 
 export function renderLogin(root: HTMLElement, mode: 'elev' | 'laerer' | 'ny' | 'glemt' | 'nytt-passord' = 'elev', notice = ''): void {
   document.documentElement.dataset.tema = '';
   let last: { klasse?: string; bruker?: string } = {};
-  try { last = JSON.parse(localStorage.getItem(LAST) || '{}'); } catch { /* ingen */ }
+  try { if (remembers()) last = JSON.parse(localStorage.getItem(LAST) || '{}'); } catch { /* ingen */ }
 
   const tabs = mode === 'nytt-passord' ? '' :
     '<div class="authtabs" role="tablist"><button type="button" role="tab" class="atab" data-a="elev" aria-selected="' + (mode === 'elev') + '">Elev</button>' +
@@ -19,11 +20,11 @@ export function renderLogin(root: HTMLElement, mode: 'elev' | 'laerer' | 'ny' | 
     form = '<form id="f" class="aform"><p class="ahelp">Du får klassekoden, brukernavnet og koden din av læreren.</p>' +
       field('klasse', 'Klassekode', 'text', last.klasse || '', 'characters', 'off', 'F.eks. K7RQ2M') +
       field('bruker', 'Brukernavn', 'text', last.bruker || '', 'none', 'username', '') +
-      field('kode', 'Kode', 'password', '', 'none', 'current-password', 'F.eks. ugle-482') +
+      field('kode', 'Kode', 'password', '', 'none', 'current-password', 'F.eks. ugle-4821') + rememberBox() +
       '<button class="btn primary" type="submit">Logg inn</button></form>';
   } else if (mode === 'laerer') {
     form = '<form id="f" class="aform">' + field('epost', 'E-post', 'email', '', 'none', 'email', '') + field('pw', 'Passord', 'password', '', 'none', 'current-password', '') +
-      '<button class="btn primary" type="submit">Logg inn</button><div class="alinks"><button class="lnk" type="button" data-a="ny">Opprett lærerkonto</button><button class="lnk" type="button" data-a="glemt">Glemt passord?</button></div></form>';
+      rememberBox() + '<button class="btn primary" type="submit">Logg inn</button><div class="alinks"><button class="lnk" type="button" data-a="ny">Opprett lærerkonto</button><button class="lnk" type="button" data-a="glemt">Glemt passord?</button></div></form>';
   } else if (mode === 'ny') {
     form = '<form id="f" class="aform"><p class="ahelp">Lærerkontoen brukes til å lage klasser, elevkoder og se fremgang. Elever trenger ikke konto.</p>' +
       field('navn', 'Navnet ditt', 'text', '', 'words', 'name', '') + field('epost', 'E-post', 'email', '', 'none', 'email', '') + field('pw', 'Passord (minst 8 tegn)', 'password', '', 'none', 'new-password', '') +
@@ -38,10 +39,13 @@ export function renderLogin(root: HTMLElement, mode: 'elev' | 'laerer' | 'ny' | 
 
   root.innerHTML = '<div class="wrap authwrap"><header class="authhead"><p class="eyebrow">Puggen</p><h1 class="brand">Logg inn og øv</h1>' +
     '<p class="lede">Klimapuggen og Kritiskpuggen samlet på ett sted. Fremgangen din lagres, så du kan fortsette der du slapp, på hvilken som helst enhet.</p></header>' +
-    '<main class="panel authpanel">' + tabs + (notice ? '<p class="fb ok" role="status">' + esc(notice) + '</p>' : '') + form + '<p class="msg" id="amsg" role="alert"></p></main></div>';
+    '<main class="panel authpanel">' + tabs + (notice ? '<p class="fb ok" role="status">' + esc(notice) + '</p>' : '') + form + '<p class="msg" id="amsg" role="alert"></p></main>' +
+    '<p class="authfoot"><button class="lnk" type="button" id="priv">Personvern: hva lagres om deg?</button></p></div>';
 
   root.querySelectorAll<HTMLElement>('[data-a]').forEach((b) => { b.onclick = () => renderLogin(root, b.dataset.a as any); });
+  $('#priv').onclick = () => showPrivacy();
   const f = $('#f') as HTMLFormElement, msg = $('#amsg');
+  const remember = () => { const c = $('#remember') as HTMLInputElement | null; return c ? c.checked : true; };
   const btn = f.querySelector('button[type=submit]') as HTMLButtonElement;
   f.onsubmit = async (e) => {
     e.preventDefault();
@@ -51,10 +55,12 @@ export function renderLogin(root: HTMLElement, mode: 'elev' | 'laerer' | 'ny' | 
       if (mode === 'elev') {
         const klasse = v('klasse').toUpperCase(), bruker = v('bruker').toLowerCase(), kode = v('kode').toLowerCase();
         if (!klasse || !bruker || !kode) throw new Error('Fyll ut alle tre feltene.');
-        try { localStorage.setItem(LAST, JSON.stringify({ klasse, bruker })); } catch { /* ignorer */ }
+        setRemember(remember());
+        try { if (remember()) localStorage.setItem(LAST, JSON.stringify({ klasse, bruker })); else localStorage.removeItem(LAST); } catch { /* ignorer */ }
         const { error } = await supabase.auth.signInWithPassword({ email: studentEmail(bruker, klasse), password: kode });
         if (error) throw error;
       } else if (mode === 'laerer') {
+        setRemember(remember());
         const { error } = await supabase.auth.signInWithPassword({ email: v('epost'), password: v('pw') });
         if (error) throw error;
       } else if (mode === 'ny') {
@@ -77,6 +83,10 @@ export function renderLogin(root: HTMLElement, mode: 'elev' | 'laerer' | 'ny' | 
       btn.disabled = false;
     }
   };
+}
+
+function rememberBox(): string {
+  return '<label class="check remember"><input type="checkbox" id="remember"' + (remembers() ? ' checked' : '') + '><span><b>Husk meg på denne enheten</b><small>Ta bort haken på en PC som andre også bruker. Da logges du ut når nettleseren lukkes.</small></span></label>';
 }
 
 function field(id: string, label: string, type: string, value: string, cap: string, ac: string, ph: string): string {

@@ -234,6 +234,6 @@ export function addPoints(n: number): void {
   eggsReady(xpBefore);
   store.award(T.id, n).then(
     (server) => { if (typeof server === 'number' && server > S.points) S.points = server; if (n > 0) maybeEgg(); },
-    () => { toast('Poengene ble ikke lagret. Sjekk nettet.'); },
+    (e) => { toast(/for mange poeng/i.test(String((e as Error)?.message)) ? 'Rolig nå! Poengene ble ikke lagret fordi du svarte veldig fort.' : 'Poengene ble ikke lagret. Sjekk nettet.'); },
   );
 }

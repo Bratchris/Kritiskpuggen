@@ -3,9 +3,15 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
 
 const DOMAIN = Deno.env.get('STUDENT_EMAIL_DOMAIN') ?? 'elev.puggen.invalid';
-const WORDS = ['ugle', 'gresskar', 'fjell', 'bekk', 'elg', 'lykt', 'måne', 'stjerne', 'rev', 'ørn', 'skog', 'bølge', 'sopp', 'lyng', 'hare', 'tind', 'fjord', 'storm', 'ravn', 'gaupe'];
+// 40 ord × 9000 tall = 360 000 mulige koder. Sammen med Supabase sin grense for innloggingsforsøk
+// gjør det koden vanskelig å gjette. Eksisterende koder virker som før.
+const WORDS = ['ugle', 'gresskar', 'fjell', 'bekk', 'elg', 'lykt', 'måne', 'stjerne', 'rev', 'ørn', 'skog', 'bølge', 'sopp', 'lyng', 'hare', 'tind', 'fjord', 'storm', 'ravn', 'gaupe',
+  'bjørk', 'furu', 'tjern', 'elv', 'sky', 'sol', 'vind', 'snø', 'ulv', 'bjørn', 'oter', 'sel', 'hval', 'laks', 'torsk', 'mose', 'dal', 'myr', 'lavvo', 'nordlys'];
+// Sett ALLOWED_ORIGIN (for eksempel https://kritiskpuggen.vercel.app) for at bare appen din skal kunne kalle funksjonen fra en nettleser.
+const ORIGIN = Deno.env.get('ALLOWED_ORIGIN') ?? '*';
 const cors = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': ORIGIN,
+  'Vary': 'Origin',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
@@ -15,7 +21,7 @@ function json(body: unknown, status = 200) {
 }
 function newCode() {
   const a = new Uint32Array(2); crypto.getRandomValues(a);
-  return WORDS[a[0] % WORDS.length] + '-' + String(100 + (a[1] % 900));
+  return WORDS[a[0] % WORDS.length] + '-' + String(1000 + (a[1] % 9000));
 }
 function slug(name: string) {
   const first = name.trim().split(/\s+/)[0] ?? 'elev';

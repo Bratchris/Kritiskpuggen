@@ -1,4 +1,5 @@
 // Lærerrommet: klasser, elevkoder, fremgang og gaver.
+import { showPrivacy, downloadJSON } from '../privacy';
 import { $, esc, fmtDate } from '../lib/dom';
 import { supabase, friendly } from '../lib/supabase';
 import { THEMES, THEME_IDS, themeName } from '../themes';
@@ -156,8 +157,9 @@ function classHTML(c: Klass): string {
     (V.newCodes ? codesHTML(c) : '') + '</section>' +
 
     '<section class="panel"><h2>Innstillinger for klassen</h2><form id="cset" class="tform"><label class="afield" for="cs-name"><span>Navn</span><input id="cs-name" maxlength="60" value="' + esc(c.name) + '"></label><fieldset><legend>Temaer</legend>' + themeChecks(c.themes, 'cs-t') + '</fieldset>' +
-    ('leaderboard' in c ? '<label class="check"><input type="checkbox" id="cs-lb"' + (c.leaderboard ? ' checked' : '') + '><span><b>Vis topplisten for elevene</b><small>Elevene ser navn og XP for alle i klassen. Slå av hvis det ikke passer for klassen.</small></span></label>' : '<p class="muted">Kjør databaseoppdateringen for topplisten for å kunne slå den av og på.</p>') +
+    ('leaderboard' in c ? '<label class="check"><input type="checkbox" id="cs-lb"' + (c.leaderboard ? ' checked' : '') + '><span><b>Vis topplisten for elevene</b><small>Elevene ser navn og XP for topp 3 i klassen. Av som standard for nye klasser, av hensyn til personvernet. Slå på hvis klassen ønsker det.</small></span></label>' : '<p class="muted">Kjør databaseoppdateringen for topplisten for å kunne slå den av og på.</p>') +
     '<div class="row"><button class="btn" type="submit">Lagre</button></div></form>' +
+    '<div class="privrow"><h3>Personvern</h3><p class="muted">Last ned alt som er lagret om elevene i klassen, for eksempel når en elev eller forelder ber om innsyn. Aktivitet eldre enn 180 dager slettes automatisk.</p><div class="row"><button class="btn" type="button" id="cls-export">Last ned klassens data (JSON)</button><button class="btn ghost" type="button" id="cls-priv">Personvernerklæringen</button></div><p class="msg" id="cls-exmsg" aria-live="polite"></p></div>' +
     '<div class="danger">' + (V.confirmDel ? '<span>Slette klassen og alle elevkontoene i den? Fremgang og gaver forsvinner.</span><button class="btn" id="del-yes" type="button">Ja, slett</button><button class="btn ghost" id="del-no" type="button">Avbryt</button>' : '<button class="btn ghost" id="del-ask" type="button">Slett klassen</button>') + '</div></section>';
 }
 
@@ -254,6 +256,20 @@ function wire(): void {
     if (c && 'leaderboard' in c) patch.leaderboard = !!($('#cs-lb') as HTMLInputElement)?.checked;
     const { error } = await supabase.from('classes').update(patch).eq('id', V.sel);
     V.msg = error ? friendly(error) : ''; await loadClasses(); await loadClass();
+  };
+  $('#cls-priv').onclick = () => showPrivacy();
+  $('#cls-export').onclick = async () => {
+    const m = $('#cls-exmsg'); m.textContent = 'Henter …';
+    try {
+      const ids = V.students.map((s) => s.id), c = cls();
+      const get = async (t: string, cols = '*') => { if (!ids.length) return []; const r = await supabase.from(t).select(cols).in('student_id', ids); return r.error ? 'Kunne ikke hentes (' + r.error.message + ')' : r.data; };
+      const data = {
+        laget: new Date().toISOString(), klasse: c ? { navn: c.name, kode: c.code, temaer: c.themes, opprettet: c.created_at } : null,
+        elever: V.students.map((s) => ({ id: s.id, navn: s.display_name, brukernavn: s.username, opprettet: s.created_at, sist_innlogget: s.last_seen })),
+        fremgang: await get('progress'), gaver: await get('gifts'), kostymer: await get('wardrobe'), egg_og_dyr: await get('pets'), achievements: await get('achievements'), aktivitet: await get('activity'),
+      };
+      downloadJSON('puggen-' + (c ? c.code : 'klasse') + '.json', data); m.textContent = 'Filen er lastet ned. Den inneholder personopplysninger, så lagre den trygt og slett den når du er ferdig.';
+    } catch { m.textContent = 'Fikk ikke hentet dataene. Prøv igjen.'; }
   };
   const da = $('#del-ask'); if (da) da.onclick = () => { V.confirmDel = true; draw(); };
   const dn = $('#del-no'); if (dn) dn.onclick = () => { V.confirmDel = false; draw(); };

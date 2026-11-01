@@ -9,7 +9,7 @@ Teknikk: Vite + TypeScript i nettleseren, Supabase (Postgres, Auth og en Edge Fu
 ### 1. Supabase
 
 1. Lag et prosjekt på [supabase.com](https://supabase.com). Velg en region i EU, for eksempel Stockholm (`eu-north-1`).
-2. Åpne **SQL Editor** og kjør filene i `supabase/migrations/` én om gangen, i rekkefølge etter navn: først `20261020000000_init.sql`, så `20261029000000_fix_student_role.sql` så `20261029100000_leaderboard.sql` så `20261029200000_leaderboard_top3.sql` så `20261029300000_activity.sql` så `20261029400000_avatar.sql` så `20261029500000_merch.sql` så `20261029600000_backgrounds.sql` så `20261029700000_nordlys.sql` så `20261029800000_pets.sql` så `20261029900000_pirat.sql` så `20261030000000_more_eggs.sql` og til slutt `20261101000000_achievements.sql`. Har du Supabase CLI, kan du i stedet kjøre `supabase link` og så `supabase db push`.
+2. Åpne **SQL Editor** og kjør filene i `supabase/migrations/` én om gangen, i rekkefølge etter navn: først `20261020000000_init.sql`, så `20261029000000_fix_student_role.sql` så `20261029100000_leaderboard.sql` så `20261029200000_leaderboard_top3.sql` så `20261029300000_activity.sql` så `20261029400000_avatar.sql` så `20261029500000_merch.sql` så `20261029600000_backgrounds.sql` så `20261029700000_nordlys.sql` så `20261029800000_pets.sql` så `20261029900000_pirat.sql` så `20261030000000_more_eggs.sql` så `20261101000000_achievements.sql` og til slutt `20261102000000_security.sql`. Har du Supabase CLI, kan du i stedet kjøre `supabase link` og så `supabase db push`.
 3. Publiser edge-funksjonen som lager elevkontoer:
    ```bash
    npx supabase login
@@ -157,7 +157,15 @@ supabase/
 
 ### Personvern
 
-Elevene er under 18 år. Bruk gjerne bare fornavn eller kallenavn når du lager elevkoder. Sjekk med skolen om det trengs en databehandleravtale med Supabase og Vercel før appen tas i bruk i klassen.
+Se [docs/personvern.md](docs/personvern.md) for hvilke opplysninger som lagres, hvem som ser dem, hvor lenge de lagres og en sjekkliste før bruk. Kort fortalt:
+
+- Elevene kan lese personvernerklæringen i appen og laste ned sine egne data under Innstillinger. Læreren kan laste ned alt om en klasse i lærerrommet.
+- Skriftene ligger i appen (`public/fonts`), så ingen IP-adresser sendes til Google Fonts.
+- «Husk meg» ved innlogging kan slås av på delte maskiner.
+- Topplisten er av som standard for nye klasser.
+- Aktivitet slettes automatisk etter 180 dager (`purge_old_data`, kjøres hver natt med pg_cron).
+- Databasen godtar høyst 60 XP per minutt per elev.
+- Nettsiden sendes med strenge sikkerhetshoder, blant annet Content-Security-Policy (se `vercel.json`).
 
 ## Legge til et nytt tema
 

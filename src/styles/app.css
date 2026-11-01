@@ -725,3 +725,14 @@ canvas.confetti { position: fixed; inset: 0; width: 100vw; height: 100vh; z-inde
 }
 @keyframes combobump2 { 0% { transform: scale(.7); } 100% { transform: none; } }
 @media (max-width: 400px) { :root .apphead .brandbtn .apptitle { font-size: 1rem; } .hchip .ic { width: 18px; height: 18px; } }
+
+/* ---------- Personvern ---------- */
+.check.remember { margin: 2px 0 4px; }
+.authfoot { text-align: center; margin: 4px 0 0; }
+.privbox { max-width: 620px; width: min(620px, 100%); text-align: left; align-items: stretch; }
+.privbox h2 { text-align: left; }
+.privbox h3 { margin: 10px 0 0; font-family: var(--font-display); font-size: 1.05rem; }
+.privbox p { margin: 4px 0 0; font-size: .95rem; line-height: 1.5; }
+.privbox .row { justify-content: flex-end; }
+.privrow { margin: 16px 0; padding-top: 14px; border-top: 1px solid var(--line); }
+.privrow h3 { margin: 0 0 4px; font-family: var(--font-display); font-size: 1.05rem; }

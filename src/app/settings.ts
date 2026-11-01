@@ -3,6 +3,7 @@ import { esc, toast } from '../lib/dom';
 import { S, T, store, panel, hooks } from './core';
 import { getPrefs, setPrefs, GOALS, type Prefs } from '../lib/prefs';
 import { icon } from './icons';
+import { showPrivacy, downloadJSON, exportMine } from '../privacy';
 import { BACKGROUNDS, bgById, bgImage, bgFit, applyBackground, type Background } from '../avatar/backgrounds';
 
 export interface SettingsActions {
@@ -50,6 +51,7 @@ export function renderSettings(): void {
       '<button type="button" class="setlink" data-go="avatar:garderobe">' + icon('butikk') + '<span><b>Garderoben</b><span>Kostymer og merch du eier</span></span></button>' +
       '<button type="button" class="setlink" data-go="avatar:dyr">' + icon('dyr') + '<span><b>Dyr og egg</b><span>Klekk egg og velg dyret ved avataren</span></span></button>' +
     '</div></section>' +
+    '<section class="setsec"><h3>Personvern og data</h3><p class="keyhint">Se hva som lagres om deg, og last ned alt sammen som en fil.</p><div class="row"><button class="btn" type="button" id="set-priv">Les om personvern</button><button class="btn" type="button" id="set-export">Last ned dataene mine</button></div><p class="msg" id="set-exmsg" aria-live="polite"></p></section>' +
     '<section class="setsec"><h3>Konto</h3><div class="row">' +
       (A.switchTheme ? '<button class="btn" type="button" id="set-theme">Bytt fag</button>' : '') +
       (A.exitPreview ? '<button class="btn" type="button" id="set-exit">Tilbake til lærerrommet</button>' : '') +
@@ -75,6 +77,12 @@ export function renderSettings(): void {
   });
   p.querySelectorAll('[data-go]').forEach((b: HTMLElement) => { b.onclick = () => { const [m, t] = b.dataset.go!.split(':'); hooks.open(m, t); }; });
   const on = (id: string, f?: () => void) => { const b = p.querySelector('#' + id) as HTMLElement | null; if (b && f) b.onclick = f; };
+  on('set-priv', () => showPrivacy());
+  on('set-export', async () => {
+    const m = p.querySelector('#set-exmsg') as HTMLElement; m.textContent = 'Henter …';
+    try { downloadJSON('puggen-mine-data.json', await exportMine(store.kind === 'preview')); m.textContent = 'Filen er lastet ned.'; }
+    catch { m.textContent = 'Fikk ikke hentet dataene. Prøv igjen.'; }
+  });
   on('set-theme', A.switchTheme); on('set-exit', A.exitPreview); on('set-out', A.logout);
   on('set-unlock', A.unlockAll ? async () => { await A.unlockAll!(); toast('Alle nivåer, trofeer og rom er låst opp i forhåndsvisningen.'); renderSettings(); } : undefined);
   on('set-reset', A.reset ? () => {

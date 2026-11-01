@@ -4,9 +4,27 @@ const url = import.meta.env.VITE_SUPABASE_URL;
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
 export const configured = Boolean(url && key);
 
-// persistSession + autoRefreshToken: innloggingen huskes på enheten til brukeren logger ut.
+// «Husk meg»: på egen enhet lagres innloggingen til brukeren logger ut (localStorage).
+// På delte maskiner lagres den bare til nettleservinduet lukkes (sessionStorage).
+const REMEMBER = 'puggen-remember';
+export function remembers(): boolean { try { return localStorage.getItem(REMEMBER) !== '0'; } catch { return false; } }
+export function setRemember(on: boolean): void {
+  try {
+    localStorage.setItem(REMEMBER, on ? '1' : '0');
+    // Rydd bort en gammel innlogging fra det andre lageret.
+    (on ? sessionStorage : localStorage).removeItem('puggen-auth');
+  } catch { /* lagring er blokkert */ }
+}
+const mem: Record<string, string> = {};
+function pick(): Storage | null { try { return remembers() ? localStorage : sessionStorage; } catch { return null; } }
+const authStorage = {
+  getItem: (k: string) => { const st = pick(); try { return st ? st.getItem(k) : mem[k] ?? null; } catch { return mem[k] ?? null; } },
+  setItem: (k: string, v: string) => { const st = pick(); try { if (st) st.setItem(k, v); else mem[k] = v; } catch { mem[k] = v; } },
+  removeItem: (k: string) => { delete mem[k]; try { localStorage.removeItem(k); sessionStorage.removeItem(k); } catch { /* ignorer */ } },
+};
+
 export const supabase = createClient(url || 'http://localhost', key || 'mangler', {
-  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: 'puggen-auth' },
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: 'puggen-auth', storage: authStorage },
 });
 
 const DOMAIN = import.meta.env.VITE_STUDENT_EMAIL_DOMAIN || 'elev.puggen.invalid';
