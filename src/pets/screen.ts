@@ -5,6 +5,7 @@ import { friendly } from '../lib/supabase';
 import { S, T, store, hooks, xpTotal } from '../app/core';
 import { type Pet, type EggKind, SPECIES, VARIANTS, RARITIES, EGGS, CHANCE, petName, eggProgress, rarityOf } from './catalog';
 import { petSVG, petG, eggSVG, eggG } from './render';
+import { checkPets } from '../achievements/engine';
 import type { PreviewStore } from '../lib/store';
 
 const chosen = (): Pet | undefined => S.pets.find((p) => p.id === S.avatar.pet);
@@ -61,7 +62,7 @@ function petCard(p: Pet, big = false): string {
   const on = S.avatar.pet === p.id;
   return '<article class="petcard rr' + p.rarity + (on ? ' on' : '') + (big ? ' big' : '') + '">' + petSVG(p.species!, p.variant!) +
     '<h4>' + esc(petName(p.species, p.variant)) + '</h4>' + rar(p.rarity) +
-    '<p class="keyhint">' + (p.egg === 'mytisk' ? 'Fra et mytisk egg · ' : '') + 'Klekket ' + fmtDate(p.hatched_at!) + '</p>' +
+    '<p class="keyhint">' + (p.egg === 'belonning' ? 'Belønning fra et achievement · ' + fmtDate(p.hatched_at!) : (p.egg === 'mytisk' ? 'Fra et mytisk egg · ' : '') + 'Klekket ' + fmtDate(p.hatched_at!)) + '</p>' +
     (big ? '' : '<button class="btn' + (on ? '' : ' primary') + '" type="button" data-show="' + p.id + '">' + (on ? 'Ta bort fra avataren' : 'Vis ved avataren') + '</button>') + '</article>';
 }
 
@@ -72,6 +73,7 @@ async function hatch(id: string, rerender: () => void): Promise<void> {
   try {
     const [res] = await Promise.all([store.hatchEgg(id), wait]);
     Object.assign(p, res);
+    checkPets();
     const box = m.el.querySelector('.petbox')!;
     box.innerHTML = '<div class="reveal rr' + p.rarity + '"><div class="burst" aria-hidden="true"></div>' + petSVG(p.species!, p.variant!, 'born') + '</div>' +
       '<p class="eyebrow">Det klekket!</p><h2>' + esc(petName(p.species, p.variant)) + '</h2><p class="rarline">' + rar(p.rarity) + '</p>' +
@@ -118,14 +120,17 @@ export function oddsHTML(): string {
 
 function dexHTML(): string {
   const found = new Set(hatched().map((p) => p.species + '/' + p.variant));
-  return SPECIES.map((s) => '<div class="dexrow"><span class="dexname">' + esc(s.name) + (s.egg === 'mytisk' ? ' <small>(mytisk egg)</small>' : '') + '</span><div class="dexcells">' +
-    VARIANTS.map((v) => { const k = s.id + '/' + v.id, has = found.has(k); return '<span class="dexcell' + (has ? ' has' : '') + '" title="' + esc(has ? petName(s.id, v.id) : 'Ikke funnet ennå') + '">' + petSVG(s.id, v.id, has ? '' : 'unknown') + '<i>' + esc(v.name) + '</i></span>'; }).join('') + '</div></div>').join('');
+  const cell = (s: typeof SPECIES[number], v: typeof VARIANTS[number]) => { const k = s.id + '/' + v.id, has = found.has(k); return '<span class="dexcell' + (has ? ' has' : '') + '" title="' + esc(has ? petName(s.id, v.id) : 'Ikke funnet ennå') + '">' + petSVG(s.id, v.id, has ? '' : 'unknown') + '<i>' + esc(s.egg === 'belonning' ? s.name : v.name) + '</i></span>'; };
+  const rewards = SPECIES.filter((s) => s.egg === 'belonning');
+  return SPECIES.filter((s) => s.egg !== 'belonning').map((s) => '<div class="dexrow"><span class="dexname">' + esc(s.name) + (s.egg === 'mytisk' ? ' <small>(mytisk egg)</small>' : '') + '</span><div class="dexcells">' +
+    VARIANTS.map((v) => cell(s, v)).join('') + '</div></div>').join('') +
+    '<div class="dexrow"><span class="dexname">Belønningsdyr <small>(bare via achievements)</small></span><div class="dexcells">' + rewards.map((s) => cell(s, VARIANTS[0])).join('') + '</div></div>';
 }
 
 export function petsHTML(): string {
   if (!S.petsReady) return '<p class="fb bad">Dyrene er ikke klare ennå. Læreren må oppdatere databasen først.</p>';
   const tot = xpTotal(), E = eggs(), H = hatched().slice().reverse();
-  const nFound = new Set(hatched().map((p) => p.species + '/' + p.variant)).size, nAll = SPECIES.length * VARIANTS.length;
+  const nFound = new Set(hatched().map((p) => p.species + '/' + p.variant)).size, nAll = SPECIES.filter((x) => x.egg !== 'belonning').length * VARIANTS.length + SPECIES.filter((x) => x.egg === 'belonning').length;
   const eggCard = (p: Pet) => {
     const pr = eggProgress(p, tot), ready = pr >= 1, on = S.avatar.pet === p.id, got = Math.min(p.xp_need, Math.max(0, tot - p.xp_start));
     return '<article class="eggcard' + (on ? ' on' : '') + (p.egg === 'mytisk' ? ' myth' : '') + '">' + eggSVG(p.egg, pr, ready ? 'wobble' : '') +

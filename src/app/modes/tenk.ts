@@ -1,3 +1,4 @@
+import { achieve } from '../../achievements/engine';
 import { $, esc, norm } from '../../lib/dom';
 import { S, T, head, panel, save } from '../core';
 
@@ -11,7 +12,7 @@ export function renderThink(): void {
   T.content.think.forEach((t) => {
     const ta = $('#ta-' + t.id);
     ta.value = S.notes[t.id] || '';
-    const upd = () => { const v = norm(ta.value); $('#keys-' + t.id).querySelectorAll('.key').forEach((el: HTMLElement, i: number) => { el.classList.toggle('on', v.indexOf(t.keys[i][1]) > -1); }); };
+    const upd = () => { const v = norm(ta.value); $('#keys-' + t.id).querySelectorAll('.key').forEach((el: HTMLElement, i: number) => { el.classList.toggle('on', v.indexOf(t.keys[i][1]) > -1); }); if (t.keys.length && t.keys.every((k) => v.indexOf(k[1]) > -1)) achieve('tenk_begreper'); };
     ta.addEventListener('input', () => { S.notes[t.id] = ta.value; save(); upd(); });
     upd();
   });

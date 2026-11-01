@@ -9,7 +9,7 @@ Teknikk: Vite + TypeScript i nettleseren, Supabase (Postgres, Auth og en Edge Fu
 ### 1. Supabase
 
 1. Lag et prosjekt på [supabase.com](https://supabase.com). Velg en region i EU, for eksempel Stockholm (`eu-north-1`).
-2. Åpne **SQL Editor** og kjør filene i `supabase/migrations/` én om gangen, i rekkefølge etter navn: først `20261020000000_init.sql`, så `20261029000000_fix_student_role.sql` så `20261029100000_leaderboard.sql` så `20261029200000_leaderboard_top3.sql` så `20261029300000_activity.sql` så `20261029400000_avatar.sql` så `20261029500000_merch.sql` så `20261029600000_backgrounds.sql` så `20261029700000_nordlys.sql` så `20261029800000_pets.sql` så `20261029900000_pirat.sql` og til slutt `20261030000000_more_eggs.sql`. Har du Supabase CLI, kan du i stedet kjøre `supabase link` og så `supabase db push`.
+2. Åpne **SQL Editor** og kjør filene i `supabase/migrations/` én om gangen, i rekkefølge etter navn: først `20261020000000_init.sql`, så `20261029000000_fix_student_role.sql` så `20261029100000_leaderboard.sql` så `20261029200000_leaderboard_top3.sql` så `20261029300000_activity.sql` så `20261029400000_avatar.sql` så `20261029500000_merch.sql` så `20261029600000_backgrounds.sql` så `20261029700000_nordlys.sql` så `20261029800000_pets.sql` så `20261029900000_pirat.sql` så `20261030000000_more_eggs.sql` og til slutt `20261101000000_achievements.sql`. Har du Supabase CLI, kan du i stedet kjøre `supabase link` og så `supabase db push`.
 3. Publiser edge-funksjonen som lager elevkontoer:
    ```bash
    npx supabase login
@@ -93,6 +93,12 @@ Når et svar gir XP, er det 2,5 % sjanse for å finne et egg og 0,15 % for et my
 Vanlige egg gir ku, sau, kanin, hund, katt, skilpadde, minigris eller enhjørning. Mytiske egg gir alltid en drage. Hvert dyr får en farge: vanlig, stripete, bronse, sølv, smaragd, neon eller gull. Art og farge gir sjeldenhetsgraden: vanlig (grå), sjelden (grønn), veldig sjelden (blå), episk (lilla) eller legendarisk (oransje). Vektene står både i `src/pets/catalog.ts` og i `hatch_egg`, og de må endres begge steder.
 
 Eleven ser eggene, dyrene og dyreboka (alle 63 kombinasjoner) under «Dyr og egg» i avatarskjermen. Et egg eller dyr kan stå ved siden av avataren øverst i appen, på avatarskjermen og i troférommet. I lærerens forhåndsvisning finnes knapper for å få et egg og gjøre eggene klare med en gang.
+
+## Achievements
+
+Det finnes 23 achievements i tre grupper: mestre spillene (for eksempel alle riktige i en quizrunde, Memory på 8 forsøk eller færre, alle kortene mestret), fremgang (XP, alle rom, første stjerne) og samling (egg, dyr og kjøp). Når eleven låser opp et, glir en medalje ned fra toppen av skjermen. Oversikten ligger under Profil → Achievements.
+
+Ti achievements gir en belønning som ikke kan kjøpes eller klekkes: ni kostymer (blant annet gullkrone, detektivhatt, doktorhatt, superheltkappe og ridderrustning) og fire dyr (ugle, rev, elefant og føniks). Definisjonene står i `src/achievements/catalog.ts`, og databasefunksjonen `unlock_achievement` gir belønningen. XP-, egg- og dyre-achievements sjekkes mot databasen. At et spill er mestret, kan databasen ikke se, så de stoler på appen. Belønningene er bare utseende og gir ingen poeng.
 
 ## Spilloversikt
 

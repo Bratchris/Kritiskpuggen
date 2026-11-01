@@ -24,6 +24,7 @@ import { renderAvatar } from '../avatar/screen';
 import { renderHome, setHomeName, heroStats, games } from './home';
 import { renderSettings, setSettingsActions } from './settings';
 import { icon } from './icons';
+import { checkProgress, checkPets } from '../achievements/engine';
 import { avatarSVG } from '../avatar/render';
 import { cleanAvatar, defaultAvatar } from '../avatar/catalog';
 
@@ -66,6 +67,7 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
     const pd = await store.loadPets();
     S.pets = pd.pets; S.petsReady = pd.ready; S.xpOther = Math.max(0, pd.total - S.points);
   } catch { S.pets = []; S.petsReady = false; S.xpOther = 0; }
+  try { const ad = await store.loadAchievements(); S.ach = new Set(ad.ids); S.achReady = ad.ready; } catch { S.ach = new Set(); S.achReady = false; }
   if (!S.home) S.home = {};
 
   setHomeName(opts.who);
@@ -122,7 +124,7 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
   $('#ava-btn').onclick = () => hooks.open('avatar', (S.cur.ava && S.cur.ava.part) || 'kropp');
 
   hooks.refresh = () => { renderHeader(); renderNav(); };
-  hooks.onEgg = (p) => { showEggFound(p); if (S.mode === 'hjem') renderHome(); };
+  hooks.onEgg = (p) => { showEggFound(p); checkPets(); if (S.mode === 'hjem') renderHome(); };
   hooks.open = (mode, tab) => {
     if (mode === 'butikk') { go('butikk'); return; }
     if (games().some((m) => m.id === mode)) S.last = mode;
@@ -137,7 +139,7 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
   };
   let starsBefore = stars(S.points);
   hooks.onPoints = (before, after, n) => {
-    renderHeader(); renderNav();
+    renderHeader(); renderNav(); checkProgress();
     const st = stars(S.points);
     if (after > before) { toast('Nytt nivå: ' + LEVELS[after].n); showLevelUp(after); }
     else if (st > starsBefore) toast('Ny stjerne! Du har nå ★' + st);
@@ -145,6 +147,7 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
     starsBefore = st;
   };
   render();
+  setTimeout(checkProgress, 900);
   if (MODES.some((m) => m.id === 'top')) void loadBoard().then(() => { if (S.mode === 'hjem') renderHome(); });
 }
 
@@ -188,7 +191,7 @@ function renderSub(): void {
     h = '<div class="subtabs" role="tablist" aria-label="Butikken">' + tab('shop', esc(shopName || 'Gaver'), S.mode === 'shop') + tab('avatar:kostymer', 'Kostymer', t === 'kostymer') + tab('avatar:merch', 'CRISPY-G', t === 'merch', ' cgtab') + tab('avatar:bakgrunn', 'Bakgrunner', t === 'bakgrunn') + '</div>';
   } else if (g === 'profil') {
     const t = S.cur.ava.tab, part = S.cur.ava.part || 'kropp';
-    h = '<div class="subtabs" role="tablist" aria-label="Profilen din">' + tab('avatar:' + part, 'Avatar', PARTS.includes(t)) + tab('avatar:garderobe', 'Garderobe', t === 'garderobe') + tab('avatar:dyr', 'Dyr og egg', t === 'dyr') + '</div>';
+    h = '<div class="subtabs" role="tablist" aria-label="Profilen din">' + tab('avatar:' + part, 'Avatar', PARTS.includes(t)) + tab('avatar:garderobe', 'Garderobe', t === 'garderobe') + tab('avatar:dyr', 'Dyr og egg', t === 'dyr') + tab('avatar:ach', 'Achievements', t === 'ach') + '</div>';
   } else if (g === 'hjem' && S.mode !== 'hjem') {
     h = '<div class="gamebar"><button class="lnk back" type="button" id="go-home">' + icon('pil') + 'Alle spill</button></div>';
   }

@@ -6,6 +6,7 @@ import { icon } from './icons';
 import { myRankText } from './modes/top';
 import { eggSVG } from '../pets/render';
 import { eggProgress } from '../pets/catalog';
+import { ACHS } from '../achievements/catalog';
 
 /** Kort undertittel på flisene. Spill som mangler her, får første setning av beskrivelsen. */
 const TAG: Record<string, string> = {
@@ -43,6 +44,7 @@ export function renderHome(): void {
       '<div class="herostats">' +
         '<button type="button" class="hstat" data-go="kort"><b>' + known + ' / ' + n + '</b><span>kort mestret</span></button>' +
         '<button type="button" class="hstat" data-go="shop"><b>' + (S.points - S.spent) + '</b><span>poeng å bruke</span></button>' +
+        (S.achReady ? '<button type="button" class="hstat" data-go="avatar:ach"><b>' + ACHS.filter((a) => S.ach.has(a.id)).length + ' / ' + ACHS.length + '</b><span>achievements</span></button>' : '') +
         (hasTop ? '<button type="button" class="hstat" data-go="top"><b>' + esc(myRankText()) + '</b><span>i klassen</span></button>' : '') +
       '</div>' +
       '<div id="stripes" class="stripes mini" role="img" aria-label="' + known + ' av ' + n + ' kort mestret">' + cards.map((c, i) => '<i class="' + (S.known[c.id] === 1 ? 'on' : '') + '" style="background:' + gradient(T.stripes, i / Math.max(1, n - 1)) + '"></i>').join('') + '</div>' +

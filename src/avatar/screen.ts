@@ -4,18 +4,22 @@ import { friendly } from '../lib/supabase';
 import { S, T, store, panel, hooks } from '../app/core';
 import {
   AvatarCfg, ColorKey, Slot, Skin, GENDERS, SKIN_TONES, HAIR_STYLES, HAIR_COLORS, HEADWEAR, EYE_COLORS, LIP_COLORS, SHADOW_COLORS, BLUSH_COLORS,
-  CLOTH_COLORS, TOPS, BOTTOMS, SHOES, EYES, MOUTHS, SKINS, SLOT_NAMES, skinById, isMerch, Swatch, Opt,
+  CLOTH_COLORS, TOPS, BOTTOMS, SHOES, EYES, MOUTHS, SKINS, SLOT_NAMES, skinById, isMerch, isAch, Swatch, Opt,
 } from './catalog';
 import { avatarSVG, tintOf } from './render';
 import { petsHTML, wirePets, companionSVG } from '../pets/screen';
+import { achHTML } from '../achievements/screen';
+import { achieve } from '../achievements/engine';
+import { achForSkin } from '../achievements/catalog';
 import { BACKGROUNDS, BG_GROUPS, Background, bgById, bgImage, bgFit, applyBackground } from './backgrounds';
 
 // Hvilken del som vises, styres av menyen i app.ts: profilen (avatar, garderobe, dyr) eller butikken (kostymer, CRISPY-G, bakgrunner).
 type Part = 'kropp' | 'har' | 'ansikt' | 'sminke' | 'klaer';
-type Tab = Part | 'garderobe' | 'dyr' | 'bakgrunn' | 'kostymer' | 'merch';
+type Tab = Part | 'garderobe' | 'dyr' | 'ach' | 'bakgrunn' | 'kostymer' | 'merch';
 const PARTS: [Part, string][] = [['kropp', 'Kropp'], ['har', 'Hår'], ['ansikt', 'Ansikt'], ['sminke', 'Sminke'], ['klaer', 'Klær']];
 const HEADS: Record<string, [string, string]> = {
   garderobe: ['Garderoben', 'Kostymer og merch du eier. Ta på og av så mye du vil.'],
+  ach: ['Achievements', 'Mestre spillene og samle medaljer. Noen gir kostymer og dyr som ikke finnes andre steder.'],
   dyr: ['Dyr og egg', 'Egg du har funnet, dyrene som har klekket, og dyreboka.'],
   kostymer: ['Kostymer', 'Kostymer til avataren, kjøpt med poengene dine.'],
   merch: ['CRISPY-G', 'Drakter, tracksuits og annen merch.'],
@@ -98,7 +102,7 @@ function card(k: Skin): string {
   const tintBtn = own && k.tint ? '<button class="btn ghost" type="button" data-open="' + ck + '" aria-expanded="' + tintOpen + '">' + (tintOpen ? 'Ferdig' : 'Endre farge') + '</button>' : '';
   return '<article class="skin' + (worn ? ' worn' : '') + (isMerch(k) ? ' merch' : '') + (tintOpen ? ' wide' : '') + '"><div class="skinart">' +
     avatarSVG({ ...S.avatar, eq: { [k.slot]: k.id } }, { crop: k.slot === 'hat' || k.slot === 'face' ? 'head' : 'full' }) + '</div><div class="skininfo">' +
-    '<h4>' + esc(k.name) + '</h4><p>' + esc(k.desc) + '</p><div class="pfoot"><span class="price">' + (own ? 'Eies' : k.price + ' poeng') + '</span><span class="tsub">' + esc(SLOT_NAMES[k.slot]) + (k.tint ? ' · kan fargelegges' : '') + '</span></div>' +
+    '<h4>' + esc(k.name) + '</h4><p>' + esc(k.desc) + (isAch(k) && !own ? ' Lås opp «' + esc(achForSkin(k.id)?.name || '') + '».' : '') + '</p><div class="pfoot"><span class="price">' + (own ? 'Eies' : isAch(k) ? 'Achievement' : k.price + ' poeng') + '</span><span class="tsub">' + esc(SLOT_NAMES[k.slot]) + (k.tint ? ' · kan fargelegges' : '') + '</span></div>' +
     (tintOpen ? colorField(ck, CLOTH_COLORS, 'Farge på ' + k.name.toLowerCase()) : '') + btn + tintBtn + '</div></article>';
 }
 
@@ -110,9 +114,11 @@ const notReady = '<p class="fb bad">Butikken er ikke klar ennå. Læreren må op
 
 function shopHTML(): string {
   if (!S.avaReady) return notReady;
-  const here = SKINS.filter((k) => k.theme === T.id), other = SKINS.filter((k) => k.theme !== T.id && !isMerch(k) && S.owned.has(k.id));
+  const here = SKINS.filter((k) => k.theme === T.id), other = SKINS.filter((k) => k.theme !== T.id && !isMerch(k) && !isAch(k) && S.owned.has(k.id));
+  const ach = SKINS.filter(isAch);
   return balHTML('Kostymene kjøpes med de samme poengene som i ' + esc((T.modes.find((m) => m.id === 'shop') || { name: 'butikken' }).name) + '. Et kostyme du har kjøpt, er ditt for godt.') +
     '<div class="skins">' + here.map(card).join('') + '</div>' +
+    '<h3 class="grp">Bare via achievements</h3><p class="keyhint">Disse kan ikke kjøpes. Du får dem ved å låse opp achievementet som står på kortet.</p><div class="skins">' + ach.map(card).join('') + '</div>' +
     (other.length ? '<h3 class="grp">Kostymer fra andre temaer</h3><div class="skins">' + other.map(card).join('') + '</div>' : '');
 }
 
@@ -172,12 +178,13 @@ export function renderAvatar(): void {
   if (s.tab === 'bakgrunn') body = bgHTML();
   if (s.tab === 'dyr') body = petsHTML();
   if (s.tab === 'garderobe') body = wardrobeHTML();
+  if (s.tab === 'ach') body = achHTML();
   const sbg = bgById(a.bg), isPart = PARTS.some(([id]) => id === s.tab);
   const hd = isPart ? ['Avataren din', 'Endringene lagres med en gang.'] : HEADS[s.tab];
 
   const worn = (Object.keys(a.eq) as Slot[]).map((k) => skinById(a.eq[k]!)?.name).filter(Boolean);
   p.innerHTML = '<div class="phead"><h2>' + esc(hd[0]) + '</h2><p>' + esc(hd[1]) + '</p></div>' +
-    '<div class="avagrid"><div class="avastage"><div class="avabig' + (sbg ? ' withbg' : '') + '"' + (sbg ? ' style="' + bgStyle(sbg) + '"' : '') + '>' + avatarSVG(a, { cls: 'big', title: 'Avataren din', ariaHidden: false }) + '<span class="stagepet">' + companionSVG() + '</span></div>' +
+    '<div class="avagrid' + (s.tab === 'ach' ? ' nostage' : '') + '"><div class="avastage"><div class="avabig' + (sbg ? ' withbg' : '') + '"' + (sbg ? ' style="' + bgStyle(sbg) + '"' : '') + '>' + avatarSVG(a, { cls: 'big', title: 'Avataren din', ariaHidden: false }) + '<span class="stagepet">' + companionSVG() + '</span></div>' +
     '<p class="keyhint">' + (worn.length ? 'På deg: ' + esc(worn.join(', ')) + '.' : 'Ingen kostymer på.') + '</p>' +
     '<div class="row"><button class="btn" type="button" id="av-rand">Tilfeldig utseende</button></div></div>' +
     '<div class="avaopts">' + (isPart ? '<div class="parts" role="tablist" aria-label="Deler av avataren">' + PARTS.map(([id, n]) => '<button class="chip" type="button" role="tab" data-tab="' + id + '" aria-selected="' + (s.tab === id) + '" aria-pressed="' + (s.tab === id) + '">' + n + '</button>').join('') + '</div>' : '') +
@@ -272,7 +279,7 @@ function wire(p: ReturnType<typeof panel>, s: AvaState) {
       s.arm = null; s.busy = true; s.msg = 'Kjøper …'; renderAvatar();
       try {
         S.spent = await store.buySkin(T.id, k.id, k.price);
-        S.owned.add(k.id);
+        S.owned.add(k.id); achieve('kostyme_forste');
         s.busy = false; s.msg = k.name + ' er kjøpt og tatt på.' + (k.tint ? ' Trykk «Endre farge» for å velge din egen farge.' : '');
         set({ eq: { ...S.avatar.eq, [k.slot]: k.id } }, '[data-wear="' + k.id + '"]');
         toast(k.name + ' er kjøpt');

@@ -1,3 +1,4 @@
+import { achieve } from '../../achievements/engine';
 import { $, esc, shuffle } from '../../lib/dom';
 import { S, T, head, tag, inTopic, focusMain, panel, verdict, track, mark, earnOnce, earnedToday, readLock } from '../core';
 
@@ -26,6 +27,7 @@ export function renderQuiz(): void {
     const note = left === 0
       ? '<p class="fb">Du har fått poeng for alle quizspørsmålene ' + (S.topic === 'alle' ? '' : 'i dette emnet ') + 'i dag. Øv gjerne videre, men nye poeng får du i morgen' + (S.topic === 'alle' ? '' : ', i andre emner') + ' eller i de andre spillene.</p>'
       : '<p class="keyhint">' + left + ' quizspørsmål kan fortsatt gi poeng i dag.</p>';
+    if (z.qs.length >= 5 && z.score === z.qs.length) achieve('quiz_perfekt');
     p.innerHTML = head('quiz') + '<div class="result"><p class="big">' + z.score + ' av ' + z.qs.length + ' riktige</p><p>' + verdict(z.score, z.qs.length) + ' Du fikk ' + z.pts + ' poeng.</p>' + note +
       '<button class="btn primary" data-focus id="q-new" type="button">Ny runde</button></div>';
     $('#q-new').onclick = () => { start(); renderQuiz(); };

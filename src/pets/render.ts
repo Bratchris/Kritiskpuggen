@@ -12,6 +12,10 @@ const NATURAL: Record<Species, Pal> = {
   minigris: { main: '#f8b8c8', belly: '#ffd6e0', dark: '#e27c9a', accent: '#f08aa8', horn: '#ffffff' },
   enhjorning: { main: '#fdf9ff', belly: '#ffffff', dark: '#c9b8e8', accent: '#ff9cc0', horn: '#ffd36a' },
   drage: { main: '#4fb06b', belly: '#f4d67e', dark: '#2c7a47', accent: '#ff9c7a', horn: '#f5e7b8' },
+  ugle: { main: '#9a6b44', belly: '#f2dfc2', dark: '#6b4529', accent: '#f2a03a', horn: '#7a5232' },
+  rev: { main: '#ee7d2f', belly: '#fff6ea', dark: '#2b2020', accent: '#ff9cbc', horn: '#ffffff' },
+  elefant: { main: '#a9b4c2', belly: '#c9d2dd', dark: '#7d8a99', accent: '#ffb3c6', horn: '#fbf6ea' },
+  foniks: { main: '#f2542d', belly: '#ffd25a', dark: '#b8291a', accent: '#ffb02e', horn: '#fff0a0' },
 };
 const METAL: Partial<Record<Variant, Pal>> = {
   bronse: { main: '#c7844a', belly: '#e8b483', dark: '#7a4a22', accent: '#f0b48a', horn: '#f0c79a' },
@@ -98,6 +102,29 @@ const DRAW: Record<Species, Draw> = {
       main: E(38, 90, 6, 4, p.horn) + E(62, 90, 6, 4, p.horn) + body(p) + P('M36,26 L38,14 L46,22Z', p.main) + C(50, 44, 20, p.main) + s + C(56, 22, 6, m[0]) + C(48, 20, 5, m[2]) +
         P('M47,24 L50,2 L53,24Z', p.horn) + L('M48,18 L52,16 M47.5,12 L52.5,10', shade(p.horn, -0.25), 1) + E(50, 53, 9, 6, p.belly) + E(47, 53, 1.2, 1.6, p.dark) + E(53, 53, 1.2, 1.6, p.dark) + eyes(41) + blush(48, 14) };
   },
+  ugle: (p) => {
+    let v = '';
+    for (const [x, y] of [[44, 70], [50, 72], [56, 70], [47, 78], [53, 78]]) v += L('M' + (x - 2) + ',' + y + ' L' + x + ',' + (y + 2) + ' L' + (x + 2) + ',' + y, shade(p.belly, -0.3), 1);
+    return { main: E(42, 90, 5, 3, p.accent) + E(58, 90, 5, 3, p.accent) + E(50, 68, 22, 22, p.main) + P('M28,62 Q22,76 32,86 Q34,74 30,62Z', p.dark) + P('M72,62 Q78,76 68,86 Q66,74 70,62Z', p.dark) + E(50, 74, 13, 14, p.belly) + v +
+      P('M32,30 L30,14 L42,24Z', p.horn) + P('M68,30 L70,14 L58,24Z', p.horn) + C(50, 38, 20, p.main) + C(42, 38, 9, p.belly) + C(58, 38, 9, p.belly) + eyes(38, 8) + P('M47,45 L53,45 L50,50Z', p.accent) + blush(46, 15) };
+  },
+  rev: (p) => ({
+    back: P('M66,80 Q94,84 92,58 Q90,46 82,50 Q86,66 64,72Z', p.main) + P('M84,50 Q92,46 92,58 Q90,56 84,54Z', p.belly),
+    main: feet(p.dark) + E(50, 72, 21, 17, p.main) + E(50, 77, 11, 10, p.belly) + P('M30,32 L28,10 L44,24Z', p.main) + P('M70,32 L72,10 L56,24Z', p.main) + P('M29.5,20 L28,10 L35,16Z', p.dark) + P('M70.5,20 L72,10 L65,16Z', p.dark) +
+      C(50, 42, 20, p.main) + P('M30,44 Q40,58 50,58 Q60,58 70,44 Q62,50 50,50 Q38,50 30,44Z', p.belly) + E(50, 50, 3, 2.2, p.dark) + smile(53) + eyes(40) + blush(48, 14),
+  }),
+  elefant: (p) => ({
+    main: feet(p.dark) + body(p) + E(26, 44, 14, 17, p.main) + E(74, 44, 14, 17, p.main) + E(27, 45, 9, 12, p.accent, ' opacity=".55"') + E(73, 45, 9, 12, p.accent, ' opacity=".55"') +
+      C(50, 42, 20, p.main) + P('M45,48 Q44,62 47,70 Q50,76 56,72 Q52,70 52,64 Q53,56 55,48Z', p.main) + L('M46,56 H53 M46.5,62 H52.5', shade(p.main, -0.2), 0.9) +
+      P('M42,54 Q40,60 43,62 Q43,58 44,55Z', p.horn) + P('M58,54 Q60,60 57,62 Q57,58 56,55Z', p.horn) + eyes(38) + blush(46, 13),
+  }),
+  foniks: (p) => ({
+    back: P('M28,60 Q6,42 10,24 Q18,40 30,46 Q16,30 22,14 Q30,34 36,52Z', p.dark) + P('M72,60 Q94,42 90,24 Q82,40 70,46 Q84,30 78,14 Q70,34 64,52Z', p.dark) +
+      P('M40,84 Q30,98 38,100 Q42,94 46,88Z', p.accent) + P('M60,84 Q70,98 62,100 Q58,94 54,88Z', p.accent) + P('M48,86 Q50,100 52,86Z', p.belly),
+    main: E(42, 90, 5, 3, p.accent) + E(58, 90, 5, 3, p.accent) + E(50, 70, 19, 18, p.main) + E(50, 74, 11, 12, p.belly) +
+      P('M50,22 Q44,6 50,0 Q50,10 56,6 Q52,14 58,12 Q54,20 50,22Z', p.accent) + P('M50,20 Q47,10 50,6 Q51,12 53,11 Q51,16 50,20Z', p.belly) +
+      C(50, 40, 18, p.main) + P('M46,45 L54,45 L50,52Z', p.belly) + eyes(38, 7) + blush(45, 13) + C(30, 30, 1.6, p.belly) + C(72, 26, 1.4, p.belly) + C(20, 54, 1.2, p.accent),
+  }),
   drage: (p) => ({
     back: P('M30,62 L6,44 L12,58 L4,64 L16,68 L12,78 L32,74Z', p.dark) + P('M70,62 L94,44 L88,58 L96,64 L84,68 L88,78 L68,74Z', p.dark) + L('M68,84 Q88,90 92,76', p.main, 6) + P('M90,70 L98,72 L92,80Z', p.dark),
     main: feet(p.dark) + E(50, 72, 23, 18, p.main) + E(50, 76, 13, 12, p.belly) + L('M40,70 H60 M39,76 H61 M41,82 H59', shade(p.belly, -0.2), 1.2) +
@@ -126,7 +153,7 @@ export function petSVG(sp: Species, va: Variant, cls = ''): string {
 
 const EGG = 'M50,8 C72,8 84,44 84,62 C84,82 68,94 50,94 C32,94 16,82 16,62 C16,44 28,8 50,8Z';
 /** Egget, med sprekker etter hvert som det nærmer seg klekking. */
-export function eggG(kind: EggKind, progress: number): string {
+export function eggG(kind: EggKind | 'belonning', progress: number): string {
   let s: string;
   if (kind === 'mytisk') {
     s = E(50, 56, 44, 44, '#b06bff', ' opacity=".25"') + P(EGG, '#3a1f5c') + P('M50,8 C60,8 70,22 76,38 C66,30 58,28 50,30 C42,28 34,30 24,38 C30,22 40,8 50,8Z', '#5a2f8a');
@@ -142,6 +169,6 @@ export function eggG(kind: EggKind, progress: number): string {
   if (progress >= 1) s += L('M18,62 L26,58 L32,64 L40,58 L48,64 L56,58 L64,64 L72,58 L82,62', ink, 2.2);
   return s;
 }
-export function eggSVG(kind: EggKind, progress: number, cls = ''): string {
+export function eggSVG(kind: EggKind | 'belonning', progress: number, cls = ''): string {
   return '<svg class="egg ' + kind + (progress >= 1 ? ' ready' : '') + ' ' + cls + '" viewBox="0 0 100 100" aria-hidden="true">' + E(50, 95, 26, 3.4, '#000', ' opacity=".12"') + eggG(kind, progress) + '</svg>';
 }

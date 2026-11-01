@@ -1,5 +1,5 @@
 // Enkle strekikoner (24 × 24) til menyen og spillflisene. Tegnet med currentColor.
-const P: Record<string, string> = {
+export const ICON_PATHS: Record<string, string> = {
   hjem: '<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h5v-6h3v6h5V10"/>',
   kort: '<rect x="3.5" y="6" width="11" height="15" rx="2"/><path d="M9 3.5h9.5a2 2 0 0 1 2 2V18"/><path d="M7 11h4M7 14.5h4"/>',
   rom: '<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5.5a2.5 2.5 0 0 0 2.6 4M16 6h2.5a2.5 2.5 0 0 1-2.6 4"/><path d="M12 13v4M8.5 20.5h7M10 17h4v3.5h-4z"/>',
@@ -19,6 +19,7 @@ const P: Record<string, string> = {
   tenk: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/>',
   dyr: '<ellipse cx="12" cy="13" rx="6.5" ry="8"/><path d="M9 11.5v.1M15 11.5v.1M10.5 15c.9.6 2.1.6 3 0"/>',
   person: '<circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/>',
+  medalje: '<circle cx="12" cy="14.5" r="5.5"/><path d="M8.5 10 6 3.5h4l2 4.5M15.5 10 18 3.5h-4l-2 4.5"/>',
   pil: '<path d="M14.5 5 7.5 12l7 7"/>',
   lys: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
   mork: '<path d="M19.5 14.5A8 8 0 1 1 9.5 4.5a6.5 6.5 0 0 0 10 10z"/>',
@@ -26,5 +27,5 @@ const P: Record<string, string> = {
 };
 
 export function icon(name: string, cls = ''): string {
-  return '<svg class="ic ' + cls + '" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + (P[name] || P.quiz) + '</svg>';
+  return '<svg class="ic ' + cls + '" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + (ICON_PATHS[name] || ICON_PATHS.quiz) + '</svg>';
 }

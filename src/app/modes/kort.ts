@@ -1,3 +1,4 @@
+import { achieve } from '../../achievements/engine';
 import { $, esc, shuffle } from '../../lib/dom';
 import { S, T, head, tag, inTopic, focusMain, panel, save, hooks, track, mark } from '../core';
 
@@ -21,7 +22,7 @@ export function renderKort(): void {
   $('#flash').onclick = () => { k.flip = !k.flip; renderKort(); };
   if (k.flip) {
     $('#k-more').onclick = () => { track(false); k.deck.push(k.deck.shift()); k.flip = false; renderKort(); };
-    $('#k-ok').onclick = () => { track(true); S.known[c.id] = 1; save(); k.deck.shift(); k.flip = false; hooks.refresh(); renderKort(); };
+    $('#k-ok').onclick = () => { track(true); S.known[c.id] = 1; save(); k.deck.shift(); k.flip = false; hooks.refresh(); if (T.content.cards.every((x) => S.known[x.id] === 1)) achieve('kort_alle'); renderKort(); };
   } else {
     mark();
     $('#k-show').onclick = () => { k.flip = true; renderKort(); };

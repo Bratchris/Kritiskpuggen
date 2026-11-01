@@ -137,9 +137,20 @@ export const SKINS: Skin[] = [
   { id: 'cg_keeper', theme: 'merch', slot: 'outfit', name: 'Keeperdrakt', price: 170, desc: 'Langermet keeperdrakt med hansker.', tint: '#4fae6b' },
   { id: 'cg_tracksuit', theme: 'merch', slot: 'outfit', name: 'CRISPY-G tracksuit', price: 180, desc: 'Joggedress med tre striper og glidelås.', tint: '#6a3d9a' },
   { id: 'cg_gullball', theme: 'merch', slot: 'hand', name: 'Gullballen', price: 250, desc: 'Prisen for årets beste pugger.' },
+  // Bare via achievements (theme 'ach'). Kan ikke kjøpes.
+  { id: 'ach_krone', theme: 'ach', slot: 'hat', name: 'Gullkrone', price: 0, desc: 'For en ekte quizmester.' },
+  { id: 'ach_medalje', theme: 'ach', slot: 'neck', name: 'Gullmedalje', price: 0, desc: 'Til den som avslører alle løgnene.' },
+  { id: 'ach_briller', theme: 'ach', slot: 'face', name: 'Ordsmedens briller', price: 0, desc: 'Runde briller for skarpe øyne.' },
+  { id: 'ach_detektiv', theme: 'ach', slot: 'hat', name: 'Detektivhatt', price: 0, desc: 'Ingen feil slipper unna.' },
+  { id: 'ach_bok', theme: 'ach', slot: 'hand', name: 'Visdomsbok', price: 0, desc: 'Full av gode argumenter.' },
+  { id: 'ach_doktorhatt', theme: 'ach', slot: 'hat', name: 'Doktorhatt', price: 0, desc: 'Med gullsnor. Du kan hele kortstokken.' },
+  { id: 'ach_kappe', theme: 'ach', slot: 'back', name: 'Superheltkappe', price: 0, desc: 'For den som mestrer alle spillene.' },
+  { id: 'ach_rustning', theme: 'ach', slot: 'outfit', name: 'Ridderrustning', price: 0, desc: 'Skinnende rustning for eksperter.' },
+  { id: 'ach_laurbaer', theme: 'ach', slot: 'hat', name: 'Laurbærkrans', price: 0, desc: 'Til den som eier hele huset.' },
 ];
 export const skinById = (id: string) => SKINS.find((s) => s.id === id);
 export const isMerch = (s: Skin) => s.theme === 'merch';
+export const isAch = (s: Skin) => s.theme === 'ach';
 
 export function defaultAvatar(seed = Math.random()): AvatarCfg {
   const pick = <T>(a: T[], k: number) => a[Math.floor((seed * 9973 * (k + 1)) % a.length)];

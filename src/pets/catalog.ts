@@ -2,12 +2,13 @@
 // supabase/migrations/20261029800000_pets.sql, som avgjør hva som klekker.
 
 export type EggKind = 'vanlig' | 'mytisk';
-export type Species = 'ku' | 'sau' | 'kanin' | 'hund' | 'katt' | 'skilpadde' | 'minigris' | 'enhjorning' | 'drage';
+export type Species = 'ku' | 'sau' | 'kanin' | 'hund' | 'katt' | 'skilpadde' | 'minigris' | 'enhjorning' | 'drage' | 'ugle' | 'rev' | 'elefant' | 'foniks';
 export type Variant = 'vanlig' | 'stripete' | 'bronse' | 'solv' | 'smaragd' | 'neon' | 'gull';
 
 export interface Pet {
   id: string;
-  egg: EggKind;
+  /** belonning = fått fra et achievement, ikke klekket av et egg. */
+  egg: EggKind | 'belonning';
   found_at: string;
   found_theme: string;
   xp_start: number;
@@ -18,7 +19,7 @@ export interface Pet {
   rarity: number | null;
 }
 
-export const SPECIES: { id: Species; name: string; tier: number; w: number; egg: EggKind }[] = [
+export const SPECIES: { id: Species; name: string; tier: number; w: number; egg: EggKind | 'belonning' }[] = [
   { id: 'ku', name: 'Ku', tier: 0, w: 16, egg: 'vanlig' },
   { id: 'sau', name: 'Sau', tier: 0, w: 16, egg: 'vanlig' },
   { id: 'kanin', name: 'Kanin', tier: 0, w: 16, egg: 'vanlig' },
@@ -28,6 +29,11 @@ export const SPECIES: { id: Species; name: string; tier: number; w: number; egg:
   { id: 'minigris', name: 'Minigris', tier: 1, w: 9, egg: 'vanlig' },
   { id: 'enhjorning', name: 'Enhjørning', tier: 2, w: 3, egg: 'vanlig' },
   { id: 'drage', name: 'Drage', tier: 3, w: 1, egg: 'mytisk' },
+  // Bare via achievements. Kommer alltid i vanlig farge.
+  { id: 'ugle', name: 'Ugle', tier: 2, w: 0, egg: 'belonning' },
+  { id: 'rev', name: 'Rev', tier: 2, w: 0, egg: 'belonning' },
+  { id: 'elefant', name: 'Elefant', tier: 2, w: 0, egg: 'belonning' },
+  { id: 'foniks', name: 'Føniks', tier: 4, w: 0, egg: 'belonning' },
 ];
 export const VARIANTS: { id: Variant; name: string; prefix: string; tier: number; w: number }[] = [
   { id: 'vanlig', name: 'Vanlig', prefix: '', tier: 0, w: 55 },

@@ -28,9 +28,13 @@ export interface AppState {
   pets: Pet[];
   petsReady: boolean;
   xpOther: number;
+  /** Achievements eleven har låst opp, i alle temaer. played = spill med XP i dette temaet. */
+  ach: Set<string>;
+  achReady: boolean;
+  played: string[];
 }
 
-export const S: AppState = { topic: 'alle', mode: 'quiz', last: 'quiz', points: 0, spent: 0, gifts: [], home: null, seenLvl: -1, seeded: [], earned: {}, known: {}, notes: {}, cur: {}, avatar: defaultAvatar(0.37), owned: new Set(), avaReady: false, pets: [], petsReady: false, xpOther: 0 };
+export const S: AppState = { topic: 'alle', mode: 'quiz', last: 'quiz', points: 0, spent: 0, gifts: [], home: null, seenLvl: -1, seeded: [], earned: {}, known: {}, notes: {}, cur: {}, avatar: defaultAvatar(0.37), owned: new Set(), avaReady: false, pets: [], petsReady: false, xpOther: 0, ach: new Set(), achReady: false, played: [] };
 
 export let T: Theme;
 export let store: Store;
@@ -52,12 +56,13 @@ export function loadProgress(p: { points: number; spent: number; state: SavedSta
   // Elever med lagret stue fra før huset kom: første rom regnes som innredet.
   S.seeded = p.state.seeded ?? (p.state.home ? [0] : []);
   S.earned = keepToday(p.state.earned ?? {});
+  S.played = p.state.played ?? [];
   S.cur = {}; S.topic = 'alle';
   S.mode = 'hjem'; S.last = '';
 }
 
 export function save(): void {
-  store.saveState(T.id, { known: S.known, notes: S.notes, home: S.home, seenLvl: S.seenLvl, seeded: S.seeded, earned: keepToday(S.earned) });
+  store.saveState(T.id, { known: S.known, notes: S.notes, home: S.home, seenLvl: S.seenLvl, seeded: S.seeded, earned: keepToday(S.earned), played: S.played });
 }
 
 export function owned(): Record<string, number> {
@@ -188,6 +193,7 @@ if (typeof document !== 'undefined') {
 
 export function addPoints(n: number): void {
   row(S.mode).xp += n; scheduleFlush();
+  if (n > 0 && !S.played.includes(S.mode) && T.modes.some((m) => m.id === S.mode && !m.g)) { S.played.push(S.mode); save(); }
   const before = lvl(S.points), xpBefore = xpTotal();
   S.points += n;
   hooks.onPoints(before, lvl(S.points), n);

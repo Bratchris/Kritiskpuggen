@@ -1,3 +1,4 @@
+import { achieve } from '../../achievements/engine';
 import { $, esc, shuffle } from '../../lib/dom';
 import { S, T, head, panel, addPoints, track } from '../core';
 
@@ -28,6 +29,8 @@ export function renderOrd(): void {
   });
   $('#o-check').onclick = () => {
     o.good = o.list.filter((v: number, i: number) => v === i).length; o.checked = true; o.solved = (o.good === n); track(o.solved);
+    o.tries = (o.tries || 0) + 1;
+    if (o.solved && o.tries === 1) achieve('ord_forste');
     if (o.solved && !o.paid) { o.paid = true; addPoints(3); }
     renderOrd();
   };

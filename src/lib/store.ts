@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import type { Placement } from '../themes/types';
-import { type Pet, type EggKind, EGGS, CHANCE, SPECIES, VARIANTS, pick, rarityOf } from '../pets/catalog';
+import { type Pet, type EggKind, type Species, EGGS, CHANCE, SPECIES, VARIANTS, pick, rarityOf } from '../pets/catalog';
+import { achById } from '../achievements/catalog';
 
 /** Det som lagres per elev og tema, i tillegg til poengene. */
 export interface SavedState {
@@ -12,6 +13,8 @@ export interface SavedState {
   seeded?: number[];
   /** Spørsmål som har gitt poeng, med dato (ÅÅÅÅ-MM-DD). Bare dagens beholdes. */
   earned?: Record<string, string>;
+  /** Spill der eleven har tjent XP, til achievementet «Allsidig». */
+  played?: string[];
 }
 export interface Gift { item_id: string; created_at: string }
 /** rank og total kommer fra databasen. Elever får bare topp 3 og sin egen rad. */
@@ -22,6 +25,8 @@ export interface ActivityRow { mode: string; answers: number; correct: number; x
 export interface AvatarData { cfg: unknown; owned: string[]; ready: boolean }
 /** Egg og dyr, og XP i alle temaer til sammen. ready = databasen har støtte for dyr. */
 export interface PetData { pets: Pet[]; total: number; ready: boolean }
+/** Svar fra unlock_achievement. new = første gang. skin og pet er belønningen, om det er en. */
+export interface AchResult { new: boolean; skin?: string | null; pet?: Pet | null }
 export interface Progress { points: number; spent: number; state: SavedState; gifts: Gift[] }
 
 /**
@@ -44,6 +49,9 @@ export interface Store {
   /** Kanskje et egg. null = ingen egg denne gangen. */
   rollEgg(theme: string): Promise<Pet | null>;
   hatchEgg(id: string): Promise<Pet>;
+  /** ready = databasen har achievements. */
+  loadAchievements(): Promise<{ ids: string[]; ready: boolean }>;
+  unlockAchievement(theme: string, id: string): Promise<AchResult>;
 }
 
 function emptyState(): SavedState { return { known: {}, notes: {}, home: null, seenLvl: -1 }; }
@@ -56,6 +64,7 @@ function cleanState(raw: any): SavedState {
     if (typeof raw.seenLvl === 'number') s.seenLvl = raw.seenLvl;
     if (Array.isArray(raw.seeded)) s.seeded = raw.seeded.filter((n: unknown) => typeof n === 'number');
     if (raw.earned && typeof raw.earned === 'object') s.earned = raw.earned;
+    if (Array.isArray(raw.played)) s.played = raw.played.filter((x: unknown) => typeof x === 'string');
   }
   return s;
 }
@@ -178,6 +187,16 @@ export class RemoteStore implements Store {
     if (error) throw error;
     return data as Pet;
   }
+  async loadAchievements() {
+    const { data, error } = await supabase.from('achievements').select('id');
+    if (error) return { ids: [], ready: false };
+    return { ids: (data ?? []).map((r: { id: string }) => r.id), ready: true };
+  }
+  async unlockAchievement(theme: string, id: string): Promise<AchResult> {
+    const { data, error } = await supabase.rpc('unlock_achievement', { p_theme: theme, p_id: id });
+    if (error) throw error;
+    return (data ?? { new: false }) as AchResult;
+  }
 }
 
 export class PreviewStore implements Store {
@@ -209,7 +228,7 @@ export class PreviewStore implements Store {
     p.spent += price; p.gifts.push({ item_id: itemId, created_at: new Date().toISOString() }); this.write(theme, p);
     return p.spent;
   }
-  reset(theme: string) { try { localStorage.removeItem(this.key(theme)); localStorage.removeItem('puggen-preview-avatar'); localStorage.removeItem('puggen-preview-pets'); } catch { /* ignorer */ } }
+  reset(theme: string) { try { localStorage.removeItem(this.key(theme)); localStorage.removeItem('puggen-preview-avatar'); localStorage.removeItem('puggen-preview-pets'); localStorage.removeItem('puggen-preview-ach'); } catch { /* ignorer */ } }
   /** Forhåndsvisningen registrerer ikke aktivitet. */
   async logActivity() { /* ingenting */ }
   async loadAvatar(): Promise<AvatarData> {
@@ -259,6 +278,22 @@ export class PreviewStore implements Store {
     p.hatched_at = new Date().toISOString();
     this.petsWrite(all);
     return p;
+  }
+  // ---------- achievements i forhåndsvisningen ----------
+  private achRead(): string[] { try { const r = JSON.parse(localStorage.getItem('puggen-preview-ach') || '[]'); return Array.isArray(r) ? r : []; } catch { return []; } }
+  async loadAchievements() { return { ids: this.achRead(), ready: true }; }
+  async unlockAchievement(theme: string, id: string): Promise<AchResult> {
+    const ids = this.achRead();
+    if (ids.includes(id)) return { new: false };
+    try { localStorage.setItem('puggen-preview-ach', JSON.stringify(ids.concat(id))); } catch { /* ignorer */ }
+    const r = achById(id)?.reward;
+    if (r?.kind === 'skin') { const a = await this.loadAvatar(); if (!a.owned.includes(r.id)) this.avaWrite(a.cfg, a.owned.concat(r.id)); return { new: true, skin: r.id }; }
+    if (r?.kind === 'pet') {
+      const p: Pet = { id: 'p' + Date.now().toString(36), egg: 'belonning', found_at: new Date().toISOString(), found_theme: theme, xp_start: this.total(), xp_need: 0, hatched_at: new Date().toISOString(), species: r.species as Species, variant: 'vanlig', rarity: rarityOf(r.species, 'vanlig') };
+      this.petsWrite(this.petsRead().concat(p));
+      return { new: true, pet: p };
+    }
+    return { new: true };
   }
   /** Lærerens «Lås opp alt»: setter XP i forhåndsvisningen. Rører ikke databasen. */
   async setPoints(theme: string, n: number) { const p = this.read(theme); p.points = Math.max(p.points, n); this.write(theme, p); return p.points; }

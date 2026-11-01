@@ -1,3 +1,4 @@
+import { achieve } from '../achievements/engine';
 import { $, esc, toast } from '../lib/dom';
 import { friendly } from '../lib/supabase';
 import { S, T, store, head, panel, owned, MODES, hooks } from './core';
@@ -48,7 +49,7 @@ export function renderShop(): void {
       sh.arm = null; sh.busy = true; sh.msg = 'Sender gaven …'; renderShop();
       try {
         const spent = await store.buy(T.id, x.id, x.price);
-        S.spent = spent; S.gifts.push({ item_id: x.id, created_at: new Date().toISOString() });
+        S.spent = spent; S.gifts.push({ item_id: x.id, created_at: new Date().toISOString() }); achieve('gave_forste');
         sh.msg = x.name + ' er gitt til læreren. Du brukte ' + x.price + ' poeng.';
         hooks.refresh();
       } catch (e) {
