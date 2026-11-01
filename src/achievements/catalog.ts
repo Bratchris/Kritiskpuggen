@@ -26,7 +26,7 @@ export const ACHS: Ach[] = [
   { id: 'sort_perfekt', group: 'spill', ic: 'sort', tier: 2, name: 'Kurvekonge', desc: 'Legg alle utsagnene i riktig kurv i en runde.', reward: { kind: 'pet', species: 'rev' } },
   { id: 'hull_perfekt', group: 'spill', ic: 'hull', tier: 2, name: 'Ordsmed', desc: 'Få alle riktige i en runde Hull i teksten.', reward: { kind: 'skin', id: 'ach_briller' } },
   { id: 'feil_perfekt', group: 'spill', ic: 'feil', tier: 2, name: 'Korrekturleser', desc: 'Finn alle feilene i en runde Finn feilen.', reward: { kind: 'skin', id: 'ach_detektiv' } },
-  { id: 'tenk_begreper', group: 'spill', ic: 'tenk', tier: 1, name: 'Filosof', desc: 'Bruk alle nøkkelbegrepene i ett svar i Tenk selv.', reward: { kind: 'skin', id: 'ach_bok' } },
+  { id: 'tenk_begreper', group: 'spill', ic: 'tenk', tier: 1, name: 'Filosof', desc: 'Skriv et ordentlig svar i Tenk selv: minst tre setninger og 40 ord, med alle nøkkelbegrepene forklart med egne ord.', reward: { kind: 'skin', id: 'ach_bok' } },
   { id: 'kort_alle', group: 'spill', ic: 'kort', tier: 3, name: 'Kortmester', desc: 'Mestre alle kortene i kortstokken.', reward: { kind: 'skin', id: 'ach_doktorhatt' } },
   { id: 'allsidig', group: 'spill', ic: 'hjem', tier: 2, name: 'Allsidig', desc: 'Tjen XP i alle spillene som gir poeng.', reward: { kind: 'skin', id: 'ach_kappe' } },
   // Fremgang
