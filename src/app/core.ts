@@ -204,7 +204,8 @@ export function track(ok: boolean, mode: string = S.mode): void {
   const now = performance.now(), ms = now - lastMark, r = row(mode);
   lastMark = now;
   r.answers++; if (ok) r.correct++;
-  S.combo = ok ? S.combo + 1 : 0; hooks.onCombo(S.combo);
+  // Kortstokken teller ikke i rekka: eleven svarer selv om hen kan kortet.
+  if (mode !== 'kort') { S.combo = ok ? S.combo + 1 : 0; hooks.onCombo(S.combo); }
   if (ms > 0 && ms < MAX_MS) { r.timed++; r.ms += Math.round(ms); if (FAST_MS[mode] && ms < FAST_MS[mode]) r.fast++; }
   scheduleFlush();
 }
