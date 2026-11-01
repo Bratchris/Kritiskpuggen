@@ -1,3 +1,4 @@
+import { resultStars } from '../juice';
 import { achieve } from '../../achievements/engine';
 import { $, esc, shuffle } from '../../lib/dom';
 import { S, T, head, tag, inTopic, focusMain, panel, verdict, track, mark, earnOnce, earnedToday, readLock } from '../core';
@@ -15,7 +16,7 @@ export function renderTf(): void {
   const z = S.cur.tf, p = panel();
   if (z.i >= z.qs.length) {
     if (z.qs.length >= 5 && z.score === z.qs.length) achieve('tf_perfekt');
-    p.innerHTML = head('tf') + '<div class="result"><p class="big">' + z.score + ' av ' + z.qs.length + ' riktige</p><p>Lengste rekke: ' + z.best + '. ' + verdict(z.score, z.qs.length) + '</p><button class="btn primary" data-focus id="t-new" type="button">Ny runde</button></div>';
+    p.innerHTML = head('tf') + '<div class="result">' + resultStars(z.score, z.qs.length) + '<p class="big">' + z.score + ' av ' + z.qs.length + ' riktige</p><p>Lengste rekke: ' + z.best + '. ' + verdict(z.score, z.qs.length) + '</p><button class="btn primary" data-focus id="t-new" type="button">Ny runde</button></div>';
     $('#t-new').onclick = () => { start(); renderTf(); };
     focusMain(); return;
   }

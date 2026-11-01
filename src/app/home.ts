@@ -1,12 +1,13 @@
 // Startsiden «Øv»: nivå og fremgang øverst, egg som er på vei, og alle spillene som store fliser.
 import { esc } from '../lib/dom';
-import { S, T, MODES, LEVELS, CARDS_KNOWN, lvl, level, stars, starText, topXp, STAR_XP, panel, hooks, xpTotal } from './core';
+import { S, T, MODES, LEVELS, CARDS_KNOWN, streakNow, dayXp, today, lvl, level, stars, starText, topXp, STAR_XP, panel, hooks, xpTotal } from './core';
 import { gradient } from './room/iso';
 import { icon } from './icons';
 import { myRankText } from './modes/top';
 import { eggSVG } from '../pets/render';
 import { eggProgress } from '../pets/catalog';
 import { ACHS } from '../achievements/catalog';
+import { getPrefs } from '../lib/prefs';
 
 /** Kort undertittel på flisene. Spill som mangler her, får første setning av beskrivelsen. */
 const TAG: Record<string, string> = {
@@ -14,6 +15,21 @@ const TAG: Record<string, string> = {
   ord: 'Sett i riktig rekkefølge', sort: 'Sorter i riktig kurv', hull: 'Skriv ordet som mangler', feil: 'Finn feilen i teksten', tenk: 'Argumenter og se sammenhenger',
 };
 let firstName = '';
+const DAYS = ['M', 'T', 'O', 'T', 'F', 'L', 'S'];
+
+/** Dagens mål som en ring, rekka med flamme, og denne uka. */
+function goalHTML(): string {
+  const goal = getPrefs().goal, xp = dayXp(), pct = Math.min(1, xp / goal), done = xp >= goal, sn = streakNow();
+  const now = new Date(), mon = new Date(now); mon.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  const p = (n: number) => String(n).padStart(2, '0');
+  const week = DAYS.map((d, i) => { const x = new Date(mon); x.setDate(mon.getDate() + i); const iso = x.getFullYear() + '-' + p(x.getMonth() + 1) + '-' + p(x.getDate()); const hit = S.streak.days.includes(iso); return '<span class="wday' + (hit ? ' hit' : '') + (iso === today() ? ' today' : '') + '" title="' + iso + '">' + (hit ? '<span class="flame mini" aria-hidden="true"></span>' : '') + '<i>' + d + '</i></span>'; }).join('');
+  const r = 26, c = 2 * Math.PI * r;
+  return '<section class="goalcard' + (done ? ' done' : '') + '">' +
+    '<div class="goalring" role="img" aria-label="Dagens mål: ' + Math.min(xp, goal) + ' av ' + goal + ' XP"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="' + r + '" class="gr-bg"/><circle cx="32" cy="32" r="' + r + '" class="gr-fg" style="stroke-dasharray:' + c.toFixed(1) + ';stroke-dashoffset:' + (c * (1 - pct)).toFixed(1) + '"/></svg><b>' + (done ? '✓' : Math.round(pct * 100) + '%') + '</b></div>' +
+    '<div class="goaltxt"><span class="eyebrow">Dagens mål</span><b>' + (done ? 'Nådd! ' + xp + ' XP i dag' : xp + ' av ' + goal + ' XP') + '</b><span>' + (done ? 'Alt du tjener nå, er bonus.' : (goal - xp) + ' XP igjen for å ' + (sn > 0 && S.streak.last !== today() ? 'holde rekka' : 'starte en rekke')) + '</span></div>' +
+    '<div class="streakbox"><span class="flame big' + (done ? '' : ' cold') + '" aria-hidden="true"></span><b>' + sn + '</b><span>' + (sn === 1 ? 'dag' : 'dager') + ' på rad</span>' + (S.streak.best > 1 ? '<small>Beste: ' + S.streak.best + '</small>' : '') + '</div>' +
+    '<div class="week" aria-label="Denne uka">' + week + '</div></section>';
+}
 export function setHomeName(who: string): void { firstName = who.split(' · ')[0].split(' ')[0]; }
 
 /** Spillene som vises som fliser: alt som ikke har en egen plass i menyen. */
@@ -48,7 +64,7 @@ export function renderHome(): void {
         (hasTop ? '<button type="button" class="hstat" data-go="top"><b>' + esc(myRankText()) + '</b><span>i klassen</span></button>' : '') +
       '</div>' +
       '<div id="stripes" class="stripes mini" role="img" aria-label="' + known + ' av ' + n + ' kort mestret">' + cards.map((c, i) => '<i class="' + (S.known[c.id] === 1 ? 'on' : '') + '" style="background:' + gradient(T.stripes, i / Math.max(1, n - 1)) + '"></i>').join('') + '</div>' +
-    '</section>' +
+    '</section>' + goalHTML() +
     (eggs.length ? '<button type="button" class="eggstrip' + (ready ? ' ready' : '') + '" data-go="avatar:dyr"><span class="eggrow">' + eggs.slice(0, 5).map((x) => eggSVG(x.egg, eggProgress(x, xpTotal()), eggProgress(x, xpTotal()) >= 1 ? 'wobble' : '')).join('') + '</span>' +
       '<span><b>' + (ready ? (ready > 1 ? ready + ' egg er klare til å klekke!' : 'Et egg er klart til å klekke!') : eggs.length + ' egg på vei') + '</b><span>' + (ready ? 'Trykk for å klekke' : 'De klekker når du tjener XP') + '</span></span></button>' : '') +
     (lastGame ? '<button type="button" class="continue" data-go="' + lastGame.id + '">' + icon(lastGame.id) + '<span><span class="eyebrow">Fortsett</span><b>' + esc(lastGame.name) + '</b></span>' + icon('pil', 'flip') + '</button>' : '') +

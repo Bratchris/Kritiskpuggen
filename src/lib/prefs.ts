@@ -2,9 +2,10 @@
 // De lagres i nettleseren. Går lagringen ikke, brukes standardvalgene.
 
 export type ColorMode = 'auto' | 'lys' | 'mork';
-export interface Prefs { mode: ColorMode; text: 'normal' | 'stor'; motion: 'full' | 'rolig' }
+export interface Prefs { mode: ColorMode; text: 'normal' | 'stor'; motion: 'full' | 'rolig'; /** Dagens mål i XP. */ goal: number }
+export const GOALS = [20, 40, 60, 100];
 const KEY = 'puggen-prefs';
-const DEFAULTS: Prefs = { mode: 'auto', text: 'normal', motion: 'full' };
+const DEFAULTS: Prefs = { mode: 'auto', text: 'normal', motion: 'full', goal: 40 };
 
 export function getPrefs(): Prefs {
   try {
@@ -13,6 +14,7 @@ export function getPrefs(): Prefs {
       mode: ['auto', 'lys', 'mork'].includes(r.mode) ? r.mode : 'auto',
       text: r.text === 'stor' ? 'stor' : 'normal',
       motion: r.motion === 'rolig' ? 'rolig' : 'full',
+      goal: GOALS.includes(Number(r.goal)) ? Number(r.goal) : 40,
     };
   } catch { /* bruker standard */ }
   return { ...DEFAULTS };

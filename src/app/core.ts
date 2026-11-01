@@ -5,6 +5,7 @@ import type { Store, SavedState, Gift, ActivityRow } from '../lib/store';
 import type { Theme, Mode, Level, RoomItem, Placement, Topic } from '../themes/types';
 import { defaultAvatar, type AvatarCfg } from '../avatar/catalog';
 import { type Pet, CHANCE, eggProgress } from '../pets/catalog';
+import { getPrefs } from '../lib/prefs';
 
 export interface AppState {
   topic: string;
@@ -32,9 +33,13 @@ export interface AppState {
   ach: Set<string>;
   achReady: boolean;
   played: string[];
+  /** XP i dag og rekka med dager der dagens mål er nådd. combo = riktige svar på rad akkurat nå. */
+  day: { d: string; xp: number };
+  streak: { n: number; last: string; best: number; days: string[] };
+  combo: number;
 }
 
-export const S: AppState = { topic: 'alle', mode: 'quiz', last: 'quiz', points: 0, spent: 0, gifts: [], home: null, seenLvl: -1, seeded: [], earned: {}, known: {}, notes: {}, cur: {}, avatar: defaultAvatar(0.37), owned: new Set(), avaReady: false, pets: [], petsReady: false, xpOther: 0, ach: new Set(), achReady: false, played: [] };
+export const S: AppState = { topic: 'alle', mode: 'quiz', last: 'quiz', points: 0, spent: 0, gifts: [], home: null, seenLvl: -1, seeded: [], earned: {}, known: {}, notes: {}, cur: {}, avatar: defaultAvatar(0.37), owned: new Set(), avaReady: false, pets: [], petsReady: false, xpOther: 0, ach: new Set(), achReady: false, played: [], day: { d: '', xp: 0 }, streak: { n: 0, last: '', best: 0, days: [] }, combo: 0 };
 
 export let T: Theme;
 export let store: Store;
@@ -57,12 +62,15 @@ export function loadProgress(p: { points: number; spent: number; state: SavedSta
   S.seeded = p.state.seeded ?? (p.state.home ? [0] : []);
   S.earned = keepToday(p.state.earned ?? {});
   S.played = p.state.played ?? [];
+  S.day = p.state.day ?? { d: '', xp: 0 };
+  S.streak = p.state.streak ?? { n: 0, last: '', best: 0, days: [] };
+  S.combo = 0;
   S.cur = {}; S.topic = 'alle';
   S.mode = 'hjem'; S.last = '';
 }
 
 export function save(): void {
-  store.saveState(T.id, { known: S.known, notes: S.notes, home: S.home, seenLvl: S.seenLvl, seeded: S.seeded, earned: keepToday(S.earned), played: S.played });
+  store.saveState(T.id, { known: S.known, notes: S.notes, home: S.home, seenLvl: S.seenLvl, seeded: S.seeded, earned: keepToday(S.earned), played: S.played, day: S.day, streak: S.streak });
 }
 
 export function owned(): Record<string, number> {
@@ -101,9 +109,32 @@ export const hooks = {
   onPoints: (_before: number, _after: number, _n: number) => {},
   /** Et nytt egg er funnet. */
   onEgg: (_p: Pet) => {},
+  /** Dagens mål ble nådd nå. */
+  onGoal: () => {},
+  /** Riktige svar på rad endret seg. */
+  onCombo: (_n: number) => {},
   /** Åpner en side, for eksempel dyrene i avatarskjermen. */
   open: (_mode: string, _tab?: string) => {},
 };
+
+/** Gårsdagens dato, ÅÅÅÅ-MM-DD. */
+export function yesterday(): string { const d = new Date(); d.setDate(d.getDate() - 1); const p = (n: number) => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+/** Rekka gjelder bare om målet ble nådd i dag eller i går. */
+export function streakNow(): number { return S.streak.last === today() || S.streak.last === yesterday() ? S.streak.n : 0; }
+export function dayXp(): number { return S.day.d === today() ? S.day.xp : 0; }
+/** Teller dagens XP og forlenger rekka første gang dagens mål nås. */
+function countDay(n: number): void {
+  const t = today(), goal = getPrefs().goal;
+  if (S.day.d !== t) S.day = { d: t, xp: 0 };
+  const before = S.day.xp; S.day.xp += n;
+  if (before < goal && S.day.xp >= goal && S.streak.last !== t) {
+    const st = S.streak;
+    st.n = st.last === yesterday() ? st.n + 1 : 1; st.last = t; st.best = Math.max(st.best, st.n);
+    st.days = st.days.filter((d) => d !== t).concat(t).slice(-14);
+    hooks.onGoal();
+  }
+  save();
+}
 
 /** XP i alle temaer til sammen. Eggene klekker etter denne. */
 export function xpTotal(): number { return S.xpOther + S.points; }
@@ -173,6 +204,7 @@ export function track(ok: boolean, mode: string = S.mode): void {
   const now = performance.now(), ms = now - lastMark, r = row(mode);
   lastMark = now;
   r.answers++; if (ok) r.correct++;
+  S.combo = ok ? S.combo + 1 : 0; hooks.onCombo(S.combo);
   if (ms > 0 && ms < MAX_MS) { r.timed++; r.ms += Math.round(ms); if (FAST_MS[mode] && ms < FAST_MS[mode]) r.fast++; }
   scheduleFlush();
 }
@@ -193,6 +225,7 @@ if (typeof document !== 'undefined') {
 
 export function addPoints(n: number): void {
   row(S.mode).xp += n; scheduleFlush();
+  if (n > 0) countDay(n);
   if (n > 0 && !S.played.includes(S.mode) && T.modes.some((m) => m.id === S.mode && !m.g)) { S.played.push(S.mode); save(); }
   const before = lvl(S.points), xpBefore = xpTotal();
   S.points += n;

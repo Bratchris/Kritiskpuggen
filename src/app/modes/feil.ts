@@ -1,3 +1,4 @@
+import { resultStars } from '../juice';
 import { achieve } from '../../achievements/engine';
 import { $, esc, shuffle } from '../../lib/dom';
 import { S, T, head, tag, inTopic, focusMain, panel, verdict, addPoints, track } from '../core';
@@ -17,7 +18,7 @@ export function renderFeil(): void {
   if (!z.qs.length) { p.innerHTML = head('feil') + '<p>Ingen tekster i dette emnet.</p>'; return; }
   if (z.i >= z.qs.length) {
     if (z.qs.length >= 3 && z.score === z.qs.length) achieve('feil_perfekt');
-    p.innerHTML = head('feil') + '<div class="result"><p class="big">' + z.score + ' av ' + z.qs.length + ' feil funnet</p><p>Du tjente ' + z.pts + ' poeng. ' + verdict(z.score, z.qs.length) + '</p><button class="btn primary" data-focus id="f-new" type="button">Nye tekster</button></div>';
+    p.innerHTML = head('feil') + '<div class="result">' + resultStars(z.score, z.qs.length) + '<p class="big">' + z.score + ' av ' + z.qs.length + ' feil funnet</p><p>Du tjente ' + z.pts + ' poeng. ' + verdict(z.score, z.qs.length) + '</p><button class="btn primary" data-focus id="f-new" type="button">Nye tekster</button></div>';
     $('#f-new').onclick = () => { start(); renderFeil(); };
     focusMain(); return;
   }

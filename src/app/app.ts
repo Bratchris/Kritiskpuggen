@@ -5,7 +5,7 @@ import { showEggFound, companionSVG } from '../pets/screen';
 import { $, esc, toast } from '../lib/dom';
 import type { Store } from '../lib/store';
 import type { Theme } from '../themes/types';
-import { S, T, MODES, LEVELS, ITEMS, setTheme, loadProgress, lvl, level, modeOf, hooks, save, stars, starText, topXp, mark, flushActivity } from './core';
+import { S, T, MODES, LEVELS, ITEMS, streakNow, dayXp, setTheme, loadProgress, lvl, level, modeOf, hooks, save, stars, starText, topXp, mark, flushActivity } from './core';
 import { PreviewStore } from '../lib/store';
 import { renderKort } from './modes/kort';
 import { renderQuiz } from './modes/quiz';
@@ -24,6 +24,8 @@ import { renderAvatar } from '../avatar/screen';
 import { renderHome, setHomeName, heroStats, games } from './home';
 import { renderSettings, setSettingsActions } from './settings';
 import { icon } from './icons';
+import { floatXP, confetti, celebrate, showCombo, countTo } from './juice';
+import { getPrefs } from '../lib/prefs';
 import { checkProgress, checkPets } from '../achievements/engine';
 import { avatarSVG } from '../avatar/render';
 import { cleanAvatar, defaultAvatar } from '../avatar/catalog';
@@ -76,6 +78,7 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
     '<header class="apphead"><div class="hbar">' +
       '<button class="brandbtn" type="button" id="h-home" aria-label="Til startsiden"><span class="eyebrow">' + esc(theme.eyebrow) + '</span><span class="apptitle">' + esc(theme.title) + '</span></button>' +
       '<div class="hright">' +
+        '<button class="hchip streak" type="button" id="h-streak"></button>' +
         '<button class="hchip" type="button" id="h-pts"></button>' +
         '<button class="hchip lvl" type="button" id="h-lvl"></button>' +
         '<button class="avabtn" id="ava-btn" type="button"></button>' +
@@ -119,6 +122,7 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
   });
   $('#h-home').onclick = () => go('hjem');
   $('#h-pts').onclick = () => go('butikk');
+  $('#h-streak').onclick = () => go('hjem');
   $('#h-lvl').onclick = () => hooks.open('rom');
   $('#h-set').onclick = () => { if (S.mode === 'innst') go('hjem'); else hooks.open('innst'); };
   $('#ava-btn').onclick = () => hooks.open('avatar', (S.cur.ava && S.cur.ava.part) || 'kropp');
@@ -138,12 +142,14 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
     render(); window.scrollTo(0, 0);
   };
   let starsBefore = stars(S.points);
+  hooks.onGoal = () => { const n = streakNow(); celebrate('Dagens mål er nådd!', n > 1 ? n + ' dager på rad. Kom tilbake i morgen for å holde rekka.' : 'Rekka di har startet. Kom tilbake i morgen for å holde den.'); renderHeader(); if (S.mode === 'hjem') renderHome(); };
+  hooks.onCombo = (n) => showCombo(n);
   hooks.onPoints = (before, after, n) => {
     renderHeader(); renderNav(); checkProgress();
     const st = stars(S.points);
     if (after > before) { toast('Nytt nivå: ' + LEVELS[after].n); showLevelUp(after); }
     else if (st > starsBefore) toast('Ny stjerne! Du har nå ★' + st);
-    else toast('+' + n + ' poeng');
+    else floatXP(n);
     starsBefore = st;
   };
   render();
@@ -229,7 +235,12 @@ function renderAvaBtn(): void {
 function renderHeader(): void {
   renderAvaBtn();
   const bal = S.points - S.spent, h = heroStats();
-  const pts = $('#h-pts'); pts.innerHTML = icon('mynt') + '<b>' + bal + '</b>'; pts.setAttribute('aria-label', bal + ' poeng å bruke. Åpne butikken'); pts.title = 'Poeng å bruke';
+  const sn = streakNow(), done = dayXp() >= getPrefs().goal, sk = $('#h-streak');
+  sk.innerHTML = '<span class="flame' + (done ? '' : ' cold') + '" aria-hidden="true"></span><b>' + sn + '</b>';
+  sk.setAttribute('aria-label', sn + ' dager på rad. ' + (done ? 'Dagens mål er nådd.' : 'Dagens mål er ikke nådd ennå.')); sk.title = 'Dager på rad';
+  const pts = $('#h-pts');
+  if (!pts.querySelector('b')) pts.innerHTML = icon('mynt') + '<b></b>';
+  countTo(pts.querySelector('b')!, bal); pts.setAttribute('aria-label', bal + ' poeng å bruke. Åpne butikken'); pts.title = 'Poeng å bruke';
   const lv = $('#h-lvl');
   lv.innerHTML = '<span class="ring" style="--p:' + Math.round(h.pct * 100) + '"><b>' + (h.cur + 1) + '</b></span><span class="lvname">' + esc(level(S.points)) + starText(stars(S.points)) + '</span>';
   lv.setAttribute('aria-label', 'Nivå ' + (h.cur + 1) + ', ' + level(S.points) + ', ' + S.points + ' XP. Åpne troférommet'); lv.title = S.points + ' XP';
@@ -242,6 +253,7 @@ function showLevelUp(i: number): void {
     '<div class="lvlpv">' + L.t.map((id) => '<div class="lp pop">' + pv(id) + '<b>' + esc(ITEMS[id].n) + '</b></div>').join('') + '</div>' +
     '<div class="row"><button class="btn primary" id="lu-go" type="button">Gå til troférommet</button><button class="btn ghost" id="lu-x" type="button">Fortsett å øve</button></div></div>';
   m.hidden = false;
+  confetti(3);
   fitPv(m);
   $('#lu-x').onclick = () => { m.hidden = true; };
   $('#lu-go').onclick = () => { m.hidden = true; S.mode = 'rom'; const nr = roomsAt(i)[0]; if (nr) rm().room = T.room.rooms.indexOf(nr); rm().sel = L.t[0]; rm().msg = hint(L.t[0]); render(); window.scrollTo(0, 0); };

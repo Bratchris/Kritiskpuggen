@@ -647,3 +647,81 @@ svg.badge.locked { filter: grayscale(1); opacity: .35; }
 .achreward.locked svg.rewart { filter: brightness(0); opacity: .2; }
 .achdone { font-family: var(--font-mono); font-size: .74rem; color: var(--leaf); }
 .avagrid.nostage { grid-template-columns: minmax(0, 1fr); } .avagrid.nostage .avastage { display: none; }
+
+/* ---------- Belønninger i grensesnittet ---------- */
+.flame { display: inline-block; width: 18px; height: 21px; background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2028%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%221%22%20x2%3D%220%22%20y2%3D%220%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ff4d1f%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffa53d%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath%20d%3D%22M12%2027C5.5%2027%202%2022.6%202%2017.6c0-4.6%203.2-7.4%204.9-10.2.3%202.4%201.3%203.9%202.7%204.6C9.4%207.2%2011.4%203.4%2015%201c-.4%203.6.9%206%202.6%208%201.7%202.1%204.4%204.4%204.4%208.7C22%2022.8%2018.4%2027%2012%2027z%22%20fill%3D%22url%28%23g%29%22/%3E%3Cpath%20d%3D%22M12.3%2026c-3%200-4.9-2-4.9-4.6%200-2.6%202-4%203.2-6%20.5%201.8%201.6%202.6%202.6%202.9-.2-2%20.6-3.6%201.8-4.6.1%202.4%203%203.9%203%206.9%200%203-2.4%205.4-5.7%205.4z%22%20fill%3D%22%23ffe27a%22/%3E%3C/svg%3E") center / contain no-repeat; flex: 0 0 auto; }
+.flame.cold { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2028%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%221%22%20x2%3D%220%22%20y2%3D%220%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%239aa3ad%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23c9ced4%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath%20d%3D%22M12%2027C5.5%2027%202%2022.6%202%2017.6c0-4.6%203.2-7.4%204.9-10.2.3%202.4%201.3%203.9%202.7%204.6C9.4%207.2%2011.4%203.4%2015%201c-.4%203.6.9%206%202.6%208%201.7%202.1%204.4%204.4%204.4%208.7C22%2022.8%2018.4%2027%2012%2027z%22%20fill%3D%22url%28%23g%29%22/%3E%3Cpath%20d%3D%22M12.3%2026c-3%200-4.9-2-4.9-4.6%200-2.6%202-4%203.2-6%20.5%201.8%201.6%202.6%202.6%202.9-.2-2%20.6-3.6%201.8-4.6.1%202.4%203%203.9%203%206.9%200%203-2.4%205.4-5.7%205.4z%22%20fill%3D%22%23e6e9ec%22/%3E%3C/svg%3E"); }
+.flame.mini { width: 12px; height: 14px; }
+.flame.big { width: 40px; height: 46px; }
+.hchip.streak { padding: 0 12px 0 8px; gap: 4px; }
+.hchip.streak .flame { width: 20px; height: 23px; }
+.hchip.bump { animation: chipbump .5s ease-out; }
+@keyframes chipbump { 30% { transform: scale(1.18); border-color: var(--sand); } 100% { transform: none; } }
+@media (max-width: 520px) { .hchip.lvl { display: none; } .hchip.streak { padding: 0 9px 0 6px; } }
+.xpfloat { position: fixed; z-index: 70; pointer-events: none; transform: translate(-50%, -50%); font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; color: #f59f00; text-shadow: 0 2px 0 rgba(0,0,0,.15), 0 0 12px rgba(255,210,90,.6); animation: xprise 1.1s ease-out forwards; }
+@keyframes xprise { 0% { opacity: 0; transform: translate(-50%, -30%) scale(.6); } 15% { opacity: 1; transform: translate(-50%, -80%) scale(1.15); } 100% { opacity: 0; transform: translate(-50%, -260%) scale(1); } }
+canvas.confetti { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 80; pointer-events: none; }
+#combo { position: fixed; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 45; display: flex; align-items: center; gap: 6px; padding: 8px 16px 8px 12px; border-radius: 999px; background: var(--ink); color: var(--surface); font-weight: 700; box-shadow: 0 8px 24px rgba(0,0,0,.25); transition: opacity .3s, transform .3s; }
+#combo b { font-family: var(--font-display); font-size: 1.25rem; }
+#combo.warm { background: linear-gradient(90deg, #e8590c, #f59f00); color: #fff; }
+#combo.hot { background: linear-gradient(90deg, #c2255c, #e8590c, #f59f00); color: #fff; box-shadow: 0 0 22px rgba(245,159,0,.6); }
+#combo.bump { animation: combobump .45s cubic-bezier(.2,1.6,.4,1); }
+#combo.gone { opacity: 0; transform: translate(-50%, 20px); pointer-events: none; }
+@keyframes combobump { 0% { transform: translateX(-50%) scale(.7); } 100% { transform: translateX(-50%) scale(1); } }
+@media (max-width: 719px) { #combo { bottom: calc(96px + env(safe-area-inset-bottom, 0px)); } #toast { bottom: calc(100px + env(safe-area-inset-bottom, 0px)); } }
+.goalpop { border-color: #f59f00; }
+.goalpop .bigflame { width: 52px; height: 60px; background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2028%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%221%22%20x2%3D%220%22%20y2%3D%220%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ff4d1f%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffa53d%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath%20d%3D%22M12%2027C5.5%2027%202%2022.6%202%2017.6c0-4.6%203.2-7.4%204.9-10.2.3%202.4%201.3%203.9%202.7%204.6C9.4%207.2%2011.4%203.4%2015%201c-.4%203.6.9%206%202.6%208%201.7%202.1%204.4%204.4%204.4%208.7C22%2022.8%2018.4%2027%2012%2027z%22%20fill%3D%22url%28%23g%29%22/%3E%3Cpath%20d%3D%22M12.3%2026c-3%200-4.9-2-4.9-4.6%200-2.6%202-4%203.2-6%20.5%201.8%201.6%202.6%202.6%202.9-.2-2%20.6-3.6%201.8-4.6.1%202.4%203%203.9%203%206.9%200%203-2.4%205.4-5.7%205.4z%22%20fill%3D%22%23ffe27a%22/%3E%3C/svg%3E") center / contain no-repeat; animation: badgepop .9s .1s ease-out both; flex: 0 0 auto; }
+.rstars { display: flex; gap: 6px; margin: 2px 0 8px; }
+.rstar { width: 46px; height: 46px; fill: var(--line); }
+.rstar.on { fill: #ffd25a; stroke: #e3ad33; stroke-width: 1; animation: starpop .55s cubic-bezier(.2,1.6,.4,1) both; }
+.rstar:nth-child(2) { transform: translateY(-6px); }
+.rstar:nth-child(2).on { animation-name: starpop2; }
+@keyframes starpop { 0% { transform: scale(0) rotate(-40deg); } 100% { transform: none; } }
+@keyframes starpop2 { 0% { transform: translateY(-6px) scale(0) rotate(-40deg); } 100% { transform: translateY(-6px); } }
+.goalcard { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px 14px; padding: 14px 16px; margin-bottom: 14px; border-radius: 16px; border: 1.5px solid var(--line); background: var(--bg); }
+.goalcard.done { border-color: #f59f00; background: linear-gradient(135deg, color-mix(in srgb, #ffd25a 16%, var(--bg)), var(--bg) 70%); }
+.goalring { position: relative; width: 64px; height: 64px; }
+.goalring svg { width: 64px; height: 64px; transform: rotate(-90deg); }
+.gr-bg { fill: none; stroke: var(--line); stroke-width: 7; }
+.gr-fg { fill: none; stroke: #f59f00; stroke-width: 7; stroke-linecap: round; transition: stroke-dashoffset .8s ease-out; animation: ringin 1s ease-out; }
+@keyframes ringin { from { stroke-dashoffset: 164; } }
+.goalring b { position: absolute; inset: 0; display: grid; place-items: center; font-size: .9rem; }
+.goaltxt { display: flex; flex-direction: column; min-width: 0; }
+.goaltxt .eyebrow { margin: 0; }
+.goaltxt b { font-size: 1.05rem; }
+.goaltxt > span:last-child { font-size: .84rem; color: var(--muted); }
+.streakbox { display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto; align-items: center; column-gap: 6px; }
+.streakbox .flame { grid-row: span 2; }
+.streakbox b { font-family: var(--font-display); font-size: 1.6rem; line-height: 1; }
+.streakbox span { font-size: .76rem; color: var(--muted); }
+.streakbox small { grid-column: 1 / -1; font-size: .7rem; color: var(--muted); text-align: center; }
+.goalcard.done .streakbox .flame { animation: flicker 1.6s ease-in-out infinite; transform-origin: 50% 90%; }
+@keyframes flicker { 0%, 100% { transform: scale(1) rotate(0); } 30% { transform: scale(1.06, .96) rotate(-2deg); } 60% { transform: scale(.97, 1.05) rotate(2deg); } }
+.week { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.wday { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; height: 40px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); padding-bottom: 3px; }
+.wday i { font-style: normal; font-size: .72rem; font-weight: 700; color: var(--muted); }
+.wday.hit { background: color-mix(in srgb, #f59f00 18%, var(--surface)); border-color: #f59f00; }
+.wday.today { outline: 2px solid var(--accent); outline-offset: 1px; }
+@media (max-width: 460px) { .goalcard { grid-template-columns: auto minmax(0, 1fr); } .streakbox { grid-column: 1 / -1; justify-self: start; grid-template-columns: auto auto auto; grid-template-rows: auto; } .streakbox .flame { grid-row: auto; width: 26px; height: 30px; } .streakbox small { grid-column: auto; } }
+/* Riktig og galt svar */
+.opt.ok, .pb.ok, .bk.ok { animation: okpop .4s cubic-bezier(.2,1.6,.4,1); }
+.opt.bad, .pb.bad, .bk.bad { animation: shake .4s ease-in-out; }
+@keyframes okpop { 0% { transform: scale(.96); } 50% { transform: scale(1.03); } 100% { transform: none; } }
+@keyframes shake { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+.fb { animation: fbin .3s ease-out; }
+@keyframes fbin { from { opacity: 0; transform: translateY(6px); } }
+.xpbar i { transform-origin: left; animation: barin .9s cubic-bezier(.2,.8,.3,1); }
+@keyframes barin { from { transform: scaleX(0); } }
+.game { position: relative; overflow: hidden; }
+.game:active { transform: scale(.97); }
+.continue { position: relative; overflow: hidden; }
+.continue::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.28) 50%, transparent 70%); transform: translateX(-100%); animation: shine 3.5s 1s ease-in-out infinite; }
+@keyframes shine { 0%, 60% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+.btn.primary:active, .navbtn:active, .hchip:active { transform: scale(.96); }
+@media (min-width: 720px) {
+  #combo { left: auto; right: 24px; transform: none; }
+  #combo.bump { animation-name: combobump2; }
+  #combo.gone { transform: translateY(20px); }
+}
+@keyframes combobump2 { 0% { transform: scale(.7); } 100% { transform: none; } }
+@media (max-width: 400px) { :root .apphead .brandbtn .apptitle { font-size: 1rem; } .hchip .ic { width: 18px; height: 18px; } }

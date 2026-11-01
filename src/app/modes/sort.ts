@@ -1,3 +1,4 @@
+import { resultStars } from '../juice';
 import { achieve } from '../../achievements/engine';
 import { $, esc, shuffle } from '../../lib/dom';
 import { S, T, head, focusMain, panel, verdict, track, mark, earnOnce, readLock } from '../core';
@@ -12,7 +13,7 @@ export function renderSort(): void {
   if (z.i >= z.qs.length) {
     const cols = B.map((b) => '<div><h4>' + dot(b.color) + esc(b.name) + '</h4><ul>' + z.log.filter((x: any) => x.b === b.k).map((x: any) => '<li class="' + (x.miss ? 'miss' : '') + '">' + esc(x.text) + '</li>').join('') + '</ul></div>').join('');
     if (z.qs.length >= 5 && z.score === z.qs.length) achieve('sort_perfekt');
-    p.innerHTML = head('sort') + '<div class="result"><p class="big">' + z.score + ' av ' + z.qs.length + ' riktige</p><p>' + verdict(z.score, z.qs.length) + ' Røde punkter er de du plasserte feil.</p></div><div class="fasit">' + cols + '</div><button class="btn primary" data-focus id="s-new" type="button">Prøv igjen</button>';
+    p.innerHTML = head('sort') + '<div class="result">' + resultStars(z.score, z.qs.length) + '<p class="big">' + z.score + ' av ' + z.qs.length + ' riktige</p><p>' + verdict(z.score, z.qs.length) + ' Røde punkter er de du plasserte feil.</p></div><div class="fasit">' + cols + '</div><button class="btn primary" data-focus id="s-new" type="button">Prøv igjen</button>';
     $('#s-new').onclick = () => { start(); renderSort(); };
     focusMain(); return;
   }

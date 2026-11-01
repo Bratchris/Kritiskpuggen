@@ -1,3 +1,4 @@
+import { resultStars } from '../juice';
 import { achieve } from '../../achievements/engine';
 import { $, esc, shuffle } from '../../lib/dom';
 import { S, T, head, focusMain, panel, addPoints, track } from '../core';
@@ -8,7 +9,7 @@ export function renderPar(): void {
   const g = S.cur.par, p = panel(), n = g.pick.length, nd = Object.keys(g.done).length;
   if (nd === n) {
     if (!g.paid) { g.paid = true; addPoints(Math.max(1, n - g.wrong)); if (g.wrong === 0) achieve('par_feilfri'); }
-    p.innerHTML = head('par') + '<div class="result"><p class="big">Alle ' + n + ' par funnet</p><p>' + (g.wrong === 0 ? 'Ingen feil. Imponerende.' : g.wrong + ' feil underveis.') + '</p><button class="btn primary" data-focus id="p-new" type="button">Nye par</button></div>';
+    p.innerHTML = head('par') + '<div class="result">' + resultStars(g.wrong === 0 ? 3 : g.wrong <= 2 ? 2 : 1, 3) + '<p class="big">Alle ' + n + ' par funnet</p><p>' + (g.wrong === 0 ? 'Ingen feil. Imponerende.' : g.wrong + ' feil underveis.') + '</p><button class="btn primary" data-focus id="p-new" type="button">Nye par</button></div>';
     $('#p-new').onclick = () => { start(); renderPar(); };
     focusMain(); return;
   }

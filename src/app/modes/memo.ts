@@ -1,3 +1,4 @@
+import { resultStars } from '../juice';
 import { achieve } from '../../achievements/engine';
 // Memory: kortene ligger med baksiden opp. Eleven snur to om gangen og
 // prøver å finne et begrep og forklaringen som hører til.
@@ -29,7 +30,7 @@ export function renderMemo(): void {
 
   if (nf === n) {
     if (g.paid < 0) { g.paid = memoPoints(g.tries); addPoints(g.paid); if (g.tries <= 8) achieve('memo_skarp'); }
-    p.innerHTML = head('memo') + '<div class="result"><p class="big">Alle ' + n + ' par funnet</p><p>Du brukte ' + g.tries + ' forsøk og fikk ' + g.paid + ' poeng. ' +
+    p.innerHTML = head('memo') + '<div class="result">' + resultStars(g.tries <= 8 ? 3 : g.tries <= 12 ? 2 : 1, 3) + '<p class="big">Alle ' + n + ' par funnet</p><p>Du brukte ' + g.tries + ' forsøk og fikk ' + g.paid + ' poeng. ' +
       (g.tries <= 9 ? 'Sterk hukommelse.' : 'Klarer du det på færre forsøk neste gang? Under 10 forsøk gir flest poeng.') + '</p>' +
       '<button class="btn primary" data-focus id="m-new" type="button">Nytt spill</button></div>';
     $('#m-new').onclick = () => { start(); renderMemo(); };

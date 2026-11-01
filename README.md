@@ -86,6 +86,14 @@ Appen er bygd i lag, slik mange læringsspill gjør det, så eleven bare ser det
 - **Profil** (avataren i toppen) har Avatar, Garderobe og Dyr og egg.
 - **Innstillinger** har fargemodus (automatisk, lys eller mørk), tekststørrelse, rolige animasjoner, bakgrunnene eleven eier, bytte fag og logge ut. Fargemodus, tekst og animasjoner lagres bare på enheten. I lærerens forhåndsvisning ligger «Lås opp alt» og «Nullstill» her.
 
+## Belønninger i grensesnittet
+
+- **Dagens mål og rekke:** eleven velger et mål per dag i innstillingene (20, 40, 60 eller 100 XP, standard 40). Startsiden viser målet som en ring, dager på rad med en flamme, og hvilke dager denne uka målet ble nådd. Flammen står også øverst i appen. Når målet nås, kommer konfetti og et varsel. Rekka lagres per tema sammen med resten av fremgangen.
+- **Rekke-teller:** fra tre riktige svar på rad vises en teller nederst på skjermen. Den blir varmere ved 5 og 10, med konfetti.
+- **+XP:** poengene flyr opp fra knappen eleven trykket på, og poengtallet øverst ruller opp.
+- **Stjerner:** rundene i quiz, sant eller usant, kurvene, hull i teksten, finn feilen, memory og parkoblingen gir én til tre stjerner. Tre stjerner gir konfetti.
+- Riktige svar spretter, gale rister, og nytt nivå gir konfetti. Alt dette slås av med «Animasjoner: Rolig» i innstillingene.
+
 ## Egg og kjæledyr
 
 Når et svar gir XP, er det 2,5 % sjanse for å finne et egg og 0,15 % for et mytisk egg. Eleven kan finne høyst 5 egg om dagen og ha 8 uklekte egg om gangen. Et vanlig egg klekker etter 300 nye XP og et mytisk etter 600, summert over alle temaer. Trekningen og klekkingen skjer i databasefunksjonene `roll_egg` og `hatch_egg`, så eleven kan ikke jukse fram et dyr i nettleseren.

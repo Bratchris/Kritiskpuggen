@@ -15,6 +15,9 @@ export interface SavedState {
   earned?: Record<string, string>;
   /** Spill der eleven har tjent XP, til achievementet «Allsidig». */
   played?: string[];
+  /** XP i dag, og dager på rad der dagens mål er nådd. */
+  day?: { d: string; xp: number };
+  streak?: { n: number; last: string; best: number; days: string[] };
 }
 export interface Gift { item_id: string; created_at: string }
 /** rank og total kommer fra databasen. Elever får bare topp 3 og sin egen rad. */
@@ -65,6 +68,8 @@ function cleanState(raw: any): SavedState {
     if (Array.isArray(raw.seeded)) s.seeded = raw.seeded.filter((n: unknown) => typeof n === 'number');
     if (raw.earned && typeof raw.earned === 'object') s.earned = raw.earned;
     if (Array.isArray(raw.played)) s.played = raw.played.filter((x: unknown) => typeof x === 'string');
+    if (raw.day && typeof raw.day.d === 'string') s.day = { d: raw.day.d, xp: Number(raw.day.xp) || 0 };
+    if (raw.streak && typeof raw.streak.last === 'string') s.streak = { n: Number(raw.streak.n) || 0, last: raw.streak.last, best: Number(raw.streak.best) || 0, days: Array.isArray(raw.streak.days) ? raw.streak.days.slice(-14) : [] };
   }
   return s;
 }

@@ -1,7 +1,7 @@
 // Innstillinger: fargemodus, bakgrunn, tekststørrelse, animasjoner, bytte fag og logge ut.
 import { esc, toast } from '../lib/dom';
 import { S, T, store, panel, hooks } from './core';
-import { getPrefs, setPrefs, type Prefs } from '../lib/prefs';
+import { getPrefs, setPrefs, GOALS, type Prefs } from '../lib/prefs';
 import { icon } from './icons';
 import { BACKGROUNDS, bgById, bgImage, bgFit, applyBackground, type Background } from '../avatar/backgrounds';
 
@@ -40,6 +40,7 @@ export function renderSettings(): void {
       seg('text', 'Tekststørrelse', [['normal', 'Normal'], ['stor', 'Stor']]) +
       seg('motion', 'Animasjoner', [['full', 'På'], ['rolig', 'Rolig']]) +
     '</section>' +
+    '<section class="setsec"><h3>Dagens mål</h3><p class="keyhint">Når du når målet, vokser rekka di med én dag.</p>' + seg('goal', 'XP per dag', GOALS.map((g, i) => [g, ['Lett', 'Vanlig', 'Seriøs', 'Intens'][i] + ' ' + g] as [number, string])) + '</section>' +
     '<section class="setsec"><h3>Bakgrunn</h3><p class="keyhint">Bakgrunnene du eier. Flere finnes i butikken.</p><div class="bgpick">' +
       '<button type="button" class="bgopt' + (cur ? '' : ' on') + '" data-setbg="" aria-pressed="' + !cur + '">' + bgThumb(null) + '<span>Vanlig</span></button>' +
       mine.map((b) => '<button type="button" class="bgopt' + (cur === b.id ? ' on' : '') + '" data-setbg="' + b.id + '" aria-pressed="' + (cur === b.id) + '">' + bgThumb(b) + '<span>' + esc(b.name) + '</span></button>').join('') +
@@ -61,7 +62,7 @@ export function renderSettings(): void {
     '<section class="setsec about"><h3>Om innholdet</h3><p class="keyhint">' + esc(T.sources) + '</p><p class="keyhint">Godteriet og gavene i ' + esc(shopName.toLowerCase()) + ' er digitale og går til læreren din.</p></section>';
 
   p.querySelectorAll('[data-pref]').forEach((b: HTMLElement) => {
-    b.onclick = () => { setPrefs({ [b.dataset.pref!]: b.dataset.v } as Partial<Prefs>); renderSettings(); (panel().querySelector('[data-pref="' + b.dataset.pref + '"][data-v="' + b.dataset.v + '"]') as HTMLElement | null)?.focus({ preventScroll: true }); };
+    b.onclick = () => { const k = b.dataset.pref!, v = k === 'goal' ? Number(b.dataset.v) : b.dataset.v; setPrefs({ [k]: v } as Partial<Prefs>); hooks.refresh(); renderSettings(); (panel().querySelector('[data-pref="' + b.dataset.pref + '"][data-v="' + b.dataset.v + '"]') as HTMLElement | null)?.focus({ preventScroll: true }); };
   });
   p.querySelectorAll('[data-setbg]').forEach((b: HTMLElement) => {
     b.onclick = () => {

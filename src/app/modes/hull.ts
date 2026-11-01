@@ -1,3 +1,4 @@
+import { resultStars } from '../juice';
 import { achieve } from '../../achievements/engine';
 import { $, esc, shuffle, norm } from '../../lib/dom';
 import { S, T, head, tag, inTopic, focusMain, panel, verdict, track, mark, earnOnce, earnedToday } from '../core';
@@ -14,7 +15,7 @@ export function renderHull(): void {
   const h = S.cur.hull, p = panel();
   if (h.i >= h.qs.length) {
     if (h.qs.length >= 5 && h.score === h.qs.length) achieve('hull_perfekt');
-    p.innerHTML = head('hull') + '<div class="result"><p class="big">' + h.score + ' av ' + h.qs.length + ' riktige</p><p>' + verdict(h.score, h.qs.length) + '</p><button class="btn primary" data-focus id="h-new" type="button">Ny runde</button></div>';
+    p.innerHTML = head('hull') + '<div class="result">' + resultStars(h.score, h.qs.length) + '<p class="big">' + h.score + ' av ' + h.qs.length + ' riktige</p><p>' + verdict(h.score, h.qs.length) + '</p><button class="btn primary" data-focus id="h-new" type="button">Ny runde</button></div>';
     $('#h-new').onclick = () => { start(); renderHull(); };
     focusMain(); return;
   }
