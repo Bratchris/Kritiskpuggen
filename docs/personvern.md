@@ -31,7 +31,7 @@ Fritekst i «Tenk selv» kan inneholde personopplysninger eleven skriver selv. B
 - Alle endringer går gjennom databasefunksjoner som sjekker hvem som spør. Ingen kan skrive direkte i tabellene fra nettleseren.
 - Klassekamerater ser bare topp 3 i topplisten, og bare hvis læreren har slått den på. Topplisten er av som standard for nye klasser.
 - Service-nøkkelen brukes bare i edge-funksjonen `manage-students`, aldri i nettleseren.
-- Nye lærerkontoer krever en invitasjonskode fra en lærer som allerede bruker appen. Koden kan brukes én gang og varer i 14 dager.
+- Nye lærerkontoer krever en invitasjonskode fra en lærer med rett til å invitere (i utgangspunktet bare den første lærerkontoen). Koden kan brukes én gang og varer i 14 dager. Inviterte lærere kan ikke invitere videre.
 
 ## Sikkerhetstiltak
 

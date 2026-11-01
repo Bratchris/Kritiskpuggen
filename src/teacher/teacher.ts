@@ -31,6 +31,8 @@ interface View {
   invites: Invite[] | null;
   newInvite: string | null;
   invMsg: string;
+  /** Om denne læreren har lov til å invitere nye lærere. */
+  canInvite: boolean;
 }
 interface Invite { code: string; note: string | null; created_at: string; expires_at: string; used_at: string | null }
 
@@ -41,7 +43,7 @@ let onPreview: (theme: string, classId: string) => void;
 export async function mountTeacher(el: HTMLElement, me: { id: string; name: string }, preview: (theme: string, classId: string) => void): Promise<void> {
   root = el; onPreview = preview;
   document.documentElement.dataset.tema = '';
-  V = V && V.me.id === me.id ? V : { me, classes: [], sel: null, theme: 'kritisk', students: [], progress: [], gifts: [], newCodes: null, rowAct: null, msg: '', creating: false, confirmDel: false, act: null, actErr: '', actDays: 7, invites: null, newInvite: null, invMsg: '' };
+  V = V && V.me.id === me.id ? V : { me, classes: [], sel: null, theme: 'kritisk', students: [], progress: [], gifts: [], newCodes: null, rowAct: null, msg: '', creating: false, confirmDel: false, act: null, actErr: '', actDays: 7, invites: null, newInvite: null, invMsg: '', canInvite: false };
   root.innerHTML = '<div class="wrap"><p class="loading">Henter klassene dine …</p></div>';
   await loadClasses();
   if (V.sel) await loadClass(); else draw();
@@ -56,16 +58,20 @@ async function loadClasses() {
   await loadInvites();
 }
 async function loadInvites() {
+  const me = await supabase.from('profiles').select('can_invite').eq('id', V.me.id).maybeSingle();
+  // Uten kolonnen can_invite (eldre database) kan alle lærere invitere.
+  V.canInvite = me.error ? true : !!(me.data as { can_invite?: boolean } | null)?.can_invite;
   const { data, error } = await supabase.from('teacher_invites').select('code, note, created_at, expires_at, used_at').order('created_at', { ascending: false });
   V.invites = error ? null : (data as Invite[]);
 }
 
 const inviteLink = (code: string) => location.origin + '/?invitasjon=' + encodeURIComponent(code);
 function invitesHTML(): string {
+  if (!V.canInvite) return '';
   if (V.invites === null) return '<section class="panel"><h2>Kolleger</h2><p class="muted">Kjør databaseoppdateringen for lærerinvitasjoner for å kunne invitere kolleger.</p></section>';
   const now = Date.now();
   const status = (i: Invite) => i.used_at ? 'Brukt ' + fmtDate(i.used_at) : new Date(i.expires_at).getTime() < now ? 'Utløpt' : 'Gyldig til ' + new Date(i.expires_at).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' });
-  return '<section class="panel"><h2>Kolleger</h2><p class="muted">Nye lærerkontoer krever en invitasjon. Lag en kode og send den til kollegaen din. Koden kan brukes én gang og varer i 14 dager.</p>' +
+  return '<section class="panel"><h2>Kolleger</h2><p class="muted">Nye lærerkontoer krever en invitasjon fra deg. Lag en kode og send den til kollegaen din. Koden kan brukes én gang og varer i 14 dager. Kolleger du inviterer, kan ikke invitere videre.</p>' +
     '<form id="inv" class="tform invform"><label class="afield" for="inv-note"><span>Hvem er den til? (valgfritt)</span><input id="inv-note" maxlength="80" placeholder="F.eks. Kari, naturfag"></label><div class="row"><button class="btn primary" type="submit">Lag invitasjon</button></div></form>' +
     (V.newInvite ? '<div class="fb ok newinv"><strong>Invitasjonen er klar</strong>Send lenken til kollegaen din. Den åpner skjemaet for ny lærerkonto med koden fylt inn. Koden kan også skrives inn for hånd.<div class="invcode"><code>' + esc(V.newInvite) + '</code></div><div class="invlink"><input id="inv-link" readonly value="' + esc(inviteLink(V.newInvite)) + '" aria-label="Invitasjonslenke"><button class="btn" type="button" id="inv-copy">Kopier lenken</button></div></div>' : '') +
     (V.invMsg ? '<p class="msg" aria-live="polite">' + esc(V.invMsg) + '</p>' : '') +
