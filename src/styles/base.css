@@ -12,13 +12,15 @@
   --wall-l: #dbe7ec; --wall-r: #c8d9e0; --floor-a: #d8c6a4; --floor-b: #cdb992; --edge-l: #a99670; --edge-r: #8c7a58; --sky: #a9daf2; --frame: #8aa3ad;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
+  :root:not([data-mode="light"]) { color-scheme: dark;
     --bg: #11161c; --surface: #19212a; --ink: #e6ecf2; --muted: #9aa7b4; --line: #2c3743;
     --accent: #7fb0e3; --accent-ink: #0c1a28; --heat: #ff8a6b; --leaf: #6cc487; --sand: #f0a24a; --sand-ink: #1a1206;
-    --good-bg: #1b3a27; --bad-bg: #432019; --ans-bg: #1c2b3a;
-  }
+    --good-bg: #1b3a27; --bad-bg: #432019; --ans-bg: #1c2b3a; }
 }
+:root[data-mode="dark"] { color-scheme: dark;
+    --bg: #11161c; --surface: #19212a; --ink: #e6ecf2; --muted: #9aa7b4; --line: #2c3743;
+    --accent: #7fb0e3; --accent-ink: #0c1a28; --heat: #ff8a6b; --leaf: #6cc487; --sand: #f0a24a; --sand-ink: #1a1206;
+    --good-bg: #1b3a27; --bad-bg: #432019; --ans-bg: #1c2b3a; }
 html { scroll-padding-top: env(safe-area-inset-top, 0px); }
 [hidden] { display: none !important; }
 img { max-width: 100%; }

@@ -75,6 +75,17 @@ CRISPY-G-butikken er en egen fane med merch (fotballdrakter, keeperdrakt, tracks
 
 Under fanen «Bakgrunn» velger eleven et mønster som legges bak hele appen: søte (hjerter, katter, kaniner, pandaer og mer), kule (galakse, neon, lyn, flammer, kamuflasje) og halloween (gresskar, flaggermus, spøkelser, edderkoppnett, kirkegård) natur (nordlys over skog og fjell med bål, både som vanlig tegning og som pikselkunst) og piratøya (en karibisk øy med fiskelandsby, brygge og piratskip i pikselkunst, ved soloppgang, solnedgang og en stjerneklar natt, i `src/avatar/pirate.ts`). Naturbildene fyller hele skjermen i stedet for å gjentas, og ligger i `src/avatar/scenes.ts`. Pikselversjonen tegnes på et lerret i nettleseren og forstørres med skarpe piksler. Fem er gratis. Resten kjøpes med poeng gjennom `buy_skin`, som kostymene. Mønstrene er SVG-fliser tegnet i `src/avatar/backgrounds.ts`, og valget lagres som `avatar.bg`.
 
+## Menyen
+
+Appen er bygd i lag, slik mange læringsspill gjør det, så eleven bare ser det som hører til der hen er:
+
+- **Toppen** viser bare poeng å bruke, nivået med en fremdriftsring, profilknappen (avataren) og tannhjulet for innstillinger.
+- **Hovedmenyen** har fem knapper: Øv, Kort, Huset, Butikk og Topp. På mobil ligger den nederst på skjermen, på større skjermer øverst.
+- **Øv** er startsiden med nivå, XP til neste nivå, egg på vei, «Fortsett» og alle spillene som fliser. Emnefilteret vises først når eleven har åpnet et spill.
+- **Butikk** samler godteri- eller kaffebutikken, kostymer, CRISPY-G og bakgrunner i én undermeny.
+- **Profil** (avataren i toppen) har Avatar, Garderobe og Dyr og egg.
+- **Innstillinger** har fargemodus (automatisk, lys eller mørk), tekststørrelse, rolige animasjoner, bakgrunnene eleven eier, bytte fag og logge ut. Fargemodus, tekst og animasjoner lagres bare på enheten. I lærerens forhåndsvisning ligger «Lås opp alt» og «Nullstill» her.
+
 ## Egg og kjæledyr
 
 Når et svar gir XP, er det 2,5 % sjanse for å finne et egg og 0,15 % for et mytisk egg. Eleven kan finne høyst 5 egg om dagen og ha 8 uklekte egg om gangen. Et vanlig egg klekker etter 300 nye XP og et mytisk etter 600, summert over alle temaer. Trekningen og klekkingen skjer i databasefunksjonene `roll_egg` og `hatch_egg`, så eleven kan ikke jukse fram et dyr i nettleseren.
@@ -102,7 +113,10 @@ src/
   teacher/teacher.ts lærerrommet
   app/
     core.ts          felles tilstand, tema og poeng
-    app.ts           skallet: topp, fast linje, faner, filter og nivå-dialog
+    app.ts           skallet: topp, hovedmeny, undermeny og nivå-dialog
+    home.ts          startsiden med nivå og spillfliser
+    settings.ts      innstillinger
+    icons.ts         ikonene i menyen
     modes/           én fil per øvingsform
     shop.ts          butikken
     room/            troférommet (motor og isometriske tegnehjelpere)

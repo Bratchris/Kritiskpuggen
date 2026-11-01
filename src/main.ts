@@ -3,6 +3,8 @@ import './styles/base.css';
 import './styles/app.css';
 import './styles/themes.css';
 import './styles/teacher.css';
+import { applyPrefs } from './lib/prefs';
+applyPrefs();
 import { $, esc } from './lib/dom';
 import { supabase, configured, friendly, isStudentEmail } from './lib/supabase';
 import { RemoteStore, PreviewStore } from './lib/store';

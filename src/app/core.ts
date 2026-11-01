@@ -53,8 +53,7 @@ export function loadProgress(p: { points: number; spent: number; state: SavedSta
   S.seeded = p.state.seeded ?? (p.state.home ? [0] : []);
   S.earned = keepToday(p.state.earned ?? {});
   S.cur = {}; S.topic = 'alle';
-  const first = MODES.find((m) => !m.g);
-  S.mode = S.last = first ? first.id : 'kort';
+  S.mode = 'hjem'; S.last = '';
 }
 
 export function save(): void {

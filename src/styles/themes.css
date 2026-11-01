@@ -8,13 +8,15 @@
   --wall-l: #d6cbdf; --wall-r: #c4b6d0; --floor-a: #8b6b52; --floor-b: #7d5f48; --edge-l: #5c4535; --edge-r: #4a372a; --sky: #262a5a; --frame: #5a4636;
 }
 @media (prefers-color-scheme: dark) {
-  :root[data-tema="kritisk"] {
-    --bg: #141018; --surface: #1e1724; --ink: #efe7f2; --muted: #a596ab; --line: #372c3f;
+  :root:not([data-mode="light"])[data-tema="kritisk"] { --bg: #141018; --surface: #1e1724; --ink: #efe7f2; --muted: #a596ab; --line: #372c3f;
     --accent: #b48be0; --accent-ink: #1a0f24; --heat: #ff8a5c; --leaf: #6cc487; --sand: #ffa53d; --sand-ink: #1a0f24;
     --good-bg: #1b3a27; --bad-bg: #452016; --ans-bg: #2c2140;
-    --wall-l: #2e2339; --wall-r: #251c2f; --floor-a: #4a3829; --floor-b: #403022; --edge-l: #2c2017; --edge-r: #221810; --sky: #12163a; --frame: #4a3c30;
-  }
+    --wall-l: #2e2339; --wall-r: #251c2f; --floor-a: #4a3829; --floor-b: #403022; --edge-l: #2c2017; --edge-r: #221810; --sky: #12163a; --frame: #4a3c30; }
 }
+:root[data-mode="dark"][data-tema="kritisk"] { --bg: #141018; --surface: #1e1724; --ink: #efe7f2; --muted: #a596ab; --line: #372c3f;
+    --accent: #b48be0; --accent-ink: #1a0f24; --heat: #ff8a5c; --leaf: #6cc487; --sand: #ffa53d; --sand-ink: #1a0f24;
+    --good-bg: #1b3a27; --bad-bg: #452016; --ans-bg: #2c2140;
+    --wall-l: #2e2339; --wall-r: #251c2f; --floor-a: #4a3829; --floor-b: #403022; --edge-l: #2c2017; --edge-r: #221810; --sky: #12163a; --frame: #4a3c30; }
 :root[data-tema="kritisk"] .apptitle { font-size: clamp(2.6rem, 11vw, 4.4rem); }
 
 /* Klimapuggen: kjølig grønn og havblå. */
@@ -25,13 +27,15 @@
   --wall-l: #dbe7ec; --wall-r: #c8d9e0; --floor-a: #d8c6a4; --floor-b: #cdb992; --edge-l: #a99670; --edge-r: #8c7a58; --sky: #a9daf2; --frame: #8aa3ad;
 }
 @media (prefers-color-scheme: dark) {
-  :root[data-tema="klima"] {
-    --bg: #0f1a1d; --surface: #17262a; --ink: #e6f0ee; --muted: #9bb2b0; --line: #2b4146;
+  :root:not([data-mode="light"])[data-tema="klima"] { --bg: #0f1a1d; --surface: #17262a; --ink: #e6f0ee; --muted: #9bb2b0; --line: #2b4146;
     --accent: #5cb8d6; --accent-ink: #06222c; --heat: #ff8a6b; --leaf: #6cc487; --sand: #e0b04f; --sand-ink: #1a1206;
     --good-bg: #1b3a27; --bad-bg: #432019; --ans-bg: #1c3640;
-    --wall-l: #22373f; --wall-r: #1b2d34; --floor-a: #4b4132; --floor-b: #42392b; --edge-l: #342c21; --edge-r: #2a231a; --sky: #1d4466; --frame: #5b7580;
-  }
+    --wall-l: #22373f; --wall-r: #1b2d34; --floor-a: #4b4132; --floor-b: #42392b; --edge-l: #342c21; --edge-r: #2a231a; --sky: #1d4466; --frame: #5b7580; }
 }
+:root[data-mode="dark"][data-tema="klima"] { --bg: #0f1a1d; --surface: #17262a; --ink: #e6f0ee; --muted: #9bb2b0; --line: #2b4146;
+    --accent: #5cb8d6; --accent-ink: #06222c; --heat: #ff8a6b; --leaf: #6cc487; --sand: #e0b04f; --sand-ink: #1a1206;
+    --good-bg: #1b3a27; --bad-bg: #432019; --ans-bg: #1c3640;
+    --wall-l: #22373f; --wall-r: #1b2d34; --floor-a: #4b4132; --floor-b: #42392b; --edge-l: #342c21; --edge-r: #2a231a; --sky: #1d4466; --frame: #5b7580; }
 
 /* Rommene i huset. Første rom bruker temaets vanlige farger. */
 :root[data-tema="kritisk"] .room.rm-b { --wall-l: #c9d6c8; --wall-r: #b6c6b4; --floor-a: #6b4c34; --floor-b: #5f432d; }
@@ -41,10 +45,16 @@
 :root[data-tema="klima"] .room.rm-k { --wall-l: #d4d9dc; --wall-r: #c3cacd; --floor-a: #9aa3a8; --floor-b: #8f989d; --edge-l: #6c7a85; --edge-r: #5a6771; }
 :root[data-tema="klima"] .room.rm-l { --wall-l: #d6efd9; --wall-r: #c2e3c6; --floor-a: #b89a70; --floor-b: #ab8e64; --sky: #bfe8f7; }
 @media (prefers-color-scheme: dark) {
-  :root[data-tema="kritisk"] .room.rm-b { --wall-l: #243127; --wall-r: #1d2820; --floor-a: #3a2a1c; --floor-b: #322417; }
-  :root[data-tema="kritisk"] .room.rm-k { --wall-l: #2a2730; --wall-r: #221f28; --floor-a: #3a3640; --floor-b: #332f39; --edge-l: #24212a; --edge-r: #1c1a21; }
-  :root[data-tema="kritisk"] .room.rm-l { --wall-l: #3a2c22; --wall-r: #30241b; --floor-a: #4a3424; --floor-b: #402c1e; }
-  :root[data-tema="klima"] .room.rm-b { --wall-l: #2c3a35; --wall-r: #24302c; --floor-a: #4b4132; --floor-b: #42392b; }
-  :root[data-tema="klima"] .room.rm-k { --wall-l: #26303a; --wall-r: #1f2830; --floor-a: #3a444c; --floor-b: #333c44; --edge-l: #1c242b; --edge-r: #161d23; }
-  :root[data-tema="klima"] .room.rm-l { --wall-l: #1f3a2a; --wall-r: #193022; --floor-a: #3e3324; --floor-b: #362c1f; --sky: #1d4466; }
+  :root:not([data-mode="light"])[data-tema="kritisk"] .room.rm-b { --wall-l: #243127; --wall-r: #1d2820; --floor-a: #3a2a1c; --floor-b: #322417; }
+  :root:not([data-mode="light"])[data-tema="kritisk"] .room.rm-k { --wall-l: #2a2730; --wall-r: #221f28; --floor-a: #3a3640; --floor-b: #332f39; --edge-l: #24212a; --edge-r: #1c1a21; }
+  :root:not([data-mode="light"])[data-tema="kritisk"] .room.rm-l { --wall-l: #3a2c22; --wall-r: #30241b; --floor-a: #4a3424; --floor-b: #402c1e; }
+  :root:not([data-mode="light"])[data-tema="klima"] .room.rm-b { --wall-l: #2c3a35; --wall-r: #24302c; --floor-a: #4b4132; --floor-b: #42392b; }
+  :root:not([data-mode="light"])[data-tema="klima"] .room.rm-k { --wall-l: #26303a; --wall-r: #1f2830; --floor-a: #3a444c; --floor-b: #333c44; --edge-l: #1c242b; --edge-r: #161d23; }
+  :root:not([data-mode="light"])[data-tema="klima"] .room.rm-l { --wall-l: #1f3a2a; --wall-r: #193022; --floor-a: #3e3324; --floor-b: #362c1f; --sky: #1d4466; }
 }
+:root[data-mode="dark"][data-tema="kritisk"] .room.rm-b { --wall-l: #243127; --wall-r: #1d2820; --floor-a: #3a2a1c; --floor-b: #322417; }
+:root[data-mode="dark"][data-tema="kritisk"] .room.rm-k { --wall-l: #2a2730; --wall-r: #221f28; --floor-a: #3a3640; --floor-b: #332f39; --edge-l: #24212a; --edge-r: #1c1a21; }
+:root[data-mode="dark"][data-tema="kritisk"] .room.rm-l { --wall-l: #3a2c22; --wall-r: #30241b; --floor-a: #4a3424; --floor-b: #402c1e; }
+:root[data-mode="dark"][data-tema="klima"] .room.rm-b { --wall-l: #2c3a35; --wall-r: #24302c; --floor-a: #4b4132; --floor-b: #42392b; }
+:root[data-mode="dark"][data-tema="klima"] .room.rm-k { --wall-l: #26303a; --wall-r: #1f2830; --floor-a: #3a444c; --floor-b: #333c44; --edge-l: #1c242b; --edge-r: #161d23; }
+:root[data-mode="dark"][data-tema="klima"] .room.rm-l { --wall-l: #1f3a2a; --wall-r: #193022; --floor-a: #3e3324; --floor-b: #362c1f; --sky: #1d4466; }

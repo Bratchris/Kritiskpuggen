@@ -1,7 +1,7 @@
 // Avatarskjermen: eleven lager karakteren sin og kjøper kostymer og CRISPY-G-merch for poeng.
 import { $, esc, toast } from '../lib/dom';
 import { friendly } from '../lib/supabase';
-import { S, T, store, head, panel, hooks } from '../app/core';
+import { S, T, store, panel, hooks } from '../app/core';
 import {
   AvatarCfg, ColorKey, Slot, Skin, GENDERS, SKIN_TONES, HAIR_STYLES, HAIR_COLORS, HEADWEAR, EYE_COLORS, LIP_COLORS, SHADOW_COLORS, BLUSH_COLORS,
   CLOTH_COLORS, TOPS, BOTTOMS, SHOES, EYES, MOUTHS, SKINS, SLOT_NAMES, skinById, isMerch, Swatch, Opt,
@@ -10,13 +10,23 @@ import { avatarSVG, tintOf } from './render';
 import { petsHTML, wirePets, companionSVG } from '../pets/screen';
 import { BACKGROUNDS, BG_GROUPS, Background, bgById, bgImage, bgFit, applyBackground } from './backgrounds';
 
-type Tab = 'dyr' | 'kropp' | 'har' | 'ansikt' | 'sminke' | 'klaer' | 'bakgrunn' | 'kostymer' | 'merch';
-const TABS: [Tab, string][] = [['kropp', 'Kropp'], ['har', 'Hår'], ['ansikt', 'Ansikt'], ['sminke', 'Sminke'], ['klaer', 'Klær'], ['bakgrunn', 'Bakgrunn'], ['dyr', 'Dyr og egg'], ['kostymer', 'Kostymer'], ['merch', 'CRISPY-G']];
+// Hvilken del som vises, styres av menyen i app.ts: profilen (avatar, garderobe, dyr) eller butikken (kostymer, CRISPY-G, bakgrunner).
+type Part = 'kropp' | 'har' | 'ansikt' | 'sminke' | 'klaer';
+type Tab = Part | 'garderobe' | 'dyr' | 'bakgrunn' | 'kostymer' | 'merch';
+const PARTS: [Part, string][] = [['kropp', 'Kropp'], ['har', 'Hår'], ['ansikt', 'Ansikt'], ['sminke', 'Sminke'], ['klaer', 'Klær']];
+const HEADS: Record<string, [string, string]> = {
+  garderobe: ['Garderoben', 'Kostymer og merch du eier. Ta på og av så mye du vil.'],
+  dyr: ['Dyr og egg', 'Egg du har funnet, dyrene som har klekket, og dyreboka.'],
+  kostymer: ['Kostymer', 'Kostymer til avataren, kjøpt med poengene dine.'],
+  merch: ['CRISPY-G', 'Drakter, tracksuits og annen merch.'],
+  bakgrunn: ['Bakgrunner', 'Mønstre og bilder bak hele appen.'],
+};
 
-interface AvaState { tab: Tab; arm: string | null; msg: string; busy: boolean; open: string | null }
+interface AvaState { tab: Tab; part: Part; arm: string | null; msg: string; busy: boolean; open: string | null }
 function st(): AvaState {
-  const s = S.cur.ava || (S.cur.ava = { tab: 'kropp', arm: null, msg: '', busy: false, open: null });
+  const s = S.cur.ava || (S.cur.ava = { tab: 'kropp', part: 'kropp', arm: null, msg: '', busy: false, open: null });
   if (s.open === undefined) s.open = null;
+  if (!s.part) s.part = 'kropp';
   return s;
 }
 
@@ -132,6 +142,13 @@ function bgHTML(): string {
     BG_GROUPS.map((g) => '<h3 class="grp">' + g.name + '</h3><div class="bgs">' + BACKGROUNDS.filter((b) => b.group === g.id).map(card).join('') + '</div>').join('');
 }
 
+function wardrobeHTML(): string {
+  const mine = SKINS.filter((k) => S.owned.has(k.id));
+  if (!mine.length) return '<p class="keyhint">Du har ingen kostymer ennå. Kjøp kostymer og CRISPY-G-merch i butikken.</p><div class="row"><button class="btn primary" type="button" data-shop="kostymer">Til butikken</button></div>';
+  const bySlot = (Object.keys(SLOT_NAMES) as Slot[]).map((sl) => { const l = mine.filter((k) => k.slot === sl); return l.length ? '<h3 class="grp">' + esc(SLOT_NAMES[sl]) + '</h3><div class="skins">' + l.map(card).join('') + '</div>' : ''; }).join('');
+  return '<p class="msg" aria-live="polite">' + esc(st().msg) + '</p>' + bySlot;
+}
+
 // ---------- skjermen ----------
 export function renderAvatar(): void {
   const s = st(), p = panel(), a = S.avatar;
@@ -149,27 +166,30 @@ export function renderAvatar(): void {
   if (s.tab === 'klaer') body = section('Overdel', tiles('top', TOPS, 'full') + colorField('topC', CLOTH_COLORS, 'Farge på overdelen')) +
     section('Underdel', tiles('bottom', BOTTOMS, 'full') + colorField('bottomC', CLOTH_COLORS, 'Farge på underdelen')) +
     section('Sko', tiles('shoes', SHOES, 'full') + colorField('shoesC', CLOTH_COLORS, 'Farge på skoene')) +
-    (a.eq.outfit || a.eq.top || a.eq.feet ? '<p class="keyhint">Du har på deg noe fra butikken som dekker klærne. Ta det av under «Kostymer» eller «CRISPY-G» for å se klærne dine.</p>' : '');
+    (a.eq.outfit || a.eq.top || a.eq.feet ? '<p class="keyhint">Du har på deg noe fra butikken som dekker klærne. Ta det av i garderoben for å se klærne dine.</p>' : '');
   if (s.tab === 'kostymer') body = shopHTML();
   if (s.tab === 'merch') body = merchHTML();
   if (s.tab === 'bakgrunn') body = bgHTML();
   if (s.tab === 'dyr') body = petsHTML();
-  const sbg = bgById(a.bg);
+  if (s.tab === 'garderobe') body = wardrobeHTML();
+  const sbg = bgById(a.bg), isPart = PARTS.some(([id]) => id === s.tab);
+  const hd = isPart ? ['Avataren din', 'Endringene lagres med en gang.'] : HEADS[s.tab];
 
   const worn = (Object.keys(a.eq) as Slot[]).map((k) => skinById(a.eq[k]!)?.name).filter(Boolean);
-  p.innerHTML = head('avatar') +
+  p.innerHTML = '<div class="phead"><h2>' + esc(hd[0]) + '</h2><p>' + esc(hd[1]) + '</p></div>' +
     '<div class="avagrid"><div class="avastage"><div class="avabig' + (sbg ? ' withbg' : '') + '"' + (sbg ? ' style="' + bgStyle(sbg) + '"' : '') + '>' + avatarSVG(a, { cls: 'big', title: 'Avataren din', ariaHidden: false }) + '<span class="stagepet">' + companionSVG() + '</span></div>' +
     '<p class="keyhint">' + (worn.length ? 'På deg: ' + esc(worn.join(', ')) + '.' : 'Ingen kostymer på.') + '</p>' +
     '<div class="row"><button class="btn" type="button" id="av-rand">Tilfeldig utseende</button></div></div>' +
-    '<div class="avaopts"><div class="tabs avtabs" role="tablist" aria-label="Deler av avataren">' + TABS.map(([id, n]) => '<button class="tab' + (id === 'merch' ? ' cgtab' : '') + '" type="button" role="tab" data-tab="' + id + '" aria-selected="' + (s.tab === id) + '" aria-current="' + (s.tab === id) + '">' + n + '</button>').join('') + '</div>' +
+    '<div class="avaopts">' + (isPart ? '<div class="parts" role="tablist" aria-label="Deler av avataren">' + PARTS.map(([id, n]) => '<button class="chip" type="button" role="tab" data-tab="' + id + '" aria-selected="' + (s.tab === id) + '" aria-pressed="' + (s.tab === id) + '">' + n + '</button>').join('') + '</div>' : '') +
     body + '</div></div>' +
     (a.made ? '' : '<p class="keyhint">Avataren lagres automatisk når du endrer noe. Den vises øverst i appen og dukker opp i troférommet.</p>');
   wire(p, s);
   if (s.tab === 'dyr') wirePets(p, renderAvatar);
+  p.querySelectorAll('[data-shop]').forEach((b: HTMLElement) => { b.onclick = () => hooks.open('avatar', b.dataset.shop); });
 }
 
 function wire(p: ReturnType<typeof panel>, s: AvaState) {
-  p.querySelectorAll('[data-tab]').forEach((b: HTMLElement) => { b.onclick = () => { s.tab = b.dataset.tab as Tab; s.msg = ''; s.open = null; renderAvatar(); const t = p.querySelector('[data-tab="' + s.tab + '"]') as HTMLElement | null; if (t) t.focus({ preventScroll: true }); }; });
+  p.querySelectorAll('[data-tab]').forEach((b: HTMLElement) => { b.onclick = () => { s.tab = b.dataset.tab as Tab; if (PARTS.some(([id]) => id === s.tab)) s.part = s.tab as Part; s.msg = ''; s.open = null; renderAvatar(); const t = p.querySelector('[data-tab="' + s.tab + '"]') as HTMLElement | null; if (t) t.focus({ preventScroll: true }); }; });
   p.querySelectorAll('.sw[data-c]').forEach((b: HTMLElement) => { b.onclick = () => set(patchC(b.dataset.ck!, b.dataset.c!), '.sw[data-ck="' + b.dataset.ck + '"][data-c="' + b.dataset.c + '"]'); });
   p.querySelectorAll('[data-open]').forEach((b: HTMLElement) => {
     b.onclick = () => {
