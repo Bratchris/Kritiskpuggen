@@ -24,14 +24,14 @@ async function route(): Promise<void> {
     return;
   }
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) { current = ''; applyBackground(null); renderLogin(root); return; }
+  if (!session) { current = ''; applyBackground(null); renderLogin(root, new URLSearchParams(location.search).has('invitasjon') ? 'ny' : 'elev'); return; }
   const uid = session.user.id;
   if (current === uid) return;
   current = uid;
 
   const { data: me, error } = await supabase.from('profiles').select('id, role, display_name, class_id').eq('id', uid).maybeSingle();
   if (error || !me) {
-    root.innerHTML = '<div class="wrap"><section class="panel"><h2>Fant ikke profilen din</h2><p>' + esc(error ? friendly(error) : 'Kontoen mangler profil. Kontakt læreren din.') + '</p><button class="btn" id="out" type="button">Logg ut</button></section></div>';
+    root.innerHTML = '<div class="wrap"><section class="panel"><h2>Fant ikke profilen din</h2><p>' + esc(error ? friendly(error) : isStudentEmail(session.user.email) ? 'Kontoen mangler profil. Kontakt læreren din.' : 'Lærerkontoer krever en invitasjonskode fra en kollega som bruker Puggen. Denne kontoen ble laget uten gyldig kode. Be om en invitasjon og opprett kontoen på nytt med en annen e-postadresse, eller be en kollega slette denne i Supabase.') + '</p><button class="btn" id="out" type="button">Logg ut</button></section></div>';
     $('#out').onclick = () => supabase.auth.signOut();
     return;
   }

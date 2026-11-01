@@ -9,7 +9,7 @@ Teknikk: Vite + TypeScript i nettleseren, Supabase (Postgres, Auth og en Edge Fu
 ### 1. Supabase
 
 1. Lag et prosjekt på [supabase.com](https://supabase.com). Velg en region i EU, for eksempel Stockholm (`eu-north-1`).
-2. Åpne **SQL Editor** og kjør filene i `supabase/migrations/` én om gangen, i rekkefølge etter navn: først `20261020000000_init.sql`, så `20261029000000_fix_student_role.sql` så `20261029100000_leaderboard.sql` så `20261029200000_leaderboard_top3.sql` så `20261029300000_activity.sql` så `20261029400000_avatar.sql` så `20261029500000_merch.sql` så `20261029600000_backgrounds.sql` så `20261029700000_nordlys.sql` så `20261029800000_pets.sql` så `20261029900000_pirat.sql` så `20261030000000_more_eggs.sql` så `20261101000000_achievements.sql` og til slutt `20261102000000_security.sql`. Har du Supabase CLI, kan du i stedet kjøre `supabase link` og så `supabase db push`.
+2. Åpne **SQL Editor** og kjør filene i `supabase/migrations/` én om gangen, i rekkefølge etter navn: først `20261020000000_init.sql`, så `20261029000000_fix_student_role.sql` så `20261029100000_leaderboard.sql` så `20261029200000_leaderboard_top3.sql` så `20261029300000_activity.sql` så `20261029400000_avatar.sql` så `20261029500000_merch.sql` så `20261029600000_backgrounds.sql` så `20261029700000_nordlys.sql` så `20261029800000_pets.sql` så `20261029900000_pirat.sql` så `20261030000000_more_eggs.sql` så `20261101000000_achievements.sql` så `20261102000000_security.sql` og til slutt `20261102100000_teacher_invites.sql`. Har du Supabase CLI, kan du i stedet kjøre `supabase link` og så `supabase db push`.
 3. Publiser edge-funksjonen som lager elevkontoer:
    ```bash
    npx supabase login
@@ -32,7 +32,7 @@ Teknikk: Vite + TypeScript i nettleseren, Supabase (Postgres, Auth og en Edge Fu
 
 ### 3. Første gang
 
-1. Åpne appen, velg **Lærer** og **Opprett lærerkonto**. Bekreft e-postadressen.
+1. Åpne appen, velg **Lærer** og **Opprett lærerkonto**. Bekreft e-postadressen. Den aller første lærerkontoen må lages før du kjører `20261102100000_teacher_invites.sql`. Etter det trenger nye lærere en invitasjon fra lærerrommet (se «Lærerkontoer» under).
 2. Lag en klasse og velg temaer. Klassen får en klassekode, for eksempel `K7RQ2M`.
 3. Lim inn elevnavn, ett per linje, og trykk **Lag elevkoder**. Kopier eller skriv ut listen. Kodene vises bare én gang, men du kan lage en ny kode for en elev når som helst.
 4. Elevene logger inn med klassekode, brukernavn og kode.
@@ -47,7 +47,7 @@ npm run dev
 
 ## Slik fungerer innlogging
 
-- **Lærere** har en vanlig Supabase-konto med e-post og passord, og kan bruke «Glemt passord».
+- **Lærere** har en vanlig Supabase-konto med e-post og passord, og kan bruke «Glemt passord». Nye lærerkontoer krever en invitasjonskode. En lærer lager koden under «Kolleger» i lærerrommet og sender lenken til kollegaen. Koden kan brukes én gang og varer i 14 dager. Uten gyldig kode får kontoen ingen profil og kan verken se eller lage noe. Kontrollen skjer i databasetriggeren `handle_new_user`.
 - **Elever** har ingen e-post. Edge-funksjonen `manage-students` lager en konto med en intern adresse (`brukernavn.klassekode@elev.puggen.invalid`) og en kode som `ugle-482`. Innloggingsskjemaet bygger den samme adressen ut fra det eleven skriver inn.
 - **Innloggingen huskes** på enheten til eleven logger ut. Supabase fornyer tilgangen automatisk, og fornyelsesnøkkelen utløper ikke med standardinnstillingene.
 

@@ -27,7 +27,12 @@ interface View {
   act: ActRow[] | null;
   actErr: string;
   actDays: number;
+  /** Invitasjoner til kolleger. null = databasen mangler støtte. */
+  invites: Invite[] | null;
+  newInvite: string | null;
+  invMsg: string;
 }
+interface Invite { code: string; note: string | null; created_at: string; expires_at: string; used_at: string | null }
 
 let V: View;
 let root: HTMLElement;
@@ -36,7 +41,7 @@ let onPreview: (theme: string, classId: string) => void;
 export async function mountTeacher(el: HTMLElement, me: { id: string; name: string }, preview: (theme: string, classId: string) => void): Promise<void> {
   root = el; onPreview = preview;
   document.documentElement.dataset.tema = '';
-  V = V && V.me.id === me.id ? V : { me, classes: [], sel: null, theme: 'kritisk', students: [], progress: [], gifts: [], newCodes: null, rowAct: null, msg: '', creating: false, confirmDel: false, act: null, actErr: '', actDays: 7 };
+  V = V && V.me.id === me.id ? V : { me, classes: [], sel: null, theme: 'kritisk', students: [], progress: [], gifts: [], newCodes: null, rowAct: null, msg: '', creating: false, confirmDel: false, act: null, actErr: '', actDays: 7, invites: null, newInvite: null, invMsg: '' };
   root.innerHTML = '<div class="wrap"><p class="loading">Henter klassene dine …</p></div>';
   await loadClasses();
   if (V.sel) await loadClass(); else draw();
@@ -48,6 +53,25 @@ async function loadClasses() {
   V.classes = data as Klass[];
   if (!V.sel || !V.classes.some((c) => c.id === V.sel)) V.sel = V.classes[0]?.id ?? null;
   V.creating = V.classes.length === 0;
+  await loadInvites();
+}
+async function loadInvites() {
+  const { data, error } = await supabase.from('teacher_invites').select('code, note, created_at, expires_at, used_at').order('created_at', { ascending: false });
+  V.invites = error ? null : (data as Invite[]);
+}
+
+const inviteLink = (code: string) => location.origin + '/?invitasjon=' + encodeURIComponent(code);
+function invitesHTML(): string {
+  if (V.invites === null) return '<section class="panel"><h2>Kolleger</h2><p class="muted">Kjør databaseoppdateringen for lærerinvitasjoner for å kunne invitere kolleger.</p></section>';
+  const now = Date.now();
+  const status = (i: Invite) => i.used_at ? 'Brukt ' + fmtDate(i.used_at) : new Date(i.expires_at).getTime() < now ? 'Utløpt' : 'Gyldig til ' + new Date(i.expires_at).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' });
+  return '<section class="panel"><h2>Kolleger</h2><p class="muted">Nye lærerkontoer krever en invitasjon. Lag en kode og send den til kollegaen din. Koden kan brukes én gang og varer i 14 dager.</p>' +
+    '<form id="inv" class="tform invform"><label class="afield" for="inv-note"><span>Hvem er den til? (valgfritt)</span><input id="inv-note" maxlength="80" placeholder="F.eks. Kari, naturfag"></label><div class="row"><button class="btn primary" type="submit">Lag invitasjon</button></div></form>' +
+    (V.newInvite ? '<div class="fb ok newinv"><strong>Invitasjonen er klar</strong>Send lenken til kollegaen din. Den åpner skjemaet for ny lærerkonto med koden fylt inn. Koden kan også skrives inn for hånd.<div class="invcode"><code>' + esc(V.newInvite) + '</code></div><div class="invlink"><input id="inv-link" readonly value="' + esc(inviteLink(V.newInvite)) + '" aria-label="Invitasjonslenke"><button class="btn" type="button" id="inv-copy">Kopier lenken</button></div></div>' : '') +
+    (V.invMsg ? '<p class="msg" aria-live="polite">' + esc(V.invMsg) + '</p>' : '') +
+    (V.invites.length ? '<table class="tbl invtbl"><thead><tr><th scope="col">Kode</th><th scope="col">Til</th><th scope="col">Status</th><th scope="col"><span class="sr">Handling</span></th></tr></thead><tbody>' +
+      V.invites.slice(0, 15).map((i) => '<tr><td><code>' + esc(i.code) + '</code></td><td>' + esc(i.note || '–') + '</td><td>' + esc(status(i)) + '</td><td>' + (!i.used_at && new Date(i.expires_at).getTime() > now ? '<button class="lnk" type="button" data-revoke="' + esc(i.code) + '">Trekk tilbake</button>' : '') + '</td></tr>').join('') + '</tbody></table>' : '') +
+    '</section>';
 }
 
 async function loadClass() {
@@ -92,7 +116,7 @@ function draw(): void {
     (V.msg ? '<p class="fb bad" role="alert">' + esc(V.msg) + '</p>' : '') +
     '<nav class="classbar" aria-label="Klasser">' + V.classes.map((k) => '<button class="chip" type="button" data-c="' + k.id + '" aria-pressed="' + (k.id === V.sel && !V.creating) + '">' + esc(k.name) + '</button>').join('') +
     '<button class="chip add" type="button" id="new-class" aria-pressed="' + V.creating + '">+ Ny klasse</button></nav>' +
-    (V.creating || !c ? newClassHTML() : classHTML(c)) +
+    (V.creating || !c ? newClassHTML() : classHTML(c)) + invitesHTML() +
     '</div><div id="toast" role="status" aria-live="polite"></div>';
   wire();
 }
@@ -185,6 +209,18 @@ function wire(): void {
   $('#logout').onclick = () => supabase.auth.signOut();
   root.querySelectorAll<HTMLElement>('[data-c]').forEach((b) => { b.onclick = () => { V.sel = b.dataset.c!; V.creating = false; V.newCodes = null; V.rowAct = null; V.confirmDel = false; V.msg = ''; void loadClass(); }; });
   $('#new-class').onclick = () => { V.creating = true; V.msg = ''; draw(); };
+  const inv = $('#inv') as HTMLFormElement | null;
+  if (inv) inv.onsubmit = async (e) => {
+    e.preventDefault();
+    const { data, error } = await supabase.rpc('create_teacher_invite', { p_note: String(($('#inv-note') as HTMLInputElement).value || '') });
+    V.newInvite = error ? null : String(data); V.invMsg = error ? friendly(error) : '';
+    await loadInvites(); draw();
+  };
+  const cp = $('#inv-copy');
+  if (cp) cp.onclick = async () => { const i = $('#inv-link') as HTMLInputElement; try { await navigator.clipboard.writeText(i.value); cp.textContent = 'Kopiert'; } catch { i.select(); } };
+  root.querySelectorAll<HTMLElement>('[data-revoke]').forEach((b) => {
+    b.onclick = async () => { const { error } = await supabase.rpc('revoke_teacher_invite', { p_code: b.dataset.revoke }); V.invMsg = error ? friendly(error) : 'Invitasjonen er trukket tilbake.'; if (V.newInvite === b.dataset.revoke) V.newInvite = null; await loadInvites(); draw(); };
+  });
 
   const nc = $('#nc') as HTMLFormElement | null;
   if (nc) {

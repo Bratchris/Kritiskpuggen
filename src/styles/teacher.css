@@ -59,3 +59,11 @@ legend { font-weight: 600; font-size: .95rem; margin-bottom: 4px; }
 .tchip.warn { border-color: var(--heat); background: var(--bad-bg); color: var(--ink); }
 .tchip.mute { border-style: dashed; }
 .acttab td:nth-child(2) { white-space: nowrap; }
+.invform { max-width: 460px; }
+.newinv { margin-top: 12px; }
+.invcode code { display: inline-block; margin: 8px 0; font-size: 1.3rem; letter-spacing: .08em; padding: 6px 12px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); }
+.invlink { display: flex; gap: 8px; flex-wrap: wrap; }
+.invlink input { flex: 1 1 260px; min-width: 0; font: inherit; font-size: .85rem; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.invtbl { margin-top: 12px; }
+.invtbl code { font-size: .85rem; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }

@@ -26,7 +26,9 @@ export function renderLogin(root: HTMLElement, mode: 'elev' | 'laerer' | 'ny' | 
     form = '<form id="f" class="aform">' + field('epost', 'E-post', 'email', '', 'none', 'email', '') + field('pw', 'Passord', 'password', '', 'none', 'current-password', '') +
       rememberBox() + '<button class="btn primary" type="submit">Logg inn</button><div class="alinks"><button class="lnk" type="button" data-a="ny">Opprett lærerkonto</button><button class="lnk" type="button" data-a="glemt">Glemt passord?</button></div></form>';
   } else if (mode === 'ny') {
-    form = '<form id="f" class="aform"><p class="ahelp">Lærerkontoen brukes til å lage klasser, elevkoder og se fremgang. Elever trenger ikke konto.</p>' +
+    const inv = new URLSearchParams(location.search).get('invitasjon') || '';
+    form = '<form id="f" class="aform"><p class="ahelp">Lærerkontoen brukes til å lage klasser, elevkoder og se fremgang. Elever trenger ikke konto. Du trenger en invitasjonskode fra en kollega som allerede bruker Puggen.</p>' +
+      field('inv', 'Invitasjonskode', 'text', inv, 'characters', 'off', 'F.eks. K7RQ-2MXA-9PLT') +
       field('navn', 'Navnet ditt', 'text', '', 'words', 'name', '') + field('epost', 'E-post', 'email', '', 'none', 'email', '') + field('pw', 'Passord (minst 8 tegn)', 'password', '', 'none', 'new-password', '') +
       '<button class="btn primary" type="submit">Opprett konto</button><div class="alinks"><button class="lnk" type="button" data-a="laerer">Har du konto? Logg inn</button></div></form>';
   } else if (mode === 'glemt') {
@@ -65,7 +67,10 @@ export function renderLogin(root: HTMLElement, mode: 'elev' | 'laerer' | 'ny' | 
         if (error) throw error;
       } else if (mode === 'ny') {
         if (v('pw').length < 8) throw new Error('Passordet må ha minst 8 tegn.');
-        const { data, error } = await supabase.auth.signUp({ email: v('epost'), password: v('pw'), options: { data: { display_name: v('navn') }, emailRedirectTo: location.origin } });
+        const invite = v('inv').toUpperCase();
+        const ok = await supabase.rpc('check_teacher_invite', { p_code: invite });
+        if (ok.error || ok.data !== true) throw new Error('Invitasjonskoden er ugyldig, utløpt eller allerede brukt. Be en kollega som bruker Puggen om en ny.');
+        const { data, error } = await supabase.auth.signUp({ email: v('epost'), password: v('pw'), options: { data: { display_name: v('navn'), invite }, emailRedirectTo: location.origin } });
         if (error) throw error;
         if (!data.session) { renderLogin(root, 'laerer', 'Kontoen er opprettet. Bekreft e-postadressen din via lenken vi sendte, og logg så inn.'); return; }
       } else if (mode === 'glemt') {
