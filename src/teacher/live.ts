@@ -92,11 +92,22 @@ async function tick(force = false): Promise<void> {
 
 function draw(): void {
   if (!el || !b) return;
-  const key = [b.status, b.idx, b.answered, b.players, b.status === 'question' ? Math.ceil((deadline - Date.now()) / 1000) : '', err].join('|');
-  if (key === sig) return; sig = key;
+  // Under et spørsmål tegnes siden bare én gang. Sekundene og antall svar oppdateres på plass,
+  // så alternativene står stille og tidslinjen glir jevnt.
+  const key = [b.status, b.idx, b.status === 'question' ? '' : b.answered + '/' + b.players, err].join('|');
+  if (key === sig) {
+    if (b.status === 'question') {
+      const secs = Math.max(0, Math.ceil((deadline - Date.now()) / 1000)), c = el.querySelector<HTMLElement>('.lbclock'), n = el.querySelector<HTMLElement>('.lbcount');
+      if (c) { c.textContent = String(secs); c.classList.toggle('low', secs <= 5); }
+      if (n) n.innerHTML = b.answered + '<small>/' + b.players + '</small>';
+      const m = el.querySelector<HTMLElement>('.lbplayers'); if (m) m.textContent = b.players + ' med';
+    }
+    return;
+  }
+  sig = key;
   const q = qs[b.idx], nn = (n: number) => String(n).padStart(2, '0');
   const head = '<div class="lbtop"><span class="lbbrand"><i class="lbdot" aria-hidden="true"></i>Live</span>' +
-    '<span class="lbmeta">' + (b.idx >= 0 && b.status !== 'end' ? nn(b.idx + 1) + ' / ' + nn(b.total) : esc(themeName(cfg.theme))) + '</span><span class="lbmeta">' + b.players + ' med</span>' +
+    '<span class="lbmeta">' + (b.idx >= 0 && b.status !== 'end' ? nn(b.idx + 1) + ' / ' + nn(b.total) : esc(themeName(cfg.theme))) + '</span><span class="lbmeta lbplayers">' + b.players + ' med</span>' +
     '<span class="lbtools"><button class="lbx" type="button" id="lb-fs" aria-label="Fullskjerm" title="Fullskjerm">⤢</button><button class="lbx" type="button" id="lb-x" aria-label="Avslutt og lukk" title="Avslutt">✕</button></span></div>';
   const letter = (j: number) => '<span class="lbletter" aria-hidden="true">' + LETTERS[j] + '</span>';
   let h = '';
