@@ -1,7 +1,7 @@
 import { resultStars } from '../juice';
 import { achieve } from '../../achievements/engine';
 import { $, esc, shuffle } from '../../lib/dom';
-import { S, T, head, tag, inTopic, focusMain, panel, verdict, track, mark, earnOnce, earnedToday, readLock } from '../core';
+import { S, T, head, tag, inTopic, focusMain, panel, verdict, track, mark, earnOnce, earnedToday, readLock, recordMiss, recordQuizOk } from '../core';
 
 const XP = 2;
 const key = (idx: number) => 'quiz:' + idx;
@@ -49,7 +49,7 @@ export function renderQuiz(): void {
         if ((b as HTMLButtonElement).disabled) return;
         z.pick = +b.dataset.j!;
         track(z.pick === q.ci);
-        if (z.pick === q.ci) { z.score++; q.got = earnOnce(key(q.idx), XP); z.pts += q.got; }
+        if (z.pick === q.ci) { z.score++; q.got = earnOnce(key(q.idx), XP); z.pts += q.got; recordQuizOk(q.idx); } else recordMiss('quiz', q.idx);
         renderQuiz();
       };
     });

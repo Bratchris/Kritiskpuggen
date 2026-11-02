@@ -1,7 +1,7 @@
 import { resultStars } from '../juice';
 import { achieve } from '../../achievements/engine';
 import { $, esc, shuffle, norm } from '../../lib/dom';
-import { S, T, head, tag, inTopic, focusMain, panel, verdict, track, mark, earnOnce, earnedToday } from '../core';
+import { S, T, head, tag, inTopic, focusMain, panel, verdict, track, mark, earnOnce, earnedToday, recordMiss } from '../core';
 
 const key = (idx: number) => 'hull:' + idx;
 
@@ -28,7 +28,7 @@ export function renderHull(): void {
   if (h.res) { $('#h-next').onclick = () => { h.i++; h.res = null; h.hint = false; h.val = ''; renderHull(); }; focusMain(); return; }
   if (!h.val && !h.hint) mark();
   const inp = $('#h-in'); inp.value = h.val; inp.addEventListener('input', () => { h.val = inp.value; }); inp.focus({ preventScroll: true });
-  $('#h-form').onsubmit = (e: Event) => { e.preventDefault(); const v = norm(inp.value); if (!v) return; if (q.a.indexOf(v) > -1) { h.res = 'ok'; h.score++; q.got = earnOnce(key(q.idx), h.hint ? 1 : 2); } else h.res = 'bad'; track(h.res === 'ok'); renderHull(); };
+  $('#h-form').onsubmit = (e: Event) => { e.preventDefault(); const v = norm(inp.value); if (!v) return; if (q.a.indexOf(v) > -1) { h.res = 'ok'; h.score++; q.got = earnOnce(key(q.idx), h.hint ? 1 : 2); } else { h.res = 'bad'; recordMiss('hull', q.idx); } track(h.res === 'ok'); renderHull(); };
   $('#h-hint').onclick = () => { h.hint = true; renderHull(); };
   $('#h-give').onclick = () => { h.res = 'bad'; track(false); renderHull(); };
 }

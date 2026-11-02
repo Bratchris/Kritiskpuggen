@@ -9,7 +9,7 @@ Teknikk: Vite + TypeScript i nettleseren, Supabase (Postgres, Auth og en Edge Fu
 ### 1. Supabase
 
 1. Lag et prosjekt på [supabase.com](https://supabase.com). Velg en region i EU, for eksempel Stockholm (`eu-north-1`).
-2. Åpne **SQL Editor** og kjør filene i `supabase/migrations/` én om gangen, i rekkefølge etter navn: først `20261020000000_init.sql`, så `20261029000000_fix_student_role.sql` så `20261029100000_leaderboard.sql` så `20261029200000_leaderboard_top3.sql` så `20261029300000_activity.sql` så `20261029400000_avatar.sql` så `20261029500000_merch.sql` så `20261029600000_backgrounds.sql` så `20261029700000_nordlys.sql` så `20261029800000_pets.sql` så `20261029900000_pirat.sql` så `20261030000000_more_eggs.sql` så `20261101000000_achievements.sql` så `20261102000000_security.sql` så `20261102100000_teacher_invites.sql` så `20261102200000_invite_admin.sql` og til slutt `20261102300000_seasons_petlevels.sql`. Har du Supabase CLI, kan du i stedet kjøre `supabase link` og så `supabase db push`.
+2. Åpne **SQL Editor** og kjør filene i `supabase/migrations/` én om gangen, i rekkefølge etter navn: først `20261020000000_init.sql`, så `20261029000000_fix_student_role.sql` så `20261029100000_leaderboard.sql` så `20261029200000_leaderboard_top3.sql` så `20261029300000_activity.sql` så `20261029400000_avatar.sql` så `20261029500000_merch.sql` så `20261029600000_backgrounds.sql` så `20261029700000_nordlys.sql` så `20261029800000_pets.sql` så `20261029900000_pirat.sql` så `20261030000000_more_eggs.sql` så `20261101000000_achievements.sql` så `20261102000000_security.sql` så `20261102100000_teacher_invites.sql` så `20261102200000_invite_admin.sql` så `20261102300000_seasons_petlevels.sql` og til slutt `20261102400000_live_homework.sql`. Har du Supabase CLI, kan du i stedet kjøre `supabase link` og så `supabase db push`.
 3. Publiser edge-funksjonen som lager elevkontoer:
    ```bash
    npx supabase login
@@ -116,6 +116,14 @@ Hendelsene lagres i `classes.events`. Innholdet står i `src/seasons/catalog.ts`
 ## Dyr som vokser
 
 Dyret som står ved avataren, får like mye XP som eleven tjener (også det står i `award_points`). Nivå L nås ved 20 · L · (L − 1) XP, opp til nivå 10. På nivå 5 blir dyret ungt og får skjerf, og på nivå 10 blir det en mester med krone, gyllen glans og litt større kropp. Små dyr (nivå 1–4) er litt mindre. Eleven får et varsel med konfetti når dyret vokser.
+
+## Live, Feilbanken og Lekser
+
+Tre spill finnes i alle temaer, i tillegg til temaets egne.
+
+- **Live** er en quiz for hele klassen, som Kahoot. Læreren trykker «Start live-quiz» i lærerrommet, velger tema, emne, antall spørsmål og tid, og viser tavla på storskjerm. Elevene trykker Live (eller banneret på startsiden) og svarer på egen skjerm. Tavla viser hvem som er med, hvor mange som har svart, fordelingen av svar, riktig svar med forklaring, topp 5 og til slutt en pall. Svaret vises av seg selv når tiden er ute eller alle har svart. Poengene (500–1000 for riktig svar, mer jo raskere) regnes ut i databasen, og elevene får aldri fasiten før læreren viser svaret. Riktige svar gir også litt vanlig XP. Appen spør databasen hvert 1,5 sekund og bruker Realtime på `live_ticks` når det er på.
+- **Feilbanken** samler spørsmål eleven har svart feil på i quiz, sant eller usant, hull i teksten og kurvene. Svarer eleven riktig i feilbanken, forsvinner spørsmålet. Feilbanken gir ingen ekstra XP: et spørsmål gir poeng én gang per dag, enten det besvares i feilbanken eller i det vanlige spillet. Da lønner det seg ikke å svare feil med vilje.
+- **Lekser**: Læreren gir klassen et emne med frist under «Lekser» i lærerrommet. Eleven er ferdig når hen kan alle kortene i emnet og har svart riktig på hvert quizspørsmål i emnet minst én gang. Elevene ser leksen på startsiden. Læreren ser hvor mange som er ferdige, i gang og ikke startet, snittet, og en tabell per elev.
 
 ## Achievements
 

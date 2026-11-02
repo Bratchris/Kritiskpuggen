@@ -1,7 +1,7 @@
 // Felles tilstand og hjelpere for øvingsappen. Temaet byttes med setTheme(),
 // og alle moduler leser data og tilstand herfra.
 import { $, esc, toast } from '../lib/dom';
-import type { Store, SavedState, Gift, ActivityRow } from '../lib/store';
+import type { Store, SavedState, Gift, ActivityRow, Homework } from '../lib/store';
 import type { Theme, Mode, Level, RoomItem, Placement, Topic } from '../themes/types';
 import { defaultAvatar, type AvatarCfg } from '../avatar/catalog';
 import { type Pet, CHANCE, eggProgress, petLevel } from '../pets/catalog';
@@ -41,9 +41,15 @@ export interface AppState {
   /** Sesonghendelsene læreren har satt for klassen, og hvilke som pågår nå. */
   events: Events;
   seasons: SeasonId[];
+  /** Feilbanken og quizspørsmål med riktig svar (til lekser). */
+  miss: Record<string, { n: number; d: string }>;
+  qok: number[];
+  /** Lekser for klassen, lastet ved oppstart. */
+  homework: Homework[];
 }
+export type { Homework };
 
-export const S: AppState = { topic: 'alle', mode: 'quiz', last: 'quiz', points: 0, spent: 0, gifts: [], home: null, seenLvl: -1, seeded: [], earned: {}, known: {}, notes: {}, cur: {}, avatar: defaultAvatar(0.37), owned: new Set(), avaReady: false, pets: [], petsReady: false, xpOther: 0, ach: new Set(), achReady: false, played: [], day: { d: '', xp: 0 }, streak: { n: 0, last: '', best: 0, days: [] }, combo: 0, events: {}, seasons: [] };
+export const S: AppState = { topic: 'alle', mode: 'quiz', last: 'quiz', points: 0, spent: 0, gifts: [], home: null, seenLvl: -1, seeded: [], earned: {}, known: {}, notes: {}, cur: {}, avatar: defaultAvatar(0.37), owned: new Set(), avaReady: false, pets: [], petsReady: false, xpOther: 0, ach: new Set(), achReady: false, played: [], day: { d: '', xp: 0 }, streak: { n: 0, last: '', best: 0, days: [] }, combo: 0, events: {}, seasons: [], miss: {}, qok: [], homework: [] };
 
 export let T: Theme;
 export let store: Store;
@@ -54,7 +60,13 @@ export let ITEMS: Record<string, RoomItem>;
 export function setTheme(theme: Theme, st: Store, flags: { leaderboard?: boolean } = {}): void {
   if (T && store && Object.keys(ACT).length) void flushActivity();
   T = theme; store = st;
-  MODES = theme.modes.filter((m) => (m.id !== 'feil' || theme.content.feil.length > 0) && (m.id !== 'top' || flags.leaderboard !== false));
+  // Live, Feilbanken og Lekser finnes i alle temaer og legges til her.
+  const extra: Mode[] = [
+    { id: 'lekser', name: 'Lekser', desc: 'Emnene læreren har gitt deg å mestre, med frist og fremdrift.', f: 0 },
+    { id: 'feilbank', name: 'Feilbanken', desc: 'Øv på det du bommet på. Svarer du riktig, forsvinner spørsmålet fra banken.', f: 0 },
+    { id: 'live', name: 'Live', desc: 'Bli med når læreren starter en live-quiz på tavla. Svar raskt for flest poeng.', f: 0 },
+  ];
+  MODES = theme.modes.filter((m) => (m.id !== 'feil' || theme.content.feil.length > 0) && (m.id !== 'top' || flags.leaderboard !== false)).concat(extra);
   LEVELS = theme.room.levels;
   ITEMS = theme.room.items;
 }
@@ -69,12 +81,14 @@ export function loadProgress(p: { points: number; spent: number; state: SavedSta
   S.day = p.state.day ?? { d: '', xp: 0 };
   S.streak = p.state.streak ?? { n: 0, last: '', best: 0, days: [] };
   S.combo = 0;
+  S.miss = p.state.miss ?? {};
+  S.qok = p.state.qok ?? [];
   S.cur = {}; S.topic = 'alle';
   S.mode = 'hjem'; S.last = '';
 }
 
 export function save(): void {
-  store.saveState(T.id, { known: S.known, notes: S.notes, home: S.home, seenLvl: S.seenLvl, seeded: S.seeded, earned: keepToday(S.earned), played: S.played, day: S.day, streak: S.streak });
+  store.saveState(T.id, { known: S.known, notes: S.notes, home: S.home, seenLvl: S.seenLvl, seeded: S.seeded, earned: keepToday(S.earned), played: S.played, day: S.day, streak: S.streak, miss: S.miss, qok: S.qok });
 }
 
 export function owned(): Record<string, number> {
@@ -151,6 +165,18 @@ function countDay(n: number): void {
   }
   save();
 }
+
+// ---------- feilbanken ----------
+/** Legger et spørsmål i feilbanken når eleven svarer feil. kind er spillet (quiz, tf, hull, sort). */
+export function recordMiss(kind: string, idx: number): void {
+  const k = kind + ':' + idx, m = S.miss[k];
+  S.miss[k] = { n: (m?.n || 0) + 1, d: today() };
+  save();
+}
+/** Fjerner et spørsmål fra feilbanken (riktig svar i Feilbanken). */
+export function clearMiss(key: string): void { if (S.miss[key]) { delete S.miss[key]; save(); } }
+/** Husker quizspørsmål eleven har svart riktig på, til lekser. */
+export function recordQuizOk(idx: number): void { if (!S.qok.includes(idx)) { S.qok.push(idx); save(); } }
 
 /** XP i alle temaer til sammen. Eggene klekker etter denne. */
 export function xpTotal(): number { return S.xpOther + S.points; }

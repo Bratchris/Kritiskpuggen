@@ -6,6 +6,8 @@ import { supabase, friendly } from '../lib/supabase';
 import { THEMES, THEME_IDS, themeName } from '../themes';
 import { gradient } from '../app/room/iso';
 import { activityHTML, type ActRow } from './activity';
+import { homeworkHTML, wireHomework, loadHomework } from './homework';
+import { openLiveBoard } from './live';
 
 interface Klass { id: string; name: string; code: string; themes: string[]; created_at: string; leaderboard?: boolean; events?: Events }
 interface Student { id: string; display_name: string; username: string; last_seen: string | null; created_at: string }
@@ -96,6 +98,7 @@ async function loadClass() {
   const ids = new Set(V.students.map((s) => s.id));
   V.progress = ((pr.data ?? []) as Prog[]).filter((p) => ids.has(p.student_id));
   V.gifts = (gi.data ?? []) as GiftRow[];
+  await loadHomework(c.id);
   draw();
   // Spilloversikten hentes for seg, så resten av lærerrommet ikke venter på den.
   const ac = await supabase.from('activity').select('student_id, theme, mode, day, answers, correct, xp, timed, ms_total, fast').eq('class_id', c.id);
@@ -104,6 +107,7 @@ async function loadClass() {
   if (V.sel === c.id) draw();
 }
 
+const hwCtx = (c: Klass) => ({ classId: c.id, themes: c.themes, students: V.students, progress: V.progress });
 const cls = () => V.classes.find((c) => c.id === V.sel) || null;
 const prog = (sid: string) => V.progress.find((p) => p.student_id === sid && p.theme === V.theme);
 function levelOf(theme: string, xp: number) { const L = THEMES[theme].room.levels; let k = 0; L.forEach((l, i) => { if (xp >= l.xp) k = i; }); return { i: k, n: L[k].n }; }
@@ -168,6 +172,7 @@ function classHTML(c: Klass): string {
   const giftList = giftsHere.slice(0, 15).map((g) => '<tr><th scope="row">' + esc(name(g.student_id)) + '</th><td>' + esc(pname(g.item_id)) + '</td><td class="num">' + g.price + '</td><td class="when">' + esc(fmtDate(g.created_at)) + '</td></tr>').join('');
 
   return '<section class="panel classhead"><div class="chrow"><div><p class="eyebrow">Klasse</p><h2>' + esc(c.name) + '</h2></div>' +
+    '<div class="quick"><button class="btn primary" type="button" id="q-live">Start live-quiz</button><button class="btn" type="button" id="q-hw">Gi lekse</button></div>' +
     '<div class="codebox"><span class="lbl2">Klassekode</span><b class="code">' + esc(c.code) + '</b></div></div>' +
     '<p class="muted">Elevene logger inn med klassekoden, brukernavnet sitt og koden de får av deg.</p>' +
     '<div class="kpis"><div><b>' + V.students.length + '</b><span>elever</span></div><div><b>' + active7 + '</b><span>aktive siste 7 dager</span></div><div><b>' + totalXp + '</b><span>XP i ' + esc(T.title) + '</span></div><div><b>' + giftsHere.length + '</b><span>gaver</span></div></div>' +
@@ -175,6 +180,7 @@ function classHTML(c: Klass): string {
 
     (c.themes.length > 1 ? '<nav class="filters" aria-label="Tema"><span class="flabel">Tema</span>' + c.themes.map((t) => '<button class="chip" type="button" data-th="' + t + '" aria-pressed="' + (t === V.theme) + '">' + esc(themeName(t)) + '</button>').join('') + '</nav>' : '') +
 
+    homeworkHTML(hwCtx(c)) +
     '<section class="panel"><h2>Elevene</h2>' + table + '</section>' +
     activityHTML(V.act, V.actErr, V.theme, V.actDays, Object.fromEntries(V.students.map((s) => [s.id, s.display_name]))) +
 
@@ -257,6 +263,12 @@ function wire(): void {
     return;
   }
 
+  const c0 = cls();
+  if (c0) {
+    wireHomework(root, hwCtx(c0), () => { const y = window.scrollY; draw(); window.scrollTo(0, y); });
+    $('#q-live').onclick = () => openLiveBoard(c0);
+    $('#q-hw').onclick = () => { const h = $('#hw'); if (h) { h.scrollIntoView({ behavior: 'smooth', block: 'start' }); setTimeout(() => ($('#hw-topic') as HTMLElement | null)?.focus({ preventScroll: true }), 400); } };
+  }
   const r = $('#refresh'); if (r) r.onclick = () => { V.msg = ''; void loadClass(); };
   root.querySelectorAll<HTMLElement>('[data-prev]').forEach((b) => { b.onclick = () => onPreview(b.dataset.prev!, V.sel!); });
   root.querySelectorAll<HTMLElement>('[data-days]').forEach((b) => { b.onclick = () => { V.actDays = +b.dataset.days!; draw(); const a = $('#act'); if (a) a.scrollIntoView({ block: 'nearest' }); }; });

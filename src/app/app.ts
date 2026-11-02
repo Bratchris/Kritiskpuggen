@@ -17,6 +17,9 @@ import { renderSort } from './modes/sort';
 import { renderHull } from './modes/hull';
 import { renderFeil } from './modes/feil';
 import { renderThink } from './modes/tenk';
+import { renderFeilbank } from './modes/feilbank';
+import { renderLekser } from './modes/lekser';
+import { renderLive, liveRunning } from './modes/live';
 import { renderShop } from './shop';
 import { renderRoom, rm, hint, pv, fitPv, roomsAt } from './room/room';
 import { renderTop, loadBoard } from './modes/top';
@@ -35,7 +38,7 @@ import { cleanAvatar, defaultAvatar } from '../avatar/catalog';
 const RENDER: Record<string, () => void> = {
   hjem: renderHome, innst: renderSettings,
   kort: renderKort, quiz: renderQuiz, tf: renderTf, par: renderPar, memo: renderMemo, ord: renderOrd, sort: renderSort,
-  hull: renderHull, feil: renderFeil, tenk: renderThink, shop: renderShop, rom: renderRoom, top: renderTop, avatar: renderAvatar,
+  hull: renderHull, feil: renderFeil, tenk: renderThink, feilbank: renderFeilbank, lekser: renderLekser, live: renderLive, shop: renderShop, rom: renderRoom, top: renderTop, avatar: renderAvatar,
 };
 
 export interface MountOptions {
@@ -79,6 +82,7 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
   } catch { S.pets = []; S.petsReady = false; S.xpOther = 0; }
   try { const ad = await store.loadAchievements(); S.ach = new Set(ad.ids); S.achReady = ad.ready; } catch { S.ach = new Set(); S.achReady = false; }
   if (!S.home) S.home = {};
+  try { S.homework = await store.loadHomework(theme.id); } catch { S.homework = []; }
 
   setHomeName(opts.who);
   root.innerHTML =
@@ -168,7 +172,25 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
   };
   render();
   setTimeout(checkProgress, 900);
+  watchLive(store);
   if (MODES.some((m) => m.id === 'top')) void loadBoard().then(() => { if (S.mode === 'hjem') renderHome(); });
+}
+
+// ---------- live ----------
+let liveTimer: number | undefined, liveStop: (() => void) | null = null;
+/** Holder S.cur.liveOn oppdatert, så startsiden kan vise et banner når læreren har startet en live-quiz. */
+function watchLive(store: Store): void {
+  if (liveTimer) clearInterval(liveTimer);
+  if (liveStop) liveStop();
+  if (store.kind !== 'remote') return;
+  const check = async () => {
+    if (document.visibilityState === 'hidden' || S.mode === 'live') return;
+    const on = await liveRunning();
+    if (on !== !!S.cur.liveOn) { S.cur.liveOn = on; if (S.mode === 'hjem') renderHome(); }
+  };
+  void check();
+  liveTimer = window.setInterval(() => { void check(); }, 20000);
+  liveStop = store.liveListen(() => { void check(); });
 }
 
 // ---------- meny ----------

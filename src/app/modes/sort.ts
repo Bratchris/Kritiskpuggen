@@ -1,7 +1,7 @@
 import { resultStars } from '../juice';
 import { achieve } from '../../achievements/engine';
 import { $, esc, shuffle } from '../../lib/dom';
-import { S, T, head, focusMain, panel, verdict, track, mark, earnOnce, readLock } from '../core';
+import { S, T, head, focusMain, panel, verdict, track, mark, earnOnce, readLock, recordMiss } from '../core';
 
 const key = (idx: number) => 'sort:' + idx;
 
@@ -24,7 +24,7 @@ export function renderSort(): void {
   if (!done) {
     mark();
     readLock('.bk', q);
-    p.querySelectorAll('.bk').forEach((b: HTMLElement) => { b.onclick = () => { if ((b as HTMLButtonElement).disabled) return; z.pick = b.dataset.k; const ok = z.pick === q.b; track(ok); if (ok) { z.score++; q.got = earnOnce(key(q.idx), 1); } z.log.push({ text: q.text, b: q.b, miss: !ok }); renderSort(); }; });
+    p.querySelectorAll('.bk').forEach((b: HTMLElement) => { b.onclick = () => { if ((b as HTMLButtonElement).disabled) return; z.pick = b.dataset.k; const ok = z.pick === q.b; track(ok); if (ok) { z.score++; q.got = earnOnce(key(q.idx), 1); } else recordMiss('sort', q.idx); z.log.push({ text: q.text, b: q.b, miss: !ok }); renderSort(); }; });
   } else {
     $('#s-next').onclick = () => { z.i++; z.pick = null; renderSort(); };
     focusMain();

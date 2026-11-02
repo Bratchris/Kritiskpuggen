@@ -18,6 +18,10 @@ export interface SavedState {
   /** XP i dag, og dager på rad der dagens mål er nådd. */
   day?: { d: string; xp: number };
   streak?: { n: number; last: string; best: number; days: string[] };
+  /** Feilbanken: spørsmål eleven har svart feil på, med antall bom og dato. Nøkkel som «quiz:12». */
+  miss?: Record<string, { n: number; d: string }>;
+  /** Quizspørsmål (indekser) eleven har svart riktig på minst én gang. Brukes til lekser. */
+  qok?: number[];
 }
 export interface Gift { item_id: string; created_at: string }
 /** rank og total kommer fra databasen. Elever får bare topp 3 og sin egen rad. */
@@ -31,6 +35,14 @@ export interface PetData { pets: Pet[]; total: number; ready: boolean }
 /** Svar fra unlock_achievement. new = første gang. skin og pet er belønningen, om det er en. */
 export interface AchResult { new: boolean; skin?: string | null; pet?: Pet | null }
 export interface Progress { points: number; spent: number; state: SavedState; gifts: Gift[] }
+/** En lekse: et emne i et tema som klassen skal mestre innen en dato (ÅÅÅÅ-MM-DD). */
+export interface Homework { id: string; theme: string; topic: string; due: string; created_at: string }
+/** Det eleven ser av en live-økt akkurat nå. ci, e, score og rank kommer først når svaret vises. */
+export interface LiveState {
+  id: string; status: 'lobby' | 'question' | 'reveal' | 'end'; idx: number; total: number; time_limit: number;
+  left_ms: number | null; q: string | null; opts: string[] | null; ci: number | null; e: string | null;
+  my_choice: number | null; my_correct: boolean | null; my_points: number | null; score: number | null; rank: number | null; players: number;
+}
 
 /**
  * Lagring for appen. RemoteStore snakker med Supabase for innloggede elever.
@@ -56,6 +68,13 @@ export interface Store {
   /** ready = databasen har achievements. */
   loadAchievements(): Promise<{ ids: string[]; ready: boolean }>;
   unlockAchievement(theme: string, id: string): Promise<AchResult>;
+  /** Leksene klassen har fått i temaet. */
+  loadHomework(theme: string): Promise<Homework[]>;
+  /** Live-økten som pågår i klassen, eller null. */
+  liveState(join?: boolean): Promise<LiveState | null>;
+  liveAnswer(session: string, idx: number, choice: number): Promise<boolean>;
+  /** Lytter på signalet for klassen i sanntid. Returnerer en funksjon som slutter å lytte. */
+  liveListen(cb: () => void): () => void;
 }
 
 function emptyState(): SavedState { return { known: {}, notes: {}, home: null, seenLvl: -1 }; }
@@ -69,6 +88,8 @@ function cleanState(raw: any): SavedState {
     if (Array.isArray(raw.seeded)) s.seeded = raw.seeded.filter((n: unknown) => typeof n === 'number');
     if (raw.earned && typeof raw.earned === 'object') s.earned = raw.earned;
     if (Array.isArray(raw.played)) s.played = raw.played.filter((x: unknown) => typeof x === 'string');
+    if (raw.miss && typeof raw.miss === 'object') s.miss = raw.miss;
+    if (Array.isArray(raw.qok)) s.qok = raw.qok.filter((n: unknown) => typeof n === 'number');
     if (raw.day && typeof raw.day.d === 'string') s.day = { d: raw.day.d, xp: Number(raw.day.xp) || 0 };
     if (raw.streak && typeof raw.streak.last === 'string') s.streak = { n: Number(raw.streak.n) || 0, last: raw.streak.last, best: Number(raw.streak.best) || 0, days: Array.isArray(raw.streak.days) ? raw.streak.days.slice(-14) : [] };
   }
@@ -203,6 +224,36 @@ export class RemoteStore implements Store {
     if (error) throw error;
     return (data ?? { new: false }) as AchResult;
   }
+  async loadHomework(theme: string): Promise<Homework[]> { return homeworkFor(theme); }
+  async liveState(join = true): Promise<LiveState | null> {
+    const { data, error } = await supabase.rpc('live_state', { p_join: join });
+    if (error) throw error;
+    return (data ?? null) as LiveState | null;
+  }
+  async liveAnswer(session: string, idx: number, choice: number): Promise<boolean> {
+    const { data, error } = await supabase.rpc('live_answer', { p_session: session, p_idx: idx, p_choice: choice });
+    if (error) throw error;
+    return !!data;
+  }
+  liveListen(cb: () => void): () => void { return listenTicks(cb); }
+}
+
+/** Lekser i temaet. RLS gir eleven bare sin egen klasse, og læreren bare sine. */
+async function homeworkFor(theme: string, classId?: string | null): Promise<Homework[]> {
+  let q = supabase.from('homework').select('id, theme, topic, due, created_at').eq('theme', theme);
+  if (classId) q = q.eq('class_id', classId);
+  const { data, error } = await q.order('due');
+  if (error) return [];
+  return (data ?? []) as Homework[];
+}
+/** Sanntid på live_ticks. Virker ikke Realtime, spør appen jevnlig likevel. */
+export function listenTicks(cb: () => void, classId?: string): () => void {
+  try {
+    const ch = supabase.channel('live-' + (classId || 'me') + '-' + Math.random().toString(36).slice(2, 8))
+      .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'live_ticks', ...(classId ? { filter: 'class_id=eq.' + classId } : {}) }, () => cb())
+      .subscribe();
+    return () => { try { void supabase.removeChannel(ch); } catch { /* ignorer */ } };
+  } catch { return () => {}; }
 }
 
 export class PreviewStore implements Store {
@@ -310,6 +361,11 @@ export class PreviewStore implements Store {
     }
     return { new: true };
   }
+  /** Læreren ser klassens ekte lekser i forhåndsvisningen. Live er bare for elever. */
+  async loadHomework(theme: string): Promise<Homework[]> { return this.classId ? homeworkFor(theme, this.classId) : []; }
+  async liveState(): Promise<LiveState | null> { return null; }
+  async liveAnswer(): Promise<boolean> { return false; }
+  liveListen(): () => void { return () => {}; }
   /** Lærerens «Lås opp alt»: setter XP i forhåndsvisningen. Rører ikke databasen. */
   async setPoints(theme: string, n: number) { const p = this.read(theme); p.points = Math.max(p.points, n); this.write(theme, p); return p.points; }
 }

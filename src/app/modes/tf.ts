@@ -1,7 +1,7 @@
 import { resultStars } from '../juice';
 import { achieve } from '../../achievements/engine';
 import { $, esc, shuffle } from '../../lib/dom';
-import { S, T, head, tag, inTopic, focusMain, panel, verdict, track, mark, earnOnce, earnedToday, readLock } from '../core';
+import { S, T, head, tag, inTopic, focusMain, panel, verdict, track, mark, earnOnce, earnedToday, readLock, recordMiss } from '../core';
 
 const key = (idx: number) => 'tf:' + idx;
 
@@ -28,7 +28,7 @@ export function renderTf(): void {
   if (!done) {
     mark();
     readLock('.tfrow .opt', q);
-    p.querySelectorAll('.opt').forEach((b: HTMLElement) => { b.onclick = () => { if ((b as HTMLButtonElement).disabled) return; z.pick = b.dataset.v === '1'; track(z.pick === q.v); if (z.pick === q.v) { z.score++; z.streak++; z.best = Math.max(z.best, z.streak); q.got = earnOnce(key(q.idx), 1); } else z.streak = 0; renderTf(); }; });
+    p.querySelectorAll('.opt').forEach((b: HTMLElement) => { b.onclick = () => { if ((b as HTMLButtonElement).disabled) return; z.pick = b.dataset.v === '1'; track(z.pick === q.v); if (z.pick === q.v) { z.score++; z.streak++; z.best = Math.max(z.best, z.streak); q.got = earnOnce(key(q.idx), 1); } else { z.streak = 0; recordMiss('tf', q.idx); } renderTf(); }; });
   } else {
     $('#t-next').onclick = () => { z.i++; z.pick = null; renderTf(); };
     focusMain();
