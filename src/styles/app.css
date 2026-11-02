@@ -782,20 +782,23 @@ canvas.confetti { position: fixed; inset: 0; width: 100vw; height: 100vh; z-inde
 .livepulse { width: 16px; height: 16px; border-radius: 50%; background: #ff3b5c; flex: 0 0 auto; box-shadow: 0 0 0 0 rgba(255, 59, 92, .6); animation: livepulse 1.6s infinite; }
 .result .livepulse { width: 22px; height: 22px; margin: 0 auto 10px; display: block; }
 @keyframes livepulse { 70% { box-shadow: 0 0 0 14px rgba(255, 59, 92, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 59, 92, 0); } }
-.livebar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: .9rem; color: var(--muted); margin-bottom: 12px; }
-.livedot { background: #e21b3c; color: #fff; font-weight: 800; font-size: .75rem; letter-spacing: .08em; padding: 3px 8px; border-radius: 6px; }
-.liveq { font-size: 1.25rem; font-weight: 700; }
-.timeline { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; margin: 10px 0 16px; }
+.livebar { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; font-family: var(--font-mono); font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); padding-bottom: 12px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
+.livedot { display: inline-flex; align-items: center; gap: 8px; color: var(--ink); }
+.livedot i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: livepulse 1.8s infinite; }
+.liveq { font-family: var(--font-display); font-size: clamp(1.35rem, 5vw, 1.8rem); font-weight: 600; line-height: 1.15; letter-spacing: -.015em; text-wrap: balance; }
+.timeline { height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; margin: 14px 0 18px; }
 .timeline i { display: block; height: 100%; background: var(--accent); transition-property: width; transition-timing-function: linear; }
-.liveopts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-@media (max-width: 420px) { .liveopts { grid-template-columns: 1fr; } }
-.lvopt { display: flex; align-items: center; gap: 10px; min-height: 84px; padding: 12px 14px; border: 0; border-radius: 14px; color: #fff; font: inherit; font-weight: 700; font-size: 1.02rem; text-align: left; cursor: pointer; box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .2); transition: transform .1s; }
-.lvopt:active { transform: scale(.97); }
-.lvopt .shape, .lbopt .shape, .lbbar .shape { font-size: 1.3rem; }
-.lv0 { background: #e21b3c; } .lv1 { background: #1368ce; } .lv2 { background: #c98a00; } .lv3 { background: #26890c; }
-.lvchoice { display: grid; place-items: center; width: 72px; height: 72px; margin: 0 auto 10px; border-radius: 16px; color: #fff; font-size: 2rem; }
+.liveopts { display: grid; gap: 10px; }
+.lvopt { display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 12px 16px; border: 1.5px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 600; font-size: 1.05rem; text-align: left; cursor: pointer; transition: border-color .15s, transform .1s, background .15s; }
+.lvopt:hover { border-color: var(--accent); }
+.lvopt:active { transform: scale(.98); background: var(--ans-bg); }
+.lvl { flex: 0 0 auto; display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--line); font-family: var(--font-mono); font-weight: 500; font-size: .9rem; color: var(--muted); }
+.lvopt:hover .lvl { border-color: var(--accent); color: var(--accent); }
+.result .lvl { width: 28px; height: 28px; vertical-align: middle; border-color: var(--leaf); color: var(--leaf); }
+.lvchoice { display: grid; place-items: center; width: 76px; height: 76px; margin: 0 auto 12px; border-radius: 50%; border: 2px solid var(--accent); color: var(--accent); font-family: var(--font-mono); font-size: 2rem; }
+.liveres .big { font-family: var(--font-display); letter-spacing: -.02em; }
 .liveres.ok .big { color: var(--leaf); } .liveres.bad .big { color: var(--heat); }
-.livepts { font-size: 2.2rem; font-weight: 800; color: var(--leaf); margin: 0; animation: okpop .5s cubic-bezier(.2,1.6,.4,1); }
+.livepts { font-family: var(--font-mono); font-size: 2.4rem; font-weight: 500; color: var(--leaf); margin: 0; animation: okpop .5s cubic-bezier(.2,1.6,.4,1); }
 .hwlist { display: grid; gap: 12px; }
 .hw { padding: 14px 16px; border-radius: 16px; border: 1.5px solid var(--line); background: var(--bg); }
 .hw.done { border-color: var(--leaf); background: var(--good-bg); }
