@@ -2,7 +2,7 @@
 // (og lytter på sanntid når det virker). Fasiten kommer først når læreren viser svaret.
 import { esc, toast } from '../../lib/dom';
 import type { LiveState } from '../../lib/store';
-import { S, head, panel, store, earnOnce, focusMain } from '../core';
+import { S, head, panel, store, earnOnce, focusMain, hooks } from '../core';
 import { confetti } from '../juice';
 
 const LETTERS = ['A', 'B', 'C', 'D'];
@@ -37,6 +37,7 @@ function draw(): void {
   if (key === sig) return;
   sig = key;
   const p = panel();
+  if (s && s.status !== 'end') S.cur.liveDone = false;
   if (!s) {
     p.innerHTML = head('live') + '<div class="result live-wait"><span class="livepulse" aria-hidden="true"></span><p class="big">Ingen live-quiz akkurat nå</p><p>' + (failed ? 'Fikk ikke kontakt. Prøver igjen …' : 'Når læreren starter en live-quiz, kommer den opp her av seg selv. La siden stå åpen.') + '</p></div>';
     return;
@@ -49,6 +50,7 @@ function draw(): void {
   if (s.status === 'end') {
     p.innerHTML = top + '<div class="result"><p class="big">Ferdig!</p><p>Du fikk <b>' + (s.score ?? 0) + ' poeng</b> og kom på <b>' + (s.rank ?? '–') + '. plass</b> av ' + s.players + '.</p><p>Se resultatet på tavla.</p></div>';
     if ((s.rank ?? 99) <= 3) confetti(3);
+    S.cur.liveDone = true; hooks.afterLive();
     stop(); timer = window.setInterval(() => { void poll(); }, 5000);
     return;
   }

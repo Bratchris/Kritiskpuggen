@@ -109,11 +109,11 @@ function shoes(id: string, c: string) {
 
 // ---------- kostymer ----------
 interface Layers { back?: string; body?: string; legs?: boolean; front?: string; cover?: string; hideHair?: boolean; feet?: string }
-type Ctx = { B: Body; c: AvatarCfg; skin: string; t: string };
+type Ctx = { B: Body; c: AvatarCfg; skin: string; t: string; t2: string; num: string };
 const socks = (t: string) => path('M45,128 H58 V146 Q51,149 45,146 Z', t) + path('M62,128 H75 V146 Q69,149 62,146 Z', t) + line('M45,131 H58 M62,131 H75', '#f4f1e8', 1.6);
 function kit(x: Ctx, shirt: string, num: string, numC: string, shorts: string) {
   const { B, skin, t } = x;
-  return legs(skin) + legs(shorts, 128) + socks(t) + arm(B, shirt, 0.42, 11) + path(B.torso, shirt) + path('M52,75 L60,82 L68,75Z', shade(t, -0.3)) + txt(60, 106, 16, numC, num) + badge(70, 86, 1, shirt);
+  return legs(skin) + legs(shorts, 128) + socks(t) + arm(B, shirt, 0.42, 11) + path(B.torso, shirt) + path('M52,75 L60,82 L68,75Z', shade(t, -0.3)) + txt(60, 106, num.length > 1 ? 14 : 16, numC, num) + badge(70, 86, 1, shirt);
 }
 const SKIN_DRAW: Record<string, (x: Ctx) => Layers> = {
   heksehatt: () => ({ front: ell(60, 20, 36, 7, '#2b2235') + path('M42,20 L58,-18 Q62,-20 64,-14 L78,20Z', '#2b2235') + path('M43,15 H77 L78,20 H42Z', '#6b4a8f') + path('M57,-12 Q66,-22 72,-10 Q64,-14 57,-12Z', '#2b2235') }),
@@ -203,17 +203,20 @@ const SKIN_DRAW: Record<string, (x: Ctx) => Layers> = {
   },
   cg_sekk: ({ t }) => ({ back: path('M34,78 Q32,70 42,70 H78 Q88,70 86,78 L88,124 Q60,130 32,124 Z', t) + path('M38,98 H82 V108 H38Z', shade(t, -0.2)), front: line('M48,76 L46,116 M72,76 L74,116', shade(t, -0.3), 3.4) + badge(60, 88, 1.3, t) }),
   cg_kjede: () => ({ front: line('M50,76 Q52,88 60,90 Q68,88 70,76', '#e3ad33', 1.8, ';stroke-dasharray:2 1') + circ(60, 93, 5.4, '#ffd25a', ';stroke:#c08a1e;stroke-width:1') + txt(60, 95, 4.6, '#7a5310', 'CG') }),
-  cg_hjemme: (x) => ({ legs: true, body: kit(x, x.t, '10', ink(x.t), '#f4f1e8') }),
+  // Farge 1 = trøya og strømpene, farge 2 = shortsen.
+  cg_hjemme: (x) => ({ legs: true, body: kit(x, x.t, x.num, ink(x.t), x.t2) }),
   cg_borte: (x) => {
-    const w = '#f4f1e8';
+    // Farge 1 = stripene, shortsen og nummeret, farge 2 = trøya.
+    const w = x.t2, wide = x.num.length > 1;
     let s = kit(x, w, '', w, x.t);
     for (const xx of [46, 54, 62, 70]) s += rect(xx, 80, 4, 37, x.t);
-    s += path('M52,75 L60,82 L68,75Z', shade(x.t, -0.3)) + rect(53, 94, 14, 14, w) + txt(60, 106, 14, x.t, '7') + badge(70, 86, 1, w);
+    s += path('M52,75 L60,82 L68,75Z', shade(x.t, -0.3)) + rect(wide ? 50 : 53, 94, wide ? 20 : 14, 14, w) + txt(60, 106, wide ? 12 : 14, x.t, x.num) + badge(70, 86, 1, w);
     return { legs: true, body: s };
   },
   cg_keeper: (x) => {
     const { B, skin, t } = x, dk = shade(t, -0.3);
-    const s = legs(skin) + legs('#1e1a24', 128) + socks(t) + arm(B, t, 0.86, 11) + path(B.torso, t) + path('M40,80 L60,96 L80,80 V88 L60,104 L40,88Z', dk) + txt(60, 114, 9, ink(t), '1') + badge(70, 84, 1, t);
+    // Farge 1 = trøya og strømpene, farge 2 = shortsen.
+    const s = legs(skin) + legs(x.t2, 128) + socks(t) + arm(B, t, 0.86, 11) + path(B.torso, t) + path('M40,80 L60,96 L80,80 V88 L60,104 L40,88Z', dk) + txt(60, 114, 9, ink(t), x.num) + badge(70, 84, 1, t);
     const glove = (p: Pt) => circ(p[0], p[1], 6.6, '#f2c230', ';stroke:#1e1a24;stroke-width:1');
     return { legs: true, body: s, front: glove(B.hand[0]) + glove(B.hand[1]) };
   },
@@ -276,6 +279,8 @@ export function avatarSVG(c: AvatarCfg, o: RenderOpts = {}): string {
 
 /** Kostymer som kan fargelegges, bruker elevens farge eller standardfargen. */
 export function tintOf(c: AvatarCfg, id: string): string { return c.tint?.[id] || skinById(id)?.tint || '#888888'; }
+export function tint2Of(c: AvatarCfg, id: string): string { return c.tint2?.[id] || skinById(id)?.tint2 || '#f4f1e8'; }
+export function numOf(c: AvatarCfg, id: string): string { return c.num?.[id] ?? skinById(id)?.num ?? ''; }
 
 const SLOT_ORDER: Slot[] = ['back', 'outfit', 'top', 'hat', 'face', 'neck', 'hand', 'feet'];
 
@@ -283,7 +288,7 @@ const SLOT_ORDER: Slot[] = ['back', 'outfit', 'top', 'hat', 'face', 'neck', 'han
 export function avatarG(c: AvatarCfg): string {
   const B = BODY[c.g], skin = c.skinC, hc = c.hairC;
   const L = {} as Record<Slot, Layers>;
-  for (const sl of SLOT_ORDER) { const id = c.eq[sl]; L[sl] = id && SKIN_DRAW[id] ? SKIN_DRAW[id]({ B, c, skin, t: tintOf(c, id) }) : {}; }
+  for (const sl of SLOT_ORDER) { const id = c.eq[sl]; L[sl] = id && SKIN_DRAW[id] ? SKIN_DRAW[id]({ B, c, skin, t: tintOf(c, id), t2: tint2Of(c, id), num: numOf(c, id) }) : {}; }
   const all = SLOT_ORDER.map((sl) => L[sl]);
   const out = L.outfit, tp = L.top;
   const H = hair(c.hair, hc);

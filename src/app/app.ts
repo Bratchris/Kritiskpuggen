@@ -140,8 +140,14 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
   $('#ava-btn').onclick = () => hooks.open('avatar', (S.cur.ava && S.cur.ava.part) || 'kropp');
 
   hooks.refresh = () => { renderHeader(); renderNav(); };
-  hooks.onEgg = (p) => { showEggFound(p); checkPets(); if (S.mode === 'hjem') renderHome(); };
+  hooks.onEgg = (p) => {
+    // Under live-quizen vises egget først etterpå, så eleven ikke blir dratt ut av quizen.
+    if (inLive()) { toast(p.egg === 'mytisk' ? 'Du fant et mytisk egg! Du får se det etter quizen.' : 'Du fant et egg! Du får se det etter quizen.'); later(() => { showEggFound(p); checkPets(); }); return; }
+    showEggFound(p); checkPets(); if (S.mode === 'hjem') renderHome();
+  };
+  hooks.afterLive = flushLater;
   hooks.open = (mode, tab) => {
+    const fromLive = S.mode === 'live' && mode !== 'live';
     if (mode === 'butikk') { go('butikk'); return; }
     if (games().some((m) => m.id === mode)) S.last = mode;
     S.mode = mode;
@@ -152,11 +158,13 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
     }
     if (group() === 'butikk') navSub.butikk = mode === 'shop' ? 'shop' : 'avatar:' + S.cur.ava.tab;
     render(); window.scrollTo(0, 0);
+    if (fromLive) flushLater();
   };
   let starsBefore = stars(S.points);
-  hooks.onGoal = () => { const n = streakNow(); celebrate('Dagens mål er nådd!', n > 1 ? n + ' dager på rad. Kom tilbake i morgen for å holde rekka.' : 'Rekka di har startet. Kom tilbake i morgen for å holde den.'); renderHeader(); if (S.mode === 'hjem') renderHome(); };
+  hooks.onGoal = () => { if (inLive()) { later(hooks.onGoal); renderHeader(); return; } const n = streakNow(); celebrate('Dagens mål er nådd!', n > 1 ? n + ' dager på rad. Kom tilbake i morgen for å holde rekka.' : 'Rekka di har startet. Kom tilbake i morgen for å holde den.'); renderHeader(); if (S.mode === 'hjem') renderHome(); };
   hooks.onCombo = (n) => showCombo(n);
   hooks.onPetLevel = (p, l) => {
+    if (inLive()) { later(() => hooks.onPetLevel(p, l)); hooks.refresh(); return; }
     const name = petName(p.species, p.variant);
     if (l === 5 || l === 10) celebrate(name + ' har vokst!', 'Nivå ' + l + ': ' + (l === 10 ? 'Nå er den en mester, med krone og gyllen glans.' : 'Nå er den ung og har fått skjerf.'));
     else toast(name + ' nådde nivå ' + l);
@@ -165,7 +173,7 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
   hooks.onPoints = (before, after, n) => {
     renderHeader(); renderNav(); checkProgress();
     const st = stars(S.points);
-    if (after > before) { toast('Nytt nivå: ' + LEVELS[after].n); showLevelUp(after); }
+    if (after > before) { toast('Nytt nivå: ' + LEVELS[after].n); if (inLive()) later(() => showLevelUp(after)); else showLevelUp(after); }
     else if (st > starsBefore) toast('Ny stjerne! Du har nå ★' + st);
     else floatXP(n);
     starsBefore = st;
@@ -177,6 +185,16 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
 }
 
 // ---------- live ----------
+/** Belønninger som venter til live-quizen er ferdig (egg, nytt nivå, dagens mål). */
+const pending: (() => void)[] = [];
+function later(f: () => void): void { pending.push(f); }
+/** Midt i en live-quiz (ikke på sluttskjermen). */
+const inLive = () => S.mode === 'live' && !S.cur.liveDone;
+function flushLater(): void {
+  const all = pending.splice(0);
+  // Én etter én, så dialogene ikke legger seg oppå hverandre i samme øyeblikk.
+  all.forEach((f, i) => setTimeout(f, 400 + i * 150));
+}
 let liveTimer: number | undefined, liveStop: (() => void) | null = null;
 /** Holder S.cur.liveOn oppdatert, så startsiden kan vise et banner når læreren har startet en live-quiz. */
 function watchLive(store: Store): void {

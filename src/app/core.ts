@@ -135,6 +135,8 @@ export const hooks = {
   onPetLevel: (_p: Pet, _level: number) => {},
   /** Åpner en side, for eksempel dyrene i avatarskjermen. */
   open: (_mode: string, _tab?: string) => {},
+  /** Live-quizen er ferdig: vis belønninger som ventet. */
+  afterLive: () => {},
 };
 
 /** Dyret ved avataren får like mye XP som eleven. Databasen gjør det samme i award_points. */

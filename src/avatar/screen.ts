@@ -6,7 +6,7 @@ import {
   AvatarCfg, ColorKey, Slot, Skin, GENDERS, SKIN_TONES, HAIR_STYLES, HAIR_COLORS, HEADWEAR, EYE_COLORS, LIP_COLORS, SHADOW_COLORS, BLUSH_COLORS,
   CLOTH_COLORS, TOPS, BOTTOMS, SHOES, EYES, MOUTHS, SKINS, SLOT_NAMES, skinById, isMerch, isAch, isSeasonal, Swatch, Opt,
 } from './catalog';
-import { avatarSVG, tintOf } from './render';
+import { avatarSVG, tintOf, tint2Of, numOf } from './render';
 import { petsHTML, wirePets, companionSVG } from '../pets/screen';
 import { achHTML } from '../achievements/screen';
 import { achieve } from '../achievements/engine';
@@ -28,7 +28,7 @@ const HEADS: Record<string, [string, string]> = {
   bakgrunn: ['Bakgrunner', 'Mønstre og bilder bak hele appen.'],
 };
 
-interface AvaState { tab: Tab; part: Part; arm: string | null; msg: string; busy: boolean; open: string | null }
+interface AvaState { tab: Tab; part: Part; arm: string | null; msg: string; busy: boolean; open: string | null; /** Draktpanelet som er åpent. */ kit?: string | null }
 function st(): AvaState {
   const s = S.cur.ava || (S.cur.ava = { tab: 'kropp', part: 'kropp', arm: null, msg: '', busy: false, open: null });
   if (s.open === undefined) s.open = null;
@@ -48,8 +48,10 @@ function set(patch: Partial<AvatarCfg>, focus?: string) {
 
 // ---------- farger ----------
 // En farge er enten en av avatarens fargefelt (hairC, topC …) eller «tint:<kostyme-id>».
-const getC = (ck: string): string => (ck.startsWith('tint:') ? tintOf(S.avatar, ck.slice(5)) : (S.avatar[ck as ColorKey] as string));
+// Fotballdraktene har også «tint2:<kostyme-id>» for farge 2.
+const getC = (ck: string): string => (ck.startsWith('tint:') ? tintOf(S.avatar, ck.slice(5)) : ck.startsWith('tint2:') ? tint2Of(S.avatar, ck.slice(6)) : (S.avatar[ck as ColorKey] as string));
 function patchC(ck: string, v: string): Partial<AvatarCfg> {
+  if (ck.startsWith('tint2:')) return { tint2: { ...(S.avatar.tint2 || {}), [ck.slice(6)]: v } };
   return ck.startsWith('tint:') ? { tint: { ...S.avatar.tint, [ck.slice(5)]: v } } : ({ [ck]: v } as Partial<AvatarCfg>);
 }
 const rgb = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
@@ -92,6 +94,14 @@ function tiles(key: 'hair' | 'top' | 'bottom' | 'shoes' | 'headwear', list: Opt[
 
 function section(title: string, body: string) { return '<div class="avsec"><h3>' + esc(title) + '</h3>' + body + '</div>'; }
 
+/** Fotballdraktene: farge 1, farge 2 og spillernummer. */
+function kitFields(k: Skin): string {
+  const n = numOf(S.avatar, k.id);
+  return '<div class="kitf"><h5>Farge 1</h5>' + colorField('tint:' + k.id, CLOTH_COLORS, 'Farge 1 på ' + k.name.toLowerCase()) +
+    '<h5>Farge 2</h5>' + colorField('tint2:' + k.id, CLOTH_COLORS, 'Farge 2 på ' + k.name.toLowerCase()) +
+    '<label class="kitnum"><span>Spillernummer</span><input type="number" inputmode="numeric" min="0" max="99" step="1" value="' + esc(n) + '" data-num="' + k.id + '" aria-label="Spillernummer på ' + esc(k.name.toLowerCase()) + '"></label></div>';
+}
+
 // ---------- butikkene ----------
 function card(k: Skin): string {
   const s = st(), bal = S.points - S.spent;
@@ -100,12 +110,12 @@ function card(k: Skin): string {
   if (own) btn = '<button class="btn' + (worn ? '' : ' primary') + '" type="button" data-wear="' + k.id + '">' + (worn ? 'Ta av' : 'Ta på') + '</button>';
   else if (!here) btn = '';
   else btn = '<button class="btn' + (armed ? ' primary' : '') + '" type="button" data-buy="' + k.id + '"' + (can && !s.busy ? '' : ' disabled') + '>' + (can ? (armed ? 'Bekreft kjøp' : 'Kjøp') : 'Mangler ' + (k.price - bal) + ' poeng') + '</button>';
-  const ck = 'tint:' + k.id, tintOpen = s.open === ck;
-  const tintBtn = own && k.tint ? '<button class="btn ghost" type="button" data-open="' + ck + '" aria-expanded="' + tintOpen + '">' + (tintOpen ? 'Ferdig' : 'Endre farge') + '</button>' : '';
+  const ck = 'tint:' + k.id, ck2 = 'tint2:' + k.id, tintOpen = s.open === ck || (!!k.tint2 && (s.kit === k.id || s.open === ck2));
+  const tintBtn = own && k.tint ? '<button class="btn ghost" type="button" ' + (k.tint2 ? 'data-kit="' + k.id + '"' : 'data-open="' + ck + '"') + ' aria-expanded="' + tintOpen + '">' + (tintOpen ? 'Ferdig' : k.tint2 ? 'Tilpass drakten' : 'Endre farge') + '</button>' : '';
   return '<article class="skin' + (worn ? ' worn' : '') + (isMerch(k) ? ' merch' : '') + (tintOpen ? ' wide' : '') + '"><div class="skinart">' +
     avatarSVG({ ...S.avatar, eq: { [k.slot]: k.id } }, { crop: k.slot === 'hat' || k.slot === 'face' ? 'head' : 'full' }) + '</div><div class="skininfo">' +
-    '<h4>' + esc(k.name) + '</h4><p>' + esc(k.desc) + (isAch(k) && !own ? ' Lås opp «' + esc(achForSkin(k.id)?.name || '') + '».' : '') + '</p><div class="pfoot"><span class="price">' + (own ? 'Eies' : isAch(k) ? 'Achievement' : isSeasonal(k) && !here ? 'Bare i ' + (seasonById(k.theme)?.name || 'sesongen') : k.price + ' poeng') + '</span><span class="tsub">' + esc(SLOT_NAMES[k.slot]) + (k.tint ? ' · kan fargelegges' : '') + '</span></div>' +
-    (tintOpen ? colorField(ck, CLOTH_COLORS, 'Farge på ' + k.name.toLowerCase()) : '') + btn + tintBtn + '</div></article>';
+    '<h4>' + esc(k.name) + '</h4><p>' + esc(k.desc) + (isAch(k) && !own ? ' Lås opp «' + esc(achForSkin(k.id)?.name || '') + '».' : '') + '</p><div class="pfoot"><span class="price">' + (own ? 'Eies' : isAch(k) ? 'Achievement' : isSeasonal(k) && !here ? 'Bare i ' + (seasonById(k.theme)?.name || 'sesongen') : k.price + ' poeng') + '</span><span class="tsub">' + esc(SLOT_NAMES[k.slot]) + (k.tint2 ? ' · to farger og nummer' : k.tint ? ' · kan fargelegges' : '') + '</span></div>' +
+    (tintOpen ? (k.tint2 ? kitFields(k) : colorField(ck, CLOTH_COLORS, 'Farge på ' + k.name.toLowerCase())) : '') + btn + tintBtn + '</div></article>';
 }
 
 function balHTML(note: string): string {
@@ -225,6 +235,22 @@ function wire(p: ReturnType<typeof panel>, s: AvaState) {
       const f = p.querySelector(s.open ? 'input[data-rgb="' + ck + '"]' : '[data-open="' + ck + '"]') as HTMLElement | null; if (f) f.focus({ preventScroll: true });
     };
   });
+  p.querySelectorAll('[data-kit]').forEach((b: HTMLElement) => {
+    b.onclick = () => { const id = b.dataset.kit!; const on = s.kit === id || s.open === 'tint:' + id || s.open === 'tint2:' + id; s.kit = on ? null : id; if (on) s.open = null; renderAvatar(); const f = p.querySelector('[data-kit="' + id + '"]') as HTMLElement | null; if (f) f.focus({ preventScroll: true }); };
+  });
+  p.querySelectorAll('input[data-num]').forEach((i: HTMLInputElement) => {
+    const id = i.dataset.num!;
+    const val = () => { const v = Math.round(Number(i.value)); return Number.isFinite(v) && i.value !== '' ? String(Math.max(0, Math.min(99, v))) : null; };
+    // Forhåndsvis mens eleven skriver, lagre når feltet forlates.
+    i.oninput = () => {
+      const v = val(); if (v === null) return;
+      S.avatar = { ...S.avatar, num: { ...(S.avatar.num || {}), [id]: v } };
+      const k = skinById(id)!, art = i.closest('.skin')?.querySelector('.skinart'); if (art) art.innerHTML = avatarSVG({ ...S.avatar, eq: { [k.slot]: k.id } }, { crop: 'full' });
+      const big = p.querySelector('.avabig'); if (big) big.innerHTML = avatarSVG(S.avatar, { cls: 'big', title: 'Avataren din', ariaHidden: false }) + '<span class="stagepet">' + companionSVG() + '</span>';
+      hooks.refresh();
+    };
+    i.onchange = () => { const v = val() ?? numOf(S.avatar, id); set({ num: { ...(S.avatar.num || {}), [id]: v } }, 'input[data-num="' + id + '"]'); };
+  });
   p.querySelectorAll('input[data-rgb]').forEach((i: HTMLInputElement) => {
     const ck = i.dataset.rgb!, box: any = i.closest('.rgb');
     const read = () => toHex([0, 1, 2].map((n) => +(box.querySelector('input[data-ch="' + n + '"]') as HTMLInputElement).value));
@@ -241,7 +267,7 @@ function wire(p: ReturnType<typeof panel>, s: AvaState) {
       const own = p.querySelector('[data-cf="' + ck + '"] .sw.custom') as HTMLElement | null;
       if (own) { own.style.setProperty('--own', h); p.querySelectorAll('[data-cf="' + ck + '"] .sw').forEach((w: HTMLElement) => w.setAttribute('aria-checked', String(w === own))); }
       const big = p.querySelector('.avabig'); if (big) big.innerHTML = avatarSVG(S.avatar, { cls: 'big', title: 'Avataren din', ariaHidden: false }) + '<span class="stagepet">' + companionSVG() + '</span>';
-      const art = box.closest('.skin')?.querySelector('.skinart'); const k = ck.startsWith('tint:') ? skinById(ck.slice(5)) : null;
+      const art = box.closest('.skin')?.querySelector('.skinart'); const k = ck.startsWith('tint:') ? skinById(ck.slice(5)) : ck.startsWith('tint2:') ? skinById(ck.slice(6)) : null;
       if (art && k) art.innerHTML = avatarSVG({ ...S.avatar, eq: { [k.slot]: k.id } }, { crop: k.slot === 'hat' || k.slot === 'face' ? 'head' : 'full' });
       hooks.refresh();
     };

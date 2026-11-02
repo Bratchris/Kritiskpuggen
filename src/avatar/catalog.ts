@@ -37,6 +37,9 @@ export interface AvatarCfg {
   eq: Partial<Record<Slot, string>>;
   /** Egen farge på kostymer som kan fargelegges, per kostyme-id. */
   tint: Record<string, string>;
+  /** Farge 2 og spillernummer på fotballdraktene, per kostyme-id. */
+  tint2?: Record<string, string>;
+  num?: Record<string, string>;
   /** Bakgrunnen bak appen, id fra backgrounds.ts. Tom = temaets vanlige bakgrunn. */
   bg?: string;
   /** Egget eller dyret som står ved siden av avataren (id fra tabellen pets). */
@@ -91,7 +94,7 @@ export const SHOES: Opt[] = [{ id: 'joggesko', name: 'Joggesko' }, { id: 'stovle
 export const EYES: Opt[] = [{ id: 'rund', name: 'Runde' }, { id: 'store', name: 'Store' }, { id: 'glad', name: 'Glade' }];
 export const MOUTHS: Opt[] = [{ id: 'smil', name: 'Smil' }, { id: 'glis', name: 'Glis' }, { id: 'rolig', name: 'Rolig' }];
 
-export interface Skin { id: string; theme: string; slot: Slot; name: string; price: number; desc: string; tint?: string }
+export interface Skin { id: string; theme: string; slot: Slot; name: string; price: number; desc: string; tint?: string; /** Farge 2 og nummer: draktene kan endre begge. */ tint2?: string; num?: string }
 export const SLOT_NAMES: Record<Slot, string> = { hat: 'Hodet', face: 'Ansiktet', neck: 'Halsen', back: 'Ryggen', hand: 'Hånden', top: 'Overdel', outfit: 'Hele drakten', feet: 'Føttene' };
 
 /** theme 'merch' = CRISPY-G-butikken, som finnes i alle temaer. tint = standardfarge for varer som kan fargelegges. */
@@ -132,9 +135,9 @@ export const SKINS: Skin[] = [
   { id: 'cg_sekk', theme: 'merch', slot: 'back', name: 'CRISPY-G ryggsekk', price: 100, desc: 'Plass til både bøker og fotballsko.', tint: '#1e1a24' },
   { id: 'cg_hoodie', theme: 'merch', slot: 'top', name: 'CRISPY-G hoodie', price: 120, desc: 'Tykk hoodie med flamme-logo.', tint: '#1e1a24' },
   { id: 'cg_kjede', theme: 'merch', slot: 'neck', name: 'CRISPY-G gullkjede', price: 140, desc: 'Tungt kjede med CG-medaljong.' },
-  { id: 'cg_hjemme', theme: 'merch', slot: 'outfit', name: 'Fotballdrakt, hjemme', price: 160, desc: 'Hjemmedrakt med nummer 10 og strømper.', tint: '#d9453b' },
-  { id: 'cg_borte', theme: 'merch', slot: 'outfit', name: 'Fotballdrakt, borte', price: 160, desc: 'Stripete bortedrakt med nummer 7.', tint: '#2e86c1' },
-  { id: 'cg_keeper', theme: 'merch', slot: 'outfit', name: 'Keeperdrakt', price: 170, desc: 'Langermet keeperdrakt med hansker.', tint: '#4fae6b' },
+  { id: 'cg_hjemme', theme: 'merch', slot: 'outfit', name: 'Fotballdrakt, hjemme', price: 160, desc: 'Hjemmedrakt med strømper. Velg to farger og ditt eget nummer.', tint: '#d9453b', tint2: '#f4f1e8', num: '10' },
+  { id: 'cg_borte', theme: 'merch', slot: 'outfit', name: 'Fotballdrakt, borte', price: 160, desc: 'Stripete bortedrakt. Velg to farger og ditt eget nummer.', tint: '#2e86c1', tint2: '#f4f1e8', num: '7' },
+  { id: 'cg_keeper', theme: 'merch', slot: 'outfit', name: 'Keeperdrakt', price: 170, desc: 'Langermet keeperdrakt med hansker. Velg to farger og nummer.', tint: '#4fae6b', tint2: '#1e1a24', num: '1' },
   { id: 'cg_tracksuit', theme: 'merch', slot: 'outfit', name: 'CRISPY-G tracksuit', price: 180, desc: 'Joggedress med tre striper og glidelås.', tint: '#6a3d9a' },
   { id: 'cg_gullball', theme: 'merch', slot: 'hand', name: 'Gullballen', price: 250, desc: 'Prisen for årets beste pugger.' },
   // Sesongkostymer (theme = sesongens id). Kan bare kjøpes mens læreren har sesongen på.
@@ -204,6 +207,10 @@ export function cleanAvatar(raw: any, owned: Set<string>): AvatarCfg {
   const tint: Record<string, string> = {};
   for (const [id, v] of Object.entries(c.tint || {})) { const s = skinById(id); if (s?.tint && typeof v === 'string' && HEX.test(v)) tint[id] = v.toLowerCase(); }
   c.tint = tint;
+  const tint2: Record<string, string> = {}, num: Record<string, string> = {};
+  for (const [id, v] of Object.entries(c.tint2 || {})) { const s = skinById(id); if (s?.tint2 && typeof v === 'string' && HEX.test(v)) tint2[id] = v.toLowerCase(); }
+  for (const [id, v] of Object.entries(c.num || {})) { const s = skinById(id); if (s?.num && typeof v === 'string' && /^\d{1,2}$/.test(v)) num[id] = String(Number(v)); }
+  c.tint2 = tint2; c.num = num;
   const bg = bgById(c.bg);
   if (!bg || (bg.price > 0 && !owned.has(bg.id))) delete c.bg;
   if (typeof c.pet !== 'string' || c.pet.length > 64) delete c.pet;

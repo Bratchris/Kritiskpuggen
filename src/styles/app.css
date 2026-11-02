@@ -813,3 +813,9 @@ canvas.confetti { position: fixed; inset: 0; width: 100vw; height: 100vh; z-inde
 .hw .xpbar { margin: 10px 0; }
 .hwparts { display: flex; gap: 8px; flex-wrap: wrap; }
 @media (prefers-reduced-motion: reduce) { .livepulse { animation: none; } .timeline i { transition: none; } }
+
+/* Fotballdrakter: farge 1, farge 2 og nummer */
+.kitf { display: grid; gap: 6px; margin: 8px 0; }
+.kitf h5 { margin: 6px 0 0; font-size: .82rem; font-family: var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.kitnum { display: flex; align-items: center; gap: 10px; margin-top: 8px; font-weight: 600; }
+.kitnum input { width: 5.5em; font: inherit; font-family: var(--font-mono); font-size: 1.1rem; padding: 8px 10px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); }
