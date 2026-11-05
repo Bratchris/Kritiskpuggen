@@ -1,13 +1,14 @@
 import { nordlysSVG, nordlysPixelPNG } from './scenes';
 import { piratePNG } from './pirate';
+import { julekveldSVG, julenattPixelPNG } from './julescenes';
 
 // Bakgrunner bak appen. Hvert mønster er en liten SVG-flis som gjentas over hele siden.
 // Pris 0 = gratis for alle. Andre kjøpes med poeng gjennom buy_skin, og prisene må stemme med skin_items
 // (supabase/migrations/20261029600000_backgrounds.sql).
 
-export type BgGroup = 'sot' | 'kul' | 'halloween' | 'natur' | 'pirat' | 'sesong';
+export type BgGroup = 'sot' | 'kul' | 'halloween' | 'jul' | 'natur' | 'pirat' | 'sesong';
 export const BG_GROUPS: { id: BgGroup; name: string }[] = [
-  { id: 'sot', name: 'Søte' }, { id: 'kul', name: 'Kule' }, { id: 'halloween', name: 'Halloween' }, { id: 'natur', name: 'Natur' }, { id: 'pirat', name: 'Piratøya' },
+  { id: 'sot', name: 'Søte' }, { id: 'kul', name: 'Kule' }, { id: 'halloween', name: 'Halloween' }, { id: 'jul', name: 'Jul' }, { id: 'natur', name: 'Natur' }, { id: 'pirat', name: 'Piratøya' },
 ];
 /** cover = ett stort bilde som fyller skjermen i stedet for et mønster. pixel = skarpe piksler når bildet forstørres. image = ferdig bildeadresse i stedet for SVG. */
 export interface Background { id: string; group: BgGroup; name: string; price: number; color: string; size: number; tile: () => string; cover?: boolean; pixel?: boolean; image?: () => string; /** Bare til salgs i denne sesonghendelsen. */ season?: string }
@@ -154,6 +155,46 @@ export const BACKGROUNDS: Background[] = [
     return svg(120, '#fbfaf3', g + L('M10,30 h22 M21,19 v22', '#2e86c1', 2) + '<text x="70" y="40" font-family="Georgia,serif" font-size="16" fill="#d9453b" font-weight="700">A+</text>' +
       L('M14,90 Q24,74 34,90 T54,90', '#4fae6b', 2) + '<text x="74" y="98" font-family="Georgia,serif" font-size="13" fill="#6a3d9a" font-style="italic">x²=4</text>' + at(102, 66, 0.6, star('#f2c230')));
   } },
+  // ---------- jul ----------
+  { id: 'bg_pepperkaker', group: 'jul', name: 'Pepperkaker', price: 45, color: '#f3e4cf', size: 130, tile: () => {
+    const ice = (d: string) => L(d, '#fffaf0', 1.6);
+    const man = P('M0,-14 a5,5 0 1 1 0.1,0 Z M-4,-9 H4 L12,-4 L10,-1 L4,-4 V3 L8,13 H3 L0,6 L-3,13 H-8 L-4,3 V-4 L-10,-1 L-12,-4Z', '#b8733c') + ice('M-9,-3 l2,-1 M7,-3 l2,1 M-6,11 h3 M3,11 h3') + C(-1.8, -15, 0.9, '#3a2418') + C(1.8, -15, 0.9, '#3a2418') + C(0, -2, 1.2, '#d64b3c') + C(0, 2, 1.2, '#2e7d4f');
+    const hj = heart('#b8733c') + ice('M-6,-2 Q0,4 6,-2');
+    return svg(130, '#f3e4cf', at(32, 36, 1.3, man) + at(98, 98, 1.3, man, 12) + at(96, 30, 1.6, hj, -10) + at(30, 100, 1.4, hj, 14) + at(64, 66, 1, star('#d89a55')) + C(64, 12, 1.6, '#d64b3c') + C(10, 64, 1.6, '#2e7d4f') + C(120, 64, 1.6, '#ffd25a'));
+  } },
+  { id: 'bg_polkagris', group: 'jul', name: 'Polkagris', price: 40, color: '#fff4f4', size: 100, tile: () => {
+    const cane = L('M0,18 V-6 A7,7 0 0 1 14,-6', '#ffffff', 6) + L('M0,18 V-6 A7,7 0 0 1 14,-6', '#e2342d', 6, ' stroke-dasharray="4 4"');
+    return svg(100, '#fff4f4', at(24, 30, 1, cane, -20) + at(74, 78, 1, cane, 25) + at(78, 20, 0.6, sparkle('#e2342d')) + at(22, 80, 0.6, sparkle('#2e7d4f')) + C(50, 52, 2, '#e2342d', ' opacity=".5"'));
+  } },
+  { id: 'bg_julekuler', group: 'jul', name: 'Julekuler', price: 50, color: '#123a2a', size: 130, tile: () => {
+    const kule = (c: string, d: string) => L('M0,-22 V-12', '#c9a227', 1) + P('M-3,-13 h6 v3 h-6z', '#c9a227') + C(0, 0, 10, c) + L('M-10,0 Q0,5 10,0', d, 1.6) + L('M-8,-5 Q0,-2 8,-5', d, 1.2) + C(-3.5, -3.5, 2.4, '#fff', ' opacity=".5"');
+    return svg(130, '#123a2a', L('M0,4 Q65,26 130,4', '#c9a227', 0.8) + at(24, 30, 1, kule('#d64b3c', '#ffd25a')) + at(66, 36, 0.9, kule('#ffd25a', '#d64b3c')) + at(108, 28, 1, kule('#4f9ee0', '#ffffff')) +
+      at(42, 96, 1.1, kule('#ffffff', '#d64b3c')) + at(98, 100, 0.9, kule('#9b7fd0', '#ffd25a')) + at(70, 74, 0.4, star('#ffd25a')) + at(10, 74, 0.3, star('#fff')) + at(124, 70, 0.3, star('#fff')));
+  } },
+  { id: 'bg_julegaver', group: 'jul', name: 'Julegaver', price: 50, color: '#f7efe2', size: 130, tile: () => {
+    const gave = (c: string, b: string) => P('M-12,-8 H12 V12 H-12Z', c) + P('M-14,-12 H14 V-6 H-14Z', c) + P('M-2,-12 H2 V12 H-2Z', b) + L('M0,-12 C-8,-20 -12,-12 0,-12 C12,-12 8,-20 0,-12', b, 2);
+    return svg(130, '#f7efe2', at(32, 34, 1, gave('#d64b3c', '#ffd25a')) + at(98, 40, 0.8, gave('#2e7d4f', '#ffffff')) + at(64, 98, 1.1, gave('#3a6fa0', '#ffd25a'), 8) + at(14, 100, 0.6, gave('#ffd25a', '#d64b3c'), -10) +
+      at(110, 104, 0.4, star('#d64b3c')) + at(64, 60, 0.4, star('#2e7d4f')));
+  } },
+  { id: 'bg_nisser', group: 'jul', name: 'Nisser', price: 55, color: '#1d4f3a', size: 140, tile: () => {
+    const nisse = P('M-10,8 Q-10,-6 0,-7 Q10,-6 10,8Z', '#7a8590') + C(0, -10, 6, '#f1c9a5') + P('M-6,-9 Q0,4 6,-9 Q4,-2 0,-1 Q-4,-2 -6,-9Z', '#ffffff') + P('M-7,-12 Q-4,-30 10,-24 L7,-12Z', '#d64b3c') + C(10, -24, 2.4, '#fff') + L('M-7,-12 H7', '#ffffff', 2.4) + C(-2, -11, 0.8, '#1e1a24') + C(2, -11, 0.8, '#1e1a24') + C(0, -9, 1.2, '#e58a8a');
+    return svg(140, '#1d4f3a', at(34, 44, 1.4, nisse) + at(104, 108, 1.4, nisse) + at(104, 36, 0.5, star('#ffd25a')) + at(34, 112, 0.5, star('#ffd25a')) + C(70, 74, 1.6, '#fff', ' opacity=".7"') + C(130, 70, 1.3, '#fff', ' opacity=".6"') + C(8, 76, 1.3, '#fff', ' opacity=".6"'));
+  } },
+  { id: 'bg_julestrikk', group: 'jul', name: 'Julestrikk', price: 60, color: '#b8322a', size: 96, tile: () => {
+    // Strikkemønster: masker i rutenett, med snøfnugg og en rad med hjerter.
+    const W = '#f6f3ec', G = '#2e7d4f';
+    let s = '';
+    const knit = (x: number, y: number, c: string) => P('M' + x + ',' + y + ' l2,4 2,-4 v2 l-2,4 -2,-4z', c);
+    const rows = ['..X...X...X.', '.XXX.XXX.XXX', '..X...X...X.'];
+    rows.forEach((r, j) => r.split('').forEach((ch, i) => { if (ch === 'X') s += knit(i * 8, 4 + j * 6, W); }));
+    for (let i = 0; i < 12; i++) s += knit(i * 8, 24, G) + knit(i * 8, 90, G);
+    const flake = ['...X...', '.X.X.X.', '..XXX..', 'XXXXXXX', '..XXX..', '.X.X.X.', '...X...'];
+    const put = (ox: number, oy: number) => flake.forEach((r, j) => r.split('').forEach((ch, i) => { if (ch === 'X') s += knit(ox + i * 4, oy + j * 5, W); }));
+    put(6, 40); put(54, 40);
+    return svg(96, '#b8322a', s);
+  } },
+  { id: 'bg_julekveld', group: 'jul', name: 'Julekveld i bygda', price: 100, color: '#16245a', size: 0, cover: true, tile: julekveldSVG },
+  { id: 'bg_julenatt_piksel', group: 'jul', name: 'Julenatt i piksler', price: 100, color: '#121d4a', size: 0, cover: true, pixel: true, tile: () => '', image: julenattPixelPNG },
   // ---------- natur ----------
   { id: 'bg_nordlys', group: 'natur', name: 'Nordlys over skogen', price: 80, color: '#0c1b40', size: 0, cover: true, tile: nordlysSVG },
   { id: 'bg_nordlys_piksel', group: 'natur', name: 'Nordlys i piksler', price: 80, color: '#0c1a44', size: 0, cover: true, pixel: true, tile: () => '', image: nordlysPixelPNG },
