@@ -33,6 +33,8 @@ import { floatXP, confetti, celebrate, showCombo, countTo } from './juice';
 import { getPrefs } from '../lib/prefs';
 import { checkProgress, checkPets } from '../achievements/engine';
 import { avatarSVG } from '../avatar/render';
+import { SKINS } from '../avatar/catalog';
+import { ACHS } from '../achievements/catalog';
 import { cleanAvatar, defaultAvatar } from '../avatar/catalog';
 
 const RENDER: Record<string, () => void> = {
@@ -85,6 +87,13 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
   try { S.homework = await store.loadHomework(theme.id); } catch { S.homework = []; }
 
   setHomeName(opts.who);
+  // «Lås opp alt» finnes bare i lærerens forhåndsvisning, aldri for elever.
+  const unlockAll = opts.preview && store instanceof PreviewStore ? async () => {
+    const u = await store.unlockEverything(theme.id, topXp());
+    S.points = u.points; S.owned = new Set(u.owned); S.ach = new Set(u.ach); S.pets = u.pets; S.achReady = true; S.petsReady = true; S.avaReady = true;
+    S.seenLvl = lvl(S.points) - 1; save(); renderHeader(); renderNav(); render();
+    toast('Alt er låst opp i forhåndsvisningen: nivåer, rom, kostymer, bakgrunner, achievements og dyr.');
+  } : undefined;
   root.innerHTML =
     '<div class="wrap">' +
     '<header class="apphead"><div class="hbar">' +
@@ -96,7 +105,7 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
         '<button class="avabtn" id="ava-btn" type="button"></button>' +
         '<button class="hicon" type="button" id="h-set" aria-label="Innstillinger" title="Innstillinger">' + icon('innst') + '</button>' +
       '</div></div>' +
-      (opts.preview ? '<div class="previewnote previewbar"><span>Forhåndsvisning for læreren. Alt lagres bare i denne nettleseren.</span>' + (opts.onExit ? '<button class="lnk" id="ex-prev" type="button">Tilbake til lærerrommet</button>' : '') + '</div>' : '') +
+      (opts.preview ? '<div class="previewnote previewbar"><span>Forhåndsvisning for læreren. Alt lagres bare i denne nettleseren.</span>' + (unlockAll ? '<button class="btn small" id="prev-unlock" type="button">Lås opp alt</button>' : '') + (opts.onExit ? '<button class="lnk" id="ex-prev" type="button">Tilbake til lærerrommet</button>' : '') + '</div>' : '') +
     '</header>' +
     '<nav class="mainnav" id="nav" aria-label="Hovedmeny"></nav>' +
     '<div class="subnav" id="subnav" hidden></div>' +
@@ -111,14 +120,12 @@ export async function mountApp(root: HTMLElement, theme: Theme, store: Store, op
     logout: opts.onLogout ? leave(opts.onLogout) : undefined,
     exitPreview: opts.onExit,
     // «Lås opp alt» finnes bare i lærerens forhåndsvisning, aldri for elever.
-    unlockAll: opts.preview && store instanceof PreviewStore ? async () => {
-      S.points = await store.setPoints(theme.id, topXp());
-      S.seenLvl = lvl(S.points) - 1; save(); renderHeader(); renderNav();
-    } : undefined,
-    unlocked: () => S.points >= topXp(),
+    unlockAll,
+    unlocked: () => S.points >= topXp() && S.owned.size >= SKINS.length && ACHS.every((x) => S.ach.has(x.id)),
     reset: opts.onReset,
   });
   if (opts.onExit) $('#ex-prev').onclick = opts.onExit;
+  const pu = $('#prev-unlock'); if (pu && unlockAll) pu.onclick = async () => { pu.disabled = true; await unlockAll(); pu.textContent = 'Alt er låst opp'; };
 
   $('#nav').addEventListener('click', (e: Event) => {
     const b = (e.target as HTMLElement).closest('button[data-nav]') as HTMLElement | null; if (!b) return;

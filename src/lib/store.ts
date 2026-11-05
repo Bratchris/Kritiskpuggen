@@ -1,7 +1,9 @@
 import { supabase } from './supabase';
 import type { Placement } from '../themes/types';
 import { type Pet, type EggKind, type Species, type Variant, EGGS, CHANCE, SPECIES, VARIANTS, pick, rarityOf, isSeasonEgg } from '../pets/catalog';
-import { achById } from '../achievements/catalog';
+import { achById, ACHS } from '../achievements/catalog';
+import { SKINS } from '../avatar/catalog';
+import { BACKGROUNDS } from '../avatar/backgrounds';
 
 /** Det som lagres per elev og tema, i tillegg til poengene. */
 export interface SavedState {
@@ -366,6 +368,29 @@ export class PreviewStore implements Store {
   async liveState(): Promise<LiveState | null> { return null; }
   async liveAnswer(): Promise<boolean> { return false; }
   liveListen(): () => void { return () => {}; }
+  /**
+   * Lærerens «Lås opp alt» i forhåndsvisningen: høyeste nivå med poeng til overs, alle kostymer og bakgrunner,
+   * alle achievements og ett dyr av hver art. Lagres bare i denne nettleseren og rører aldri databasen.
+   */
+  async unlockEverything(theme: string, topXp: number): Promise<{ points: number; owned: string[]; ach: string[]; pets: Pet[] }> {
+    const p = this.read(theme); p.points = Math.max(p.points, topXp + 3000); this.write(theme, p);
+    const a = await this.loadAvatar(), owned = Array.from(new Set(a.owned.concat(SKINS.map((k) => k.id), BACKGROUNDS.filter((b) => b.price > 0).map((b) => b.id))));
+    this.avaWrite(a.cfg, owned);
+    const ach = ACHS.map((x) => x.id);
+    try { localStorage.setItem('puggen-preview-ach', JSON.stringify(ach)); } catch { /* ignorer */ }
+    const pets = this.petsRead(), now = new Date().toISOString(), t = this.total();
+    SPECIES.forEach((sp, i) => {
+      if (pets.some((x) => x.hatched_at && x.species === sp.id)) return;
+      pets.push({ id: 'u' + Date.now().toString(36) + i, egg: sp.egg === 'belonning' ? 'belonning' : sp.egg, found_at: now, found_theme: theme, xp_start: t, xp_need: 0, hatched_at: now, species: sp.id, variant: 'vanlig', rarity: rarityOf(sp.id, 'vanlig') });
+    });
+    this.petsWrite(pets);
+    return { points: p.points, owned, ach, pets };
+  }
+  /** Er alt låst opp i forhåndsvisningen? */
+  async allUnlocked(theme: string, topXp: number): Promise<boolean> {
+    const a = await this.loadAvatar();
+    return this.read(theme).points >= topXp && SKINS.every((k) => a.owned.includes(k.id)) && ACHS.every((x) => this.achRead().includes(x.id));
+  }
   /** Lærerens «Lås opp alt»: setter XP i forhåndsvisningen. Rører ikke databasen. */
   async setPoints(theme: string, n: number) { const p = this.read(theme); p.points = Math.max(p.points, n); this.write(theme, p); return p.points; }
 }
