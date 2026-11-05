@@ -5,7 +5,13 @@ export interface HullItem { t: string; s: string; a: string[] }
 export interface SortItem { text: string; b: string; e: string }
 export interface FeilItem { t: string; src: string; sec: string; text: string; fix: string; e: string }
 export interface OrderPuzzle { title: string; intro: string; items: [string, string][] }
-export interface ThinkItem { id: string; q: string; boxes: { h: string; items: string[] }[]; keys: [string, string][] }
+export interface ThinkItem {
+  id: string; q: string; boxes: { h: string; items: string[] }[]; keys: [string, string][];
+  /** Setningsstartere eleven kan trykke på for å komme i gang. */
+  starters?: string[];
+  /** Viser en velger for stjernetegn (oppgaven «Hvilket stjernetegn er du?»). */
+  zodiac?: boolean;
+}
 
 /** f: viser emnefilteret. g: 1 = global funksjon i den faste linjen øverst, 2 = global, men åpnes fra avataren i toppen. */
 export interface Mode { id: string; name: string; desc: string; f: number; g?: number }

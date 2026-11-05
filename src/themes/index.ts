@@ -1,6 +1,7 @@
 import type { Theme, RoomDef } from './types';
 import { kritisk } from './kritisk';
 import { klima } from './klima';
+import { nyrel } from './nyrel';
 
 function finalize(t: Theme): Theme {
   const r: RoomDef = t.room;
@@ -12,6 +13,7 @@ function finalize(t: Theme): Theme {
 export const THEMES: Record<string, Theme> = {
   kritisk: finalize(kritisk),
   klima: finalize(klima),
+  nyrel: finalize(nyrel),
 };
 export const THEME_IDS = Object.keys(THEMES);
 export function themeName(id: string): string { return THEMES[id]?.title ?? id; }

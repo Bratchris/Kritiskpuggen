@@ -269,7 +269,8 @@ function renderSub(): void {
 function seasonDecor(): void {
   document.getElementById('snow')?.remove();
   document.documentElement.dataset.season = S.seasons[0] || '';
-  if (!S.seasons.includes('jul')) return;
+  // Nyreligiøspuggen har juletema og snør hele tida.
+  if (!S.seasons.includes('jul') && T.id !== 'nyrel') return;
   const el = document.createElement('div'); el.id = 'snow'; el.setAttribute('aria-hidden', 'true');
   document.body.appendChild(el);
 }

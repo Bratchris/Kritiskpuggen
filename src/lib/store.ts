@@ -312,7 +312,7 @@ export class PreviewStore implements Store {
   // ---------- dyr i forhåndsvisningen: samme regler som i databasen, men lagret i nettleseren ----------
   private petsRead(): Pet[] { try { const r = JSON.parse(localStorage.getItem('puggen-preview-pets') || '[]'); return Array.isArray(r) ? r : []; } catch { return []; } }
   private petsWrite(p: Pet[]) { try { localStorage.setItem('puggen-preview-pets', JSON.stringify(p)); } catch { /* ignorer */ } }
-  private total() { return ['kritisk', 'klima'].reduce((a, t) => a + this.read(t).points, 0); }
+  private total() { return ['kritisk', 'klima', 'nyrel'].reduce((a, t) => a + this.read(t).points, 0); }
   private lastRoll = 0;
   async loadPets(): Promise<PetData> { return { pets: this.petsRead(), total: this.total(), ready: true }; }
   /** Lager et egg med en gang. Bare for læreren, så hen kan prøve klekkingen. */

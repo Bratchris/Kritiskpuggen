@@ -58,3 +58,35 @@
 :root[data-mode="dark"][data-tema="klima"] .room.rm-b { --wall-l: #2c3a35; --wall-r: #24302c; --floor-a: #4b4132; --floor-b: #42392b; }
 :root[data-mode="dark"][data-tema="klima"] .room.rm-k { --wall-l: #26303a; --wall-r: #1f2830; --floor-a: #3a444c; --floor-b: #333c44; --edge-l: #1c242b; --edge-r: #161d23; }
 :root[data-mode="dark"][data-tema="klima"] .room.rm-l { --wall-l: #1f3a2a; --wall-r: #193022; --floor-a: #3e3324; --floor-b: #362c1f; --sky: #1d4466; }
+
+/* Nyreligiøspuggen: jul. Granskog, julerødt og gull, med en stjerneklar vinternatt i mørk modus. */
+:root[data-tema="nyrel"] {
+  --bg: #f5f0e6; --surface: #fffdf8; --ink: #1f2a22; --muted: #5f6b60; --line: #e3d9c6;
+  --accent: #23683f; --accent-ink: #ffffff; --heat: #b8322a; --leaf: #2e7d4f; --sand: #b8322a; --sand-ink: #ffffff;
+  --good-bg: #dcefe2; --bad-bg: #f6dcd6; --ans-bg: #e6efe3;
+  --font-title: 'Mountains of Christmas', 'Bricolage Grotesque', Georgia, serif;
+  --title-weight: 700; --title-color: var(--sand); --title-track: .01em;
+  --wall-l: #e9dcc4; --wall-r: #dccbab; --floor-a: #9a6b45; --floor-b: #8c5f3c; --edge-l: #5f3f27; --edge-r: #4d321f; --sky: #22345e; --frame: #5f3f27;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode="light"])[data-tema="nyrel"] { --bg: #0e1714; --surface: #15211c; --ink: #eef2ea; --muted: #a2b1a6; --line: #2a3a33;
+    --accent: #6fcf97; --accent-ink: #0b1a12; --heat: #ff7b6b; --leaf: #6fcf97; --sand: #ff8a7a; --sand-ink: #1a0b0b;
+    --good-bg: #173a27; --bad-bg: #431b18; --ans-bg: #1d3328;
+    --wall-l: #26352d; --wall-r: #1f2c25; --floor-a: #4a3424; --floor-b: #402c1e; --edge-l: #2a1d13; --edge-r: #21170f; --sky: #0b1430; --frame: #4a3424; }
+}
+:root[data-mode="dark"][data-tema="nyrel"] { --bg: #0e1714; --surface: #15211c; --ink: #eef2ea; --muted: #a2b1a6; --line: #2a3a33;
+    --accent: #6fcf97; --accent-ink: #0b1a12; --heat: #ff7b6b; --leaf: #6fcf97; --sand: #ff8a7a; --sand-ink: #1a0b0b;
+    --good-bg: #173a27; --bad-bg: #431b18; --ans-bg: #1d3328;
+    --wall-l: #26352d; --wall-r: #1f2c25; --floor-a: #4a3424; --floor-b: #402c1e; --edge-l: #2a1d13; --edge-r: #21170f; --sky: #0b1430; --frame: #4a3424; }
+:root[data-tema="nyrel"] .apptitle { font-size: clamp(2.2rem, 9vw, 3.8rem); line-height: 1; }
+:root[data-tema="nyrel"] .room.rm-b { --wall-l: #283a66; --wall-r: #1f2f55; --floor-a: #6b4c34; --floor-b: #5f432d; }
+:root[data-tema="nyrel"] .room.rm-k { --wall-l: #d9cfe8; --wall-r: #c8bbdc; --floor-a: #b49a78; --floor-b: #a88e6c; --edge-l: #6b5a48; --edge-r: #5a4a3a; }
+:root[data-tema="nyrel"] .room.rm-l { --wall-l: #e6c9b0; --wall-r: #d8b698; --floor-a: #a87c52; --floor-b: #9c7048; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode="light"])[data-tema="nyrel"] .room.rm-b { --wall-l: #18213f; --wall-r: #131a33; --floor-a: #3a2a1c; --floor-b: #322417; }
+  :root:not([data-mode="light"])[data-tema="nyrel"] .room.rm-k { --wall-l: #2d2640; --wall-r: #251f36; --floor-a: #3e3426; --floor-b: #362d20; --edge-l: #241d16; --edge-r: #1c1611; }
+  :root:not([data-mode="light"])[data-tema="nyrel"] .room.rm-l { --wall-l: #3a2a22; --wall-r: #30221b; --floor-a: #4a3424; --floor-b: #402c1e; }
+}
+:root[data-mode="dark"][data-tema="nyrel"] .room.rm-b { --wall-l: #18213f; --wall-r: #131a33; --floor-a: #3a2a1c; --floor-b: #322417; }
+:root[data-mode="dark"][data-tema="nyrel"] .room.rm-k { --wall-l: #2d2640; --wall-r: #251f36; --floor-a: #3e3426; --floor-b: #362d20; --edge-l: #241d16; --edge-r: #1c1611; }
+:root[data-mode="dark"][data-tema="nyrel"] .room.rm-l { --wall-l: #3a2a22; --wall-r: #30221b; --floor-a: #4a3424; --floor-b: #402c1e; }

@@ -151,6 +151,43 @@ const SKIN_DRAW: Record<string, (x: Ctx) => Layers> = {
     cover: path('M28,44 Q28,10 60,10 Q92,10 92,44 L98,150 L88,142 L78,152 L68,142 L58,152 L48,142 L38,152 L28,142 L22,150 Z', '#f4f1f8', ';stroke:#b9aed0;stroke-width:1.5') +
       ell(49, 46, 5, 7, '#1e1a24') + ell(71, 46, 5, 7, '#1e1a24') + ell(60, 64, 5, 6, '#1e1a24'),
   }),
+  // nyreligiøsitet og jul
+  ny_tarot: ({ B }) => {
+    const [x, y] = B.hand[1], c = (r: number, fill: string, sym: string) => '<g transform="translate(' + x + ' ' + (y + 2) + ') rotate(' + r + ')">' + path('M-5,-18 h10 v16 h-10z', '#f6f3ec', ';stroke:#c9962a;stroke-width:.8') + path('M-3.5,-16 h7 v12 h-7z', fill) + sym + '</g>';
+    return { front: c(-22, '#1c2450', circ(0, -10, 2, '#ffd25a')) + c(0, '#614a92', circ(0, -10, 2.4, '#f6f3ec')) + c(22, '#d64b3c', circ(0, -10, 2, '#ffd25a')) };
+  },
+  ny_luciakrans: () => {
+    let s = path('M30,30 Q60,20 90,30 Q90,36 84,35 Q60,26 36,35 Q30,36 30,30Z', '#2f7045');
+    for (let i = 0; i < 7; i++) s += circ(34 + i * 8.6, 31 - Math.sin(i / 6 * Math.PI) * 4, 2.6, '#3f9a63');
+    [38, 52, 68, 82].forEach((x, i) => { const y = 27 - Math.sin((x - 30) / 60 * Math.PI) * 4; s += path('M' + (x - 2) + ',' + r1(y) + ' h4 v-12 h-4z', '#fffaf0') + ell(x, r1(y - 15), 2, 3.6, '#ffb52e') + ell(x, r1(y - 14.4), 1, 1.8, '#fff2b0'); if (i % 2) s += circ(x + 4, r1(y + 3), 1.8, '#d64b3c'); });
+    return { front: s };
+  },
+  ny_krystallkjede: () => ({ front: line('M48,76 Q50,88 60,92 Q70,88 72,76', '#c9ccd1', 1.2) + path('M60,90 l4,5 -4,9 -4,-9z', '#9575cd', ';stroke:#614a92;stroke-width:.8') + path('M60,90 l4,5 -4,9z', '#b39ddb') }),
+  ny_krystallkule: ({ B }) => { const [x, y] = B.hand[1]; return { front: path('M' + (x - 7) + ',' + (y + 4) + ' h14 l-2,5 h-10z', '#c9962a') + circ(x, y - 4, 9, 'rgba(155,127,208,.88)', ';stroke:#c5b3e6;stroke-width:1') + line('M' + (x - 4) + ',' + (y - 5) + ' q3,-5 7,-1', '#efe4ff', 1.2) + ell(x - 3.5, y - 8, 2.6, 1.4, '#fff', ';opacity:.6') }; },
+  ny_manediadem: () => ({ front: line('M36,32 Q60,22 84,32', '#c9ccd1', 1.8) + circ(60, 20, 4.4, '#e8eef4') + path('M51,16 a5,5 0 1 0 0,8 a4,4 0 0 1 0,-8z', '#e8eef4') + path('M69,16 a5,5 0 1 1 0,8 a4,4 0 0 0 0,-8z', '#e8eef4') + circ(60, 20, 1.6, '#7c61b3') }),
+  ny_glorie: () => ({ back: ell(60, 6, 22, 6, 'none', ';stroke:#ffe18f;stroke-width:6;opacity:.35'), front: ell(60, 6, 20, 5, 'none', ';stroke:#ffd25a;stroke-width:2.6') }),
+  ny_tromme: ({ B }) => {
+    const [x, y] = B.hand[0], cx = x - 2, cy = y - 6, [hx, hy] = B.hand[1];
+    return { front: ell(cx, cy, 11, 13, '#e9dcc6', ';stroke:#8a5628;stroke-width:2') + line('M' + cx + ',' + (cy - 12) + ' V' + (cy + 12) + ' M' + (cx - 10) + ',' + cy + ' H' + (cx + 10), '#a4513b', 1) + circ(cx, cy, 3.4, 'none', ';stroke:#a4513b;stroke-width:1.2') +
+      line('M' + hx + ',' + hy + ' L' + (hx + 8) + ',' + (hy - 16), '#6d4c41', 2.2) + ell(hx + 9, hy - 17, 2.6, 2, '#a1887f') };
+  },
+  ny_yoga: ({ B, t }) => ({ legs: true, body: legs(shade(t, -0.35)) + arm(B, t, 0.42, 11) + path('M42,80 Q42,75 48,75 H72 Q78,75 78,80 L77,104 H43 Z', t) + path('M43,104 H77 L76,116 H44Z', shade(t, -0.35)) + line('M52,76 Q60,82 68,76', shade(t, 0.3), 1.4) }),
+  ny_englevinger: () => {
+    const wing = (k: number) => { const X = (n: number) => r1(60 + k * n); return path('M' + X(14) + ',84 C' + X(30) + ',62 ' + X(52) + ',58 ' + X(56) + ',68 C' + X(58) + ',82 ' + X(50) + ',100 ' + X(40) + ',112 C' + X(34) + ',106 ' + X(24) + ',100 ' + X(14) + ',96Z', '#ffffff', ';stroke:#d9dfe8;stroke-width:1.2') + line('M' + X(22) + ',84 C' + X(32) + ',74 ' + X(44) + ',70 ' + X(50) + ',72 M' + X(22) + ',92 C' + X(32) + ',84 ' + X(42) + ',84 ' + X(48) + ',88 M' + X(22) + ',98 C' + X(30) + ',96 ' + X(36) + ',98 ' + X(42) + ',102', '#d9dfe8', 1.2); };
+    return { back: wing(-1) + wing(1) };
+  },
+  ny_luciakjole: ({ B }) => ({ legs: true, body: legs('#f6f3ec') + arm(B, '#fffdf8', 0.9, 13) + path('M38,82 Q38,74 46,74 H74 Q82,74 82,82 L90,150 Q60,154 30,150 Z', '#fffdf8', ';stroke:#e3dccd;stroke-width:1') + path('M40,100 H80 V106 H40Z', '#d64b3c') + path('M64,104 l6,18 -4,1 -4,-17z', '#d64b3c') + line('M54,74 Q60,80 66,74', '#e3dccd', 1.2) }),
+  ny_astrologkappe: ({ B }) => {
+    const b = '#1c2450', g = '#ffd25a', sym = ['♈', '♋', '♎', '♑', '♌', '♓'];
+    let s = legs('#141a3a') + arm(B, b, 0.9, 14) + path('M38,82 Q38,74 46,74 H74 Q82,74 82,82 L90,150 Q60,154 30,150 Z', b) + line('M54,74 L60,88 L66,74', g, 1.6) + line('M31,146 Q60,151 89,146', g, 1.6);
+    [[46, 98], [72, 104], [52, 124], [70, 132], [42, 140], [80, 142]].forEach(([x, y], i) => { s += '<text x="' + x + '" y="' + y + '" text-anchor="middle" style="font:7px \'DejaVu Sans\',\'Segoe UI Symbol\',sans-serif;fill:' + g + '">' + sym[i] + '︎</text>'; });
+    return { legs: true, body: s + circ(60, 112, 6, 'none', ';stroke:' + g + ';stroke-width:1.2') + circ(60, 112, 2, g) };
+  },
+  ny_nissedrakt: ({ B }) => {
+    const r = '#c9302c', w = '#f6f3ec';
+    return { legs: true, body: legs(r) + path('M44,140 H59 V147 H44Z M61,140 H76 V147 H61Z', '#1e1a24') + arm(B, r, 0.9, 13) + [0, 1].map((i) => circ(B.hand[i][0], B.hand[i][1], 4.6, w)).join('') +
+      path('M38,82 Q38,74 46,74 H74 Q82,74 82,82 L84,122 H36 Z', r) + path('M58,74 H62 V122 H58Z', w) + path('M36,118 H84 V124 H36Z', w) + path('M38,104 H82 V110 H38Z', '#1e1a24') + path('M56,103 h8 v8 h-8z', '#e3ad33') + path('M58,105 h4 v4 h-4z', '#1e1a24') };
+  },
   // klima
   sydvest: () => ({ front: path('M24,26 Q60,8 96,26 Q98,34 88,32 Q60,24 32,32 Q22,34 24,26Z', '#f2c230') + path('M36,28 Q36,8 60,6 Q84,8 84,28 Q60,20 36,28Z', '#f2c230') + line('M36,28 Q60,20 84,28', '#d9a915', 2) }),
   strikkelue: () => ({ front: path('M34,34 Q34,8 60,8 Q86,8 86,34 Z', '#d9453b') + path('M33,28 H87 V36 H33Z', '#f4f1e8') + line('M42,14 V28 M50,10 V28 M60,8 V28 M70,10 V28 M78,14 V28', '#b8392f', 1.2) + circ(60, 4, 7, '#f4f1e8') }),

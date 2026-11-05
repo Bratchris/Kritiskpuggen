@@ -1,6 +1,6 @@
 # Puggen
 
-Kritiskpuggen og Klimapuggen i én app. Elevene logger inn med en kode fra læreren og øver på pensum. Poeng, nivåer, troférom og godterigaver lagres i Supabase, slik at fremgangen følger eleven fra enhet til enhet. Læreren har et eget lærerrom der hen lager klasser og elevkoder og ser fremgang og gaver.
+Kritiskpuggen, Klimapuggen og Nyreligiøspuggen i én app. Elevene logger inn med en kode fra læreren og øver på pensum. Poeng, nivåer, troférom og godterigaver lagres i Supabase, slik at fremgangen følger eleven fra enhet til enhet. Læreren har et eget lærerrom der hen lager klasser og elevkoder og ser fremgang og gaver.
 
 Teknikk: Vite + TypeScript i nettleseren, Supabase (Postgres, Auth og en Edge Function) og hosting på Vercel.
 
@@ -9,7 +9,7 @@ Teknikk: Vite + TypeScript i nettleseren, Supabase (Postgres, Auth og en Edge Fu
 ### 1. Supabase
 
 1. Lag et prosjekt på [supabase.com](https://supabase.com). Velg en region i EU, for eksempel Stockholm (`eu-north-1`).
-2. Åpne **SQL Editor** og kjør filene i `supabase/migrations/` én om gangen, i rekkefølge etter navn: først `20261020000000_init.sql`, så `20261029000000_fix_student_role.sql` så `20261029100000_leaderboard.sql` så `20261029200000_leaderboard_top3.sql` så `20261029300000_activity.sql` så `20261029400000_avatar.sql` så `20261029500000_merch.sql` så `20261029600000_backgrounds.sql` så `20261029700000_nordlys.sql` så `20261029800000_pets.sql` så `20261029900000_pirat.sql` så `20261030000000_more_eggs.sql` så `20261101000000_achievements.sql` så `20261102000000_security.sql` så `20261102100000_teacher_invites.sql` så `20261102200000_invite_admin.sql` så `20261102300000_seasons_petlevels.sql` og til slutt `20261102400000_live_homework.sql`. Har du Supabase CLI, kan du i stedet kjøre `supabase link` og så `supabase db push`.
+2. Åpne **SQL Editor** og kjør filene i `supabase/migrations/` én om gangen, i rekkefølge etter navn: først `20261020000000_init.sql`, så `20261029000000_fix_student_role.sql` så `20261029100000_leaderboard.sql` så `20261029200000_leaderboard_top3.sql` så `20261029300000_activity.sql` så `20261029400000_avatar.sql` så `20261029500000_merch.sql` så `20261029600000_backgrounds.sql` så `20261029700000_nordlys.sql` så `20261029800000_pets.sql` så `20261029900000_pirat.sql` så `20261030000000_more_eggs.sql` så `20261101000000_achievements.sql` så `20261102000000_security.sql` så `20261102100000_teacher_invites.sql` så `20261102200000_invite_admin.sql` så `20261102300000_seasons_petlevels.sql` så `20261102400000_live_homework.sql` og til slutt `20261105000000_nyrel.sql`. Har du Supabase CLI, kan du i stedet kjøre `supabase link` og så `supabase db push`.
 3. Publiser edge-funksjonen som lager elevkontoer:
    ```bash
    npx supabase login
@@ -117,6 +117,12 @@ Hendelsene lagres i `classes.events`. Innholdet står i `src/seasons/catalog.ts`
 
 Dyret som står ved avataren, får like mye XP som eleven tjener (også det står i `award_points`). Nivå L nås ved 20 · L · (L − 1) XP, opp til nivå 10. På nivå 5 blir dyret ungt og får skjerf, og på nivå 10 blir det en mester med krone, gyllen glans og litt større kropp. Små dyr (nivå 1–4) er litt mindre. Eleven får et varsel med konfetti når dyret vokser.
 
+## Nyreligiøspuggen
+
+KRLE-tema om nyreligiøsitet, bygget på tekstene «Hva er nyreligiøsitet?» og «Nyreligiøse praksiser». Alt har juletema: julemarked med gaver til læreren, et julehus med peis og juletre, og 40 trofeer som blander jul og nyreligiøsitet. Det snør i appen hele tida. Tolv egne kostymer (blant annet nissedrakt, luciakjole, astrologkappe, englevinger og sjamantromme).
+
+«Tenk selv» har tolv refleksjonsoppgaver, med alle oppgavene fra «Tenk og skriv om nyreligiøse praksiser» og «Hvilket stjernetegn er du?». Oppgavene vises én om gangen med en oversikt over hvilke som er besvart, og har setningsstartere eleven kan trykke på. Stjernetegnoppgaven har en velger med alle tolv stjernetegn og hva astrologien sier om dem. Den nye visningen gjelder «Tenk selv» i alle temaene.
+
 ## Live, Feilbanken og Lekser
 
 Tre spill finnes i alle temaer, i tillegg til temaets egne.
@@ -161,6 +167,7 @@ src/
     types.ts         hva et tema består av
     kritisk/         innhold, butikk og rom for Kritiskpuggen
     klima/           innhold, butikk og rom for Klimapuggen
+    nyrel/           innhold, julemarked og julehus for Nyreligiøspuggen (KRLE)
   styles/            grunnlag, app, temafarger og lærerrom
 supabase/
   migrations/        tabeller, radsikkerhet og databasefunksjoner
